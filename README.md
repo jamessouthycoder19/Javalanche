@@ -5,6 +5,7 @@ This tool is meant to be used in Red Vs. Blue style Cybersecurity Competitions f
 Plans
 
 Main C2 Server - Java
+
     C2Server.java - Listen for connections from Long Range Beacons. Interacts with both the Long Range 
     Beacon Handler Threads, as well as the User Handler Thread.
 
@@ -18,6 +19,7 @@ Main C2 Server - Java
     
 
 Long Range Beacon Server - Java
+
     BeaconServer.java - The Main Server for the Long Range Beacon. When this server starts up, a new thread 
     will be created using the BeaconC2Server.java class. This server will listen for connections new 
     clients (victims). Whenever a new client makes a connection, an initial payload will be given accordingly. 
