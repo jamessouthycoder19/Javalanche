@@ -1,7 +1,5 @@
 /*
  * This a Duplexer class, that will be used by all of the different servers for simple networking calls
- * 
- * Author: James Southcott
  */
 package Servers;
 

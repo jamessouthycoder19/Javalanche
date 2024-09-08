@@ -36,5 +36,8 @@ Long Range Beacon Server - Java
     2. Provide data to the C2 Server (ex. Connection Status of all of the vicims, responses of victims to certain 
     commands)
 
+Duplexer.java - This Java Class is utilized by all of the Servers. It is meant to simplify networking java networking
+instructions, down to just send() and receive().
+
 Payloads
     TBD
