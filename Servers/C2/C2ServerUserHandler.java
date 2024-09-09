@@ -20,6 +20,15 @@ public class C2ServerUserHandler implements Runnable{
         this.userInputScanner = new Scanner(System.in);
     }
 
+    /**
+     * Used by the C2 Server to output a message to the CLI for the Threat Actor to View
+     * 
+     * @param message Message to be displayed
+     */
+    protected void outputToCLI(String message){
+        System.out.println(message);
+    }
+
     @Override
     public void run() {
         while(true){
@@ -28,6 +37,7 @@ public class C2ServerUserHandler implements Runnable{
             String command = userInputScanner.next();
             // Send the command back to the C2 Server
             C2server.broadcast(command);
+            // TODO CLI for the user to use
         }
     }
 }

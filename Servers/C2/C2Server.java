@@ -39,6 +39,15 @@ public class C2Server{
 
     }
 
+    /**
+     * Used by the Beacon Handler to send a message to the User Handler
+     * 
+     * @param message Message to be displayed in the User CLI
+     */
+    protected void outputToUserHandler(String message){
+        userHandler.outputToCLI(message);
+    }
+
     public void run() throws IOException{
         // Start Thread to handle commands from the user
         userHandler.run();
