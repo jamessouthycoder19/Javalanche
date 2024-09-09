@@ -20,6 +20,19 @@ public class BeaconClientHandler implements Runnable{
         this.beaconServer = beaconServer;
     }
 
+    protected void quit(String reason) throws IOException{
+        duplexer.close();
+    }
+
+    /**
+     * Use this function to have the thread send a message to the client
+     * 
+     * @param message Message to be sent
+     */
+    protected void sendToClient(String message){
+        duplexer.send(message);
+    }
+
     @Override
     public void run(){
         while(true){
