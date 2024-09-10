@@ -41,12 +41,15 @@ public class C2ServerUserHandler implements Runnable{
         }
 
         try{
-            beaconsWaitingForMFA.wait();
-            if(beaconsWaitingForMFA.get(IPAddress).equals("Approved")){
-                return "Authentication Successful";
-            }else{
-                return "Authentication Failed: User Denied MFA Prompt";
+            synchronized(beaconsWaitingForMFA){
+                beaconsWaitingForMFA.wait();
+                if(beaconsWaitingForMFA.get(IPAddress).equals("Approved")){
+                    return "Authentication Successful";
+                }else{
+                    return "Authentication Failed: User Denied MFA Prompt";
+                }
             }
+            
         }catch(InterruptedException e){
             e.printStackTrace();
         }
@@ -95,17 +98,20 @@ public class C2ServerUserHandler implements Runnable{
         
         while(true){
             // If there are any beacons waiting for MFA, prompt user if they should be allowed to connect.
-            if(beaconsWaitingForMFA.size() > 0){
-                for(String IPAddress : beaconsWaitingForMFA.keySet()){
-                    System.out.print("New Beacon Entered Password Correctly from " + IPAddress + ". Allow connection to C2 Server? (y/n) ");
-                    if(userInputScanner.next().toLowerCase().equals("y")){
-                        beaconsWaitingForMFA.replace(IPAddress, "Waiting", "Approved");
-                    }else{
-                        beaconsWaitingForMFA.replace(IPAddress, "Waiting", "Denied");
+            synchronized(beaconsWaitingForMFA){
+                if(beaconsWaitingForMFA.size() > 0){
+                    for(String IPAddress : beaconsWaitingForMFA.keySet()){
+                        System.out.print("New Beacon Entered Password Correctly from " + IPAddress + ". Allow connection to C2 Server? (y/n) ");
+                        if(userInputScanner.next().toLowerCase().equals("y")){
+                            beaconsWaitingForMFA.replace(IPAddress, "Waiting", "Approved");
+                        }else{
+                            beaconsWaitingForMFA.replace(IPAddress, "Waiting", "Denied");
+                        }
                     }
+                    beaconsWaitingForMFA.notifyAll();
                 }
-                beaconsWaitingForMFA.notifyAll();
             }
+            
             // Give the user a bunch of optiions
             System.out.println("Choices: TODO");
             String command = userInputScanner.next();

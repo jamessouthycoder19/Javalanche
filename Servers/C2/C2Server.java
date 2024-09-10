@@ -7,7 +7,7 @@ import java.util.HashMap;
 
 import Servers.Duplexer;
 
-public class C2Server{
+public class C2Server implements Runnable{
     // Dictionary of all of the longRangeBeacons currently reporting back to the C2
     // Formatted IP Address, Duplexer Pointer
     private HashMap<String,C2ServerBeaconHandler> longRangeBeacons;
@@ -50,9 +50,11 @@ public class C2Server{
         userHandler.outputToCLI(message);
     }
 
-    public void run() throws IOException{
+    @Override
+    public void run(){
         // Start Thread to handle commands from the user
-        userHandler.run();
+        Thread userHandlerThread = new Thread(userHandler);
+        userHandlerThread.start();
         // Always listen for new long range beacons
         while(true){
             try{
@@ -72,15 +74,14 @@ public class C2Server{
                 }else{
                     // Create a new thread to handle each Long Range Beacon
                     C2ServerBeaconHandler beaconHandler = new C2ServerBeaconHandler(duplexer, IP, this);
+                    Thread beaconHandlerThread = new Thread(beaconHandler);
 
                     // Store IP and Duplexer pointer in the dicitonary
                     longRangeBeacons.put(IP, beaconHandler);
 
                     // Start the thread
-                    beaconHandler.run();
+                    beaconHandlerThread.start();
                 }
-                
-                
                 
             } catch(IOException e){
                 e.printStackTrace();
