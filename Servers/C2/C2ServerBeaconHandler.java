@@ -26,6 +26,15 @@ public class C2ServerBeaconHandler implements Runnable{
         this.C2server = server;
     }
 
+    /**
+     * Sends a message to the Long Range Beacon Server from the C2 Server
+     * 
+     * @param message
+     */
+    protected void sendToBeacon(String message){
+        duplexer.send(message);
+    }
+
     @Override
     public void run() {
         try {
