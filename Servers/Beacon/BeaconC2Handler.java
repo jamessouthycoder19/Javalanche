@@ -76,6 +76,7 @@ public class BeaconC2Handler implements Runnable{
         while(authenticationSentinel){
             try{
                 String message = C2Server.receive();
+                System.out.println(message);
                 String[] tokens = message.split(" ");
                 if(tokens[0].equals("Command")){
                     if(tokens[1].equals("Windows")){

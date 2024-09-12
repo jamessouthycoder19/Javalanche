@@ -20,6 +20,9 @@ public class C2ServerUserHandler implements Runnable{
     // "Waiting", "Approved", or "Denied"
     private HashMap<String,String> beaconsWaitingForMFA;
 
+    // The User's current Path in the CLI
+    private String currentUserPath;
+
     /**
      * Class to handle input from the user controlling the C2
      * and send it back to the C2 Server.
@@ -31,6 +34,7 @@ public class C2ServerUserHandler implements Runnable{
         this.userInputScanner = new Scanner(System.in);
         this.passwordDigest = null;
         this.beaconsWaitingForMFA = new HashMap<>();
+        this.currentUserPath = "";
     }
 
     protected String authenticateToC2(String enteredPasswordHash, String IPAddress){
@@ -96,6 +100,8 @@ public class C2ServerUserHandler implements Runnable{
             passwordDigest = hexString.toString();
         } catch(Exception e){}
         
+        // Loop for the User to use the CLI
+        String userInput = "";
         while(true){
             // If there are any beacons waiting for MFA, prompt user if they should be allowed to connect.
             synchronized(beaconsWaitingForMFA){
@@ -107,17 +113,68 @@ public class C2ServerUserHandler implements Runnable{
                         }else{
                             beaconsWaitingForMFA.replace(IPAddress, "Waiting", "Denied");
                         }
+                        beaconsWaitingForMFA.remove(IPAddress);
                     }
                     beaconsWaitingForMFA.notifyAll();
                 }
             }
             
-            // Give the user a bunch of optiions
-            System.out.println("Choices: TODO");
-            String command = userInputScanner.next();
-            // Send the command back to the C2 Server
-            C2server.broadcastToBeacons(command);
-            // TODO CLI for the user to use
+            if(currentUserPath.equals("")){
+                System.out.println("1. Send a command to all Clients");
+                System.out.println("2. Launch an Attack Chain");
+                System.out.println("3. Request Data from Clients");
+                System.out.print(currentUserPath + " >> ");
+                userInput = userInputScanner.next();
+                if(userInput.equals("1")){
+                    currentUserPath = "Command";
+                } else if(userInput.equals("2")){
+                    currentUserPath = "AttackChain";
+                } else if(userInput.equals("3")){
+                    currentUserPath = "Request";
+                } else {
+                    System.out.println("Invalid Input");
+                }
+            } else if(currentUserPath.equals("Command")){
+                System.out.println("1. Send a command to Windows Computers");
+                System.out.println("2. Send a command to Linux Computers");
+                System.out.println(".. Back");
+                System.out.print(currentUserPath + " >> ");
+                userInput = userInputScanner.nextLine();
+                if(userInput.equals("1")){
+                    currentUserPath = "Command Windows";
+                } else if(userInput.equals("2")){
+                    currentUserPath = "Command Linux";
+                } else if(userInput.equals("3")){
+                    currentUserPath = "";
+                } else {
+                    System.out.println("Invalid Input");
+                }
+            } else if(currentUserPath.equals("Command Windows") || currentUserPath.equals("Command Linux")){
+                String OS = currentUserPath.split(" ")[1];
+                System.out.println("1. Send a command to all " + OS + " Computers");
+                System.out.println("2. Send a command to a specific " + OS + " Computer");
+                System.out.println(".. Back");
+                System.out.print(currentUserPath + " >> ");
+                userInput = userInputScanner.nextLine();
+                if(userInput.equals("1")){
+                    currentUserPath += "All";
+                } else if(userInput.equals("2")){
+                    System.out.print("Enter IP Address of desired target >> ");
+                } else if(userInput.equals("3")){
+                    currentUserPath = "Command";
+                } else {
+                    System.out.println("Invalid Input");
+                }
+
+                if(userInput.equals("1") || userInput.equals("2")){
+                    System.out.print("Enter Command to be run >> ");
+                    String finalCommand = currentUserPath + userInputScanner.nextLine();
+                    C2server.broadcastToBeacons(finalCommand);
+                }
+                if(userInput.equals("1")){
+                    currentUserPath = "Command " + OS;
+                }
+            }
         }
     }
 }
