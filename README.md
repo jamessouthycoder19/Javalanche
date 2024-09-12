@@ -2,7 +2,8 @@ This is a tool developed by James Southcott and Danny Nichols for the RITSEC Red
 
 This tool is meant to be used in Red Vs. Blue style Cybersecurity Competitions for educational purposes.
 
-Plans
+Network Diagram:
+![alt text](C2NetworkDiagram.drawio.png)
 
 Main C2 Server - Java
 
@@ -41,3 +42,6 @@ instructions, down to just send() and receive().
 
 Payloads
     TBD
+
+UML:
+![alt text](DannyJamesC2UML.drawio.png)
