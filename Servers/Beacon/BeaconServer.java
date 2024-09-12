@@ -53,14 +53,17 @@ public class BeaconServer implements Runnable{
      * @throws IOException
      */
     protected void quit(String reason) throws IOException{
+        synchronized(windowsClientObjects){
+            for(BeaconClientHandler clientHandler : windowsClientObjects.values()){
+                clientHandler.quit(reason);
+            }
+        }
+        synchronized(linuxClientObjects){
+            for(BeaconClientHandler clientHandler : linuxClientObjects.values()){
+                clientHandler.quit(reason);
+            }
+        }
         serverSocket.close();
-        for(BeaconClientHandler clientHandler : windowsClientObjects.values()){
-            clientHandler.quit(reason);
-        }
-        for(BeaconClientHandler clientHandler : linuxClientObjects.values()){
-            clientHandler.quit(reason);
-        }
-
         System.out.println("Beacon Server is shutting down. Reason: " + reason);
     }
 
@@ -71,10 +74,14 @@ public class BeaconServer implements Runnable{
      * @param Response The Response sent from the client
      */
     protected void addDataToResponsesDictionaries(String IPAddress, String Response){
-        if(windowsClientObjects.keySet().contains(IPAddress)){
-            windowsClientResponses.get(IPAddress).add(Response);
-        } else {
-            linuxClientResponses.get(IPAddress).add(Response);
+        synchronized(windowsClientResponses){
+            synchronized(linuxClientResponses){
+                if(windowsClientResponses.keySet().contains(IPAddress)){
+                    windowsClientResponses.get(IPAddress).add(Response);
+                } else {
+                    linuxClientResponses.get(IPAddress).add(Response);
+                }
+            }
         }
     }
 
@@ -85,10 +92,14 @@ public class BeaconServer implements Runnable{
      * @return ArrayList of all of the responses from the desired client
      */
     protected ArrayList<String> getSingleClientResponses(String IPAddress){
-        if(windowsClientObjects.keySet().contains(IPAddress)){
-            return windowsClientResponses.get(IPAddress);
-        } else {
-            return linuxClientResponses.get(IPAddress);
+        synchronized(windowsClientResponses){
+            synchronized(linuxClientResponses){
+                if(windowsClientResponses.keySet().contains(IPAddress)){
+                    return windowsClientResponses.get(IPAddress);
+                } else {
+                    return linuxClientResponses.get(IPAddress);
+                }
+            }
         }
     }
 
@@ -101,9 +112,13 @@ public class BeaconServer implements Runnable{
      */
     protected HashMap<String, ArrayList<String>> getMultipleClientResponses(String OS){
         if(OS.equals("Windows")){
-            return windowsClientResponses;
+            synchronized(windowsClientResponses){
+                return windowsClientResponses;
+            }
         }else{
-            return linuxClientResponses;
+            synchronized(linuxClientResponses){
+                return linuxClientResponses;
+            }
         }
     }
 
@@ -122,21 +137,29 @@ public class BeaconServer implements Runnable{
 
         // Send Status messages based on the Scope of the request
         if(Scope.equals("Windows") || Scope.equals("All")){
-            for(BeaconClientHandler clientHandler : windowsClientObjects.values()){
-                clientHandler.sendToClient("TODO: Figure out how we want to check the status of a client");
+            synchronized(windowsClientObjects){
+                for(BeaconClientHandler clientHandler : windowsClientObjects.values()){
+                    clientHandler.sendToClient("TODO: Figure out how we want to check the status of a client");
+                }
             }
         }
         if(Scope.equals("Linux") || Scope.equals("All")){
-            for(BeaconClientHandler clientHandler : linuxClientObjects.values()){
-                clientHandler.sendToClient("TODO: Figure out how we want to check the status of a client");
+            synchronized(linuxClientObjects){
+                for(BeaconClientHandler clientHandler : linuxClientObjects.values()){
+                    clientHandler.sendToClient("TODO: Figure out how we want to check the status of a client");
+                }
             }
         }
         // If the Scope contains a . (i.e. the Scope is an IP Address)
         if(Scope.contains(".")){
-            if(windowsClientObjects.keySet().contains(Scope)){
-                windowsClientObjects.get(Scope).sendToClient("TODO: Figure out how we want to check the status of a client");
-            } else if(linuxClientObjects.keySet().contains(Scope)){
-                linuxClientObjects.get(Scope).sendToClient("TODO: Figure out how we want to check the status of a client");
+            synchronized(windowsClientObjects){
+                synchronized(linuxClientObjects){
+                    if(windowsClientObjects.keySet().contains(Scope)){
+                        windowsClientObjects.get(Scope).sendToClient("TODO: Figure out how we want to check the status of a client");
+                    } else if(linuxClientObjects.keySet().contains(Scope)){
+                        linuxClientObjects.get(Scope).sendToClient("TODO: Figure out how we want to check the status of a client");
+                    }
+                }
             }
         }
         
@@ -151,40 +174,48 @@ public class BeaconServer implements Runnable{
 
         // Check status' of clients based on the scope of the request
         if(Scope.equals("Windows") || Scope.equals("All")){
-            for(String client: windowsClientResponses.keySet()){
-                if(windowsClientResponses.get(client).contains("TODO Figure out how we want to check the status of a client")){
-                    clientStatus.put(client, true);
-                    windowsClientResponses.get(client).remove("TODO Figure out how we want to check the status of a client");
-                } else {
-                    clientStatus.put(client, false);
+            synchronized(windowsClientResponses){
+                for(String client: windowsClientResponses.keySet()){
+                    if(windowsClientResponses.get(client).contains("TODO Figure out how we want to check the status of a client")){
+                        clientStatus.put(client, true);
+                        windowsClientResponses.get(client).remove("TODO Figure out how we want to check the status of a client");
+                    } else {
+                        clientStatus.put(client, false);
+                    }
                 }
             }
         }
         if(Scope.equals("Linux") || Scope.equals("All")){
-            for(String client: linuxClientResponses.keySet()){
-                if(linuxClientResponses.get(client).contains("TODO Figure out how we want to check the status of a client")){
-                    clientStatus.put(client, true);
-                    linuxClientResponses.get(client).remove("TODO Figure out how we want to check the status of a client");
-                } else {
-                    clientStatus.put(client, false);
+            synchronized(linuxClientResponses){
+                for(String client: linuxClientResponses.keySet()){
+                    if(linuxClientResponses.get(client).contains("TODO Figure out how we want to check the status of a client")){
+                        clientStatus.put(client, true);
+                        linuxClientResponses.get(client).remove("TODO Figure out how we want to check the status of a client");
+                    } else {
+                        clientStatus.put(client, false);
+                    }
                 }
             }
         }
         // If the Scope contains a . (i.e. the Scope is an IP Address)
         if(Scope.contains(".")){
-            if(windowsClientObjects.keySet().contains(Scope)){
-                if(windowsClientResponses.get(Scope).contains("TODO Figure out how we want to check the status of a client")){
-                    clientStatus.put(Scope, true);
-                    windowsClientResponses.get(Scope).remove("TODO Figure out how we want to check the status of a client");
-                } else {
-                    clientStatus.put(Scope, false);
-                }
-            } else if(linuxClientObjects.keySet().contains(Scope)){
-                if(linuxClientResponses.get(Scope).contains("TODO Figure out how we want to check the status of a client")){
-                    clientStatus.put(Scope, true);
-                    linuxClientResponses.get(Scope).remove("TODO Figure out how we want to check the status of a client");
-                } else {
-                    clientStatus.put(Scope, false);
+            synchronized(windowsClientResponses){
+                synchronized(linuxClientResponses){
+                    if(windowsClientResponses.keySet().contains(Scope)){
+                        if(windowsClientResponses.get(Scope).contains("TODO Figure out how we want to check the status of a client")){
+                            clientStatus.put(Scope, true);
+                            windowsClientResponses.get(Scope).remove("TODO Figure out how we want to check the status of a client");
+                        } else {
+                            clientStatus.put(Scope, false);
+                        }
+                    } else if(linuxClientResponses.keySet().contains(Scope)){
+                        if(linuxClientResponses.get(Scope).contains("TODO Figure out how we want to check the status of a client")){
+                            clientStatus.put(Scope, true);
+                            linuxClientResponses.get(Scope).remove("TODO Figure out how we want to check the status of a client");
+                        } else {
+                            clientStatus.put(Scope, false);
+                        }
+                    }
                 }
             }
         }

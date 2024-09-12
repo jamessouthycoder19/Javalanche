@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
-
 import Servers.Duplexer;
 
 public class C2Server implements Runnable{
@@ -47,7 +46,10 @@ public class C2Server implements Runnable{
      * @param message Message to be displayed in the User CLI
      */
     protected void outputToUserHandler(String message){
-        userHandler.outputToCLI(message);
+        synchronized(userHandler){
+            userHandler.outputToCLI(message);
+        }
+        
     }
 
     @Override
