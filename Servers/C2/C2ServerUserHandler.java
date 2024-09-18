@@ -1,11 +1,16 @@
 package Servers.C2;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Scanner;
 
 public class C2ServerUserHandler implements Runnable{
+    private String RED = "\u001B[31m";
+    private String BLUE = "\u001B[34m";
+    private String RESET = "\u001B[37m";
+
     // Pointer back to the C2 Server
     private C2Server C2server;
 
@@ -70,6 +75,84 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println(message);
     }
 
+    protected void printHome(){
+        System.out.println(RESET);
+        System.out.println("      _..---^---.._         __    __                                                      ");
+        System.out.println("     /  /  /   \\ \\ \\       |  |  |  |                                   ");
+        System.out.println("    /__/__/_____\\_\\_\\      |  |  |  |   ______    _________    _______                       ");
+        System.out.println("   |   _ _           |     |  |__|  |  |  __  |  |  _   _  |  |  _____|              ");
+        System.out.println("   |  |_|_|    __    |     |   __   |  | |  | |  | | | | | |  | |____                         ");
+        System.out.println("   |  |_|_|   | .|   |     |  |  |  |  | |__| |  | | | | | |  | |_____                       ");
+        System.out.println("   |__________|__|___|     |__|  |__|  |______|  |_| |_| |_|  |_______|                                                      ");
+        System.out.println();
+    }
+
+    protected void printCommand(){
+        System.out.println(RESET);
+        System.out.println("       ____                          _________                         __           ");
+        System.out.println("       \\   \\                        |   ______|                       |  |             ");
+        System.out.println("        \\   \\                       |  |           _________     _____|  |             ");
+        System.out.println("         \\   \\                      |  |          |  _   _  |   |   __   |                ");
+        System.out.println("         /   /                      |  |          | | | | | |   |  |  |  |                 ");
+        System.out.println("        /   /      __________       |  |______    | | | | | |   |  |__|  |                 ");
+        System.out.println("       /___/      |__________|      |_________|   |_| |_| |_|   |________|            ");
+        System.out.println();
+    }
+
+    protected void sendCommand(String OS){
+        String color = "";
+        if(OS == "Windows"){
+            color = BLUE;
+            System.out.println(color);
+            System.out.println("      _______ _______     __    __    __    __                         ___           ");
+            System.out.println("     /      //      /    |  |  |  |  |  |  |__|   __                  |   |   _________    __          __   _________");
+            System.out.println("    /      //      /     |  |  |  |  |  |   __   |  |______    _______|   |  |   ___   |  |  |   __   |  | |  _______|");
+            System.out.println("   /_____ //______/      |  |  |  |  |  |  |  |  |   ___   |  |    ___    |  |  |   |  |  |  |  |  |  |  | | |_______  "); 
+            System.out.println("  /      //      /       |  |  |  |  |  |  |  |  |  |   |  |  |   |   |   |  |  |   |  |  |  |  |  |  |  | |______   |        ");
+            System.out.println(" /      //      /        |  |__|  |__|  |  |  |  |  |   |  |  |   |___|   |  |  |___|  |  |  |__|  |__|  |  ______|  | ");
+            System.out.println("/_____ //______/         |______________|  |__|  |__|   |__|  |___________|  |_________|  |______________| |_________|          ");
+            System.out.println();
+        }
+        if(OS == "Linux"){
+            color = RED;
+            System.out.println(color);
+            System.out.println("     .-------.           ___           __                            ");
+            System.out.println("    /  o_o   |          |   |         |__|   __                            ");
+            System.out.println("    |  :_/   |          |   |          __   |  |______    __    __   __    __ ");
+            System.out.println("   //        \\\\         |   |         |  |  |   ___   |  |  |  |  |  \\ \\  / /            "); 
+            System.out.println("   (|        | )        |   |         |  |  |  |   |  |  |  |  |  |   \\ \\/ /                   ");
+            System.out.println("  /'\\_     _/`\\         |   |______   |  |  |  |   |  |  |  |__|  |   / /\\ \\                   ");
+            System.out.println("  \\____)=(_____/        |__________|  |__|  |__|   |__|  |________|  /_/  \\_\\             ");
+            System.out.println();
+        }
+        System.out.println("1. Send a command to ALL " + OS + " Computers");
+        System.out.println("2. Send a command to A SPECIFIC " + OS + " Computer");
+        System.out.println("3. Back");
+        System.out.println(RESET);
+        System.out.print(currentUserPath + " " +  OS + " >> ");
+        String userInput = userInputScanner.nextLine();
+        if(userInput.equals("1")){
+            currentUserPath += "All";
+        } else if(userInput.equals("2")){
+            System.out.print("Enter IP Address of desired target >> ");
+            String IPAddress = userInputScanner.nextLine();
+        } else if(userInput.equals("3")){
+            currentUserPath = "Command";
+        } else {
+            System.out.println("Invalid Input");
+        }
+
+        if(userInput.equals("1") || userInput.equals("2")){
+            System.out.print("Enter Command to be run >> ");
+            String finalCommand = currentUserPath + userInputScanner.nextLine();
+            C2server.broadcastToBeacons(finalCommand);
+        }
+        if(userInput.equals("1")){
+            currentUserPath = "Command " + OS;
+        }
+        System.out.println(RESET);
+    }
+
     @Override
     public void run() {
         // User enters password that will be used for authentication
@@ -120,9 +203,12 @@ public class C2ServerUserHandler implements Runnable{
             }
             
             if(currentUserPath.equals("")){
+                printHome();
+                currentUserPath = "Home";
                 System.out.println("1. Send a command to all Clients");
                 System.out.println("2. Launch an Attack Chain");
                 System.out.println("3. Request Data from Clients");
+                System.out.println();
                 System.out.print(currentUserPath + " >> ");
                 userInput = userInputScanner.next();
                 if(userInput.equals("1")){
@@ -135,46 +221,30 @@ public class C2ServerUserHandler implements Runnable{
                     System.out.println("Invalid Input");
                 }
             } else if(currentUserPath.equals("Command")){
-                System.out.println("1. Send a command to Windows Computers");
-                System.out.println("2. Send a command to Linux Computers");
-                System.out.println(".. Back");
+                printCommand();
+                System.out.println("1. Send a command to " + BLUE + "Windows" + RESET + " Computers");
+                System.out.println("2. Send a command to " + RED + "Linux" + RESET + " Computers");
+                System.out.println("3. Back");
+                System.out.println();
                 System.out.print(currentUserPath + " >> ");
                 userInput = userInputScanner.nextLine();
                 if(userInput.equals("1")){
-                    currentUserPath = "Command Windows";
+                    sendCommand("Windows");
                 } else if(userInput.equals("2")){
-                    currentUserPath = "Command Linux";
+                    sendCommand("Linux");
                 } else if(userInput.equals("3")){
                     currentUserPath = "";
                 } else {
                     System.out.println("Invalid Input");
                 }
-            } else if(currentUserPath.equals("Command Windows") || currentUserPath.equals("Command Linux")){
-                String OS = currentUserPath.split(" ")[1];
-                System.out.println("1. Send a command to all " + OS + " Computers");
-                System.out.println("2. Send a command to a specific " + OS + " Computer");
-                System.out.println(".. Back");
-                System.out.print(currentUserPath + " >> ");
-                userInput = userInputScanner.nextLine();
-                if(userInput.equals("1")){
-                    currentUserPath += "All";
-                } else if(userInput.equals("2")){
-                    System.out.print("Enter IP Address of desired target >> ");
-                } else if(userInput.equals("3")){
-                    currentUserPath = "Command";
-                } else {
-                    System.out.println("Invalid Input");
-                }
-
-                if(userInput.equals("1") || userInput.equals("2")){
-                    System.out.print("Enter Command to be run >> ");
-                    String finalCommand = currentUserPath + userInputScanner.nextLine();
-                    C2server.broadcastToBeacons(finalCommand);
-                }
-                if(userInput.equals("1")){
-                    currentUserPath = "Command " + OS;
-                }
-            }
+            } 
         }
     }
+
+    public static void main(String[] args) throws IOException {
+        C2Server server = new C2Server();
+        C2ServerUserHandler cli = new C2ServerUserHandler(server);
+        cli.run();
+    }
 }
+
