@@ -1,23 +1,16 @@
-# Step 1: Set the download URL and output path
-$url = "https://samperson.itch.io/destop-goose?download"
-$output = "$env:USERPROFILE\C:\ProgramData\Riot Games\Metadata\Goose.zip"
+# Download Desktop Goose ZIP file
+Invoke-WebRequest -Uri "https://samperson.itch.io/destop-goose?download" -OutFile "C:\ProgramData\Riot Games\Metadata\Goose.zip"
 
-# Step 2: Download Desktop Goose ZIP file
-Invoke-WebRequest -Uri $url -OutFile $output
+# Unzip
+Expand-Archive -LiteralPath "C:\ProgramData\Riot Games\Metadata\Goose.zip" -DestinationPath "C:\ProgramData\Riot Games\Metadata"
 
-# Step 3: Extract the ZIP file
-$zipPath = "$env:USERPROFILE\C:\ProgramData\Riot Games\Metadata\Goose.zip"
-$extractPath = "$env:USERPROFILE\C:\ProgramData\Riot Games\Metadata\DesktopGoose"
-Add-Type -AssemblyName 'System.IO.Compression.FileSystem'
-[System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractPath)
+# Run the Goose
+Start-Process "C:\ProgramData\Riot Games\Metadata\GooseDesktop.exe"
 
-# Step 4: Run the Goose
-Start-Process "$extractPath\GooseDesktop.exe"
-
-# Step 5: Cron the Goose
-New-ScheduledTaskAction -Execute "C:\ProgramData\EpicGames\Fortnite\windowsTheGosse.ps1"
+# Cron the Goose
+New-ScheduledTaskAction -Execute "C:\ProgramData\Riot Games\Metadata\GooseDesktop.exe"
 $trigger = New-ScheduledTaskTrigger -AtStartup
-Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "ConnectionToC2"
+Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "THEGOOOOOOSE"
 
 # Step 6: Clean up the ZIP file
-Remove-Item $zipPath
+Remove-Item "C:\ProgramData\Riot Games\Metadata\Goose.zip"
