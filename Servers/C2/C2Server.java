@@ -62,24 +62,31 @@ public class C2Server implements Runnable{
             try{
                 // Accept a new connection
                 Socket socket = serverSocket.accept();
+
                 // Create a new Duplexer
                 Duplexer duplexer = new Duplexer(socket);
+
                 // Get the IP address of the Duplexer
-                String IP = socket.getRemoteSocketAddress().toString();
+                // getRemoteSocketAddress retruns in the form /IPAddress:Port (i.e. /1.2.3.4:12345)
+                // We just care about the IP Address though
+                String unformattedIPAddress = socket.getRemoteSocketAddress().toString();
+                String IPAddress = unformattedIPAddress.split(":")[0].substring(1);
+                
                 // Receive initial message for authentication from the new Beacon
                 String hashedPassForAuth = duplexer.receive();
+
                 // Pass this hash to the User Handler thread for MFA
-                String authResponse = userHandler.authenticateToC2(hashedPassForAuth, IP);
+                String authResponse = userHandler.authenticateToC2(hashedPassForAuth, IPAddress);
                 duplexer.send(authResponse);
                 if(!(authResponse.equals("Authentication Successful"))){
                     duplexer.close();
                 }else{
                     // Create a new thread to handle each Long Range Beacon
-                    C2ServerBeaconHandler beaconHandler = new C2ServerBeaconHandler(duplexer, IP, this);
+                    C2ServerBeaconHandler beaconHandler = new C2ServerBeaconHandler(duplexer, IPAddress, this);
                     Thread beaconHandlerThread = new Thread(beaconHandler);
 
                     // Store IP and Duplexer pointer in the dicitonary
-                    longRangeBeacons.put(IP, beaconHandler);
+                    longRangeBeacons.put(IPAddress, beaconHandler);
 
                     // Start the thread
                     beaconHandlerThread.start();

