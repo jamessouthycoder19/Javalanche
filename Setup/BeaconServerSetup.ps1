@@ -9,6 +9,10 @@ if($installJDK){
     & "C:\jdkinstaller.exe"
 }
 
+# Allow port inbound for the C2 Server to work
+netsh adv f a r n="Allow C2 Port Outbound" dir=out act=allow prof=any prot=tcp remoteport=1234
+netsh adv f a r n="Allow Client Traffic Inbound" dir=out act=allow prof=any prot=tcp remoteport=80
+
 # Set up all of the directories
 New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting"
 New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\Servers"
@@ -26,6 +30,9 @@ Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecre
 
 # Set up file for javac
 Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/-/raw/main/Setup/files.txt?ref_type=heads" -OutFile "C:\james-danny-ritsecredteamrecruiting\files.txt"
+
+# Change Location so that compilation and Running the server work correctly
+Set-Location "C:\james-danny-ritsecredteamrecruiting"
 
 # Compile
 & "C:\Program Files\Java\jdk-17\bin\javac.exe" "@C:\james-danny-ritsecredteamrecruiting\files.txt"
