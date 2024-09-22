@@ -25,15 +25,7 @@ Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecre
 Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/-/raw/main/Servers/Duplexer.java?ref_type=heads" -OutFile "C:\james-danny-ritsecredteamrecruiting\Servers\Duplexer.java"
 
 # Set up file for javac
-New-Item C:\files.txt
-"C:\james-danny-ritsecredteamrecruiting\Servers\Duplexer.java" | Out-File C:\files.txt
-"C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconC2Handler.java" | Out-File C:\files.txt -Append
-"C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconClientHandler.java" | Out-File C:\files.txt -Append
-"C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconServer.java" | Out-File C:\files.txt -Append
-"C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2Server.java" | Out-File C:\files.txt -Append
-"C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2ServerBeaconHandler.java" | Out-File C:\files.txt -Append
-"C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2ServerUserHandler.java" | Out-File C:\files.txt -Append
-Move-Item -LiteralPath C:\files.txt -Destination "C:\james-danny-ritsecredteamrecruiting\"
+Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/-/raw/main/Setup/files.txt?ref_type=heads" -OutFile "C:\james-danny-ritsecredteamrecruiting\files.txt"
 
 # Compile
 & "C:\Program Files\Java\jdk-17\bin\javac.exe" "@C:\james-danny-ritsecredteamrecruiting\files.txt"
