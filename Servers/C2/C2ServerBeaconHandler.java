@@ -31,7 +31,7 @@ public class C2ServerBeaconHandler implements Runnable{
      * 
      * @param message
      */
-    protected void sendToBeacon(String message){
+    public void sendToBeacon(String message){
         duplexer.send(message);
     }
 

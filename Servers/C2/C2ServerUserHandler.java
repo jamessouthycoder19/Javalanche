@@ -51,7 +51,7 @@ public class C2ServerUserHandler implements Runnable{
      * @return Either 'Authentication Successful', 'Authentication Failed: Incorrect Password', 'Authentication 
      * Failed: User Denied MFA Prompt', or 'Authentication Failed: Authentication Process could not be completed'
      */
-    protected String authenticateToC2(String enteredPasswordHash, String IPAddress){
+    public String authenticateToC2(String enteredPasswordHash, String IPAddress){
         if(enteredPasswordHash.equals(passwordDigest)){
             beaconsWaitingForMFA.put(IPAddress, "Waiting");
         } else{
@@ -82,7 +82,7 @@ public class C2ServerUserHandler implements Runnable{
      * 
      * @param message Message to be displayed
      */
-    protected void outputToCLI(String message){
+    public void outputToCLI(String message){
         System.out.println(message);
     }
 

@@ -37,7 +37,7 @@ public class BeaconC2Handler implements Runnable{
      * 
      * @param Data The Data to be sent back to the C2 Server
      */
-    protected void sendDataToC2Server(String Data){
+    public void sendDataToC2Server(String Data){
         C2Server.send(Data);
     }
 

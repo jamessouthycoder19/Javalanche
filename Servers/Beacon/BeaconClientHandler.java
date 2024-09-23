@@ -20,7 +20,7 @@ public class BeaconClientHandler implements Runnable{
         this.beaconServer = beaconServer;
     }
 
-    protected void quit(String reason) throws IOException{
+    public void quit(String reason) throws IOException{
         duplexer.close();
     }
 
@@ -29,7 +29,7 @@ public class BeaconClientHandler implements Runnable{
      * 
      * @param message Message to be sent
      */
-    protected void sendToClient(String message){
+    public void sendToClient(String message){
         duplexer.send(message);
     }
 
