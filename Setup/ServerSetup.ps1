@@ -28,10 +28,10 @@ if($response[0] -eq "Ok." -and $response2[0] -eq "Ok."){
 
 
 # Set up all of the directories
-New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting"
-New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\Servers"
-New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon"
-New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\Servers\C2"
+New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting" | Out-Null
+New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\Servers" | Out-Null
+New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon" | Out-Null
+New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\Servers\C2" | Out-Null
 
 $testOne = Test-Path "C:\james-danny-ritsecredteamrecruiting"
 $testTwo = Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers"
@@ -54,13 +54,13 @@ Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecre
 Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/-/raw/main/Servers/Beacon/BeaconServer.java?ref_type=heads" -OutFile "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconServer.java"
 Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/-/raw/main/Servers/Duplexer.java?ref_type=heads" -OutFile "C:\james-danny-ritsecredteamrecruiting\Servers\Duplexer.java"
 
-$testOne += Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2Server.java"
-$testTwo += Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2ServerBeaconHandler.java"
-$testThree += Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2ServerUserHandler.java"
-$testFour += Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconC2Handler.java"
-$testFive += Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconClientHandler.java"
-$testSix += Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconServer.java"
-$testSeven += Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Duplexer.java"
+$testOne = Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2Server.java"
+$testTwo = Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2ServerBeaconHandler.java"
+$testThree = Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2ServerUserHandler.java"
+$testFour = Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconC2Handler.java"
+$testFive = Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconClientHandler.java"
+$testSix = Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconServer.java"
+$testSeven = Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Duplexer.java"
 
 if($testOne -eq "True" -and $testTwo -eq "True" -and $testThree -eq "True" -and $testFour -eq "True" -and $testFive -eq "True" -and $testSix -eq "True" -and $testSeven -eq "True"){
     Write-Host "[" -NoNewline; Write-Host "SUCESS" -ForegroundColor Green -NoNewline; Write-Host "] Java Files downloaded" -ForegroundColor White
@@ -80,13 +80,13 @@ Set-Location "C:\james-danny-ritsecredteamrecruiting"
 # Compile
 & "C:\Program Files\Java\jdk-17\bin\javac.exe" "@C:\james-danny-ritsecredteamrecruiting\files.txt"
 
-$testOne += Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2Server.class"
-$testTwo += Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2ServerBeaconHandler.class"
-$testThree += Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2ServerUserHandler.class"
-$testFour += Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconC2Handler.class"
-$testFive += Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconClientHandler.class"
-$testSix += Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconServer.class"
-$testSeven += Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Duplexer.class"
+$testOne = Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2Server.class"
+$testTwo = Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2ServerBeaconHandler.class"
+$testThree = Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2ServerUserHandler.class"
+$testFour = Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconC2Handler.class"
+$testFive = Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconClientHandler.class"
+$testSix = Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconServer.class"
+$testSeven = Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Duplexer.class"
 
 if($testOne -eq "True" -and $testTwo -eq "True" -and $testThree -eq "True" -and $testFour -eq "True" -and $testFive -eq "True" -and $testSix -eq "True" -and $testSeven -eq "True"){
     Write-Host "[" -NoNewline; Write-Host "SUCESS" -ForegroundColor Green -NoNewline; Write-Host "] Java Files Compiled" -ForegroundColor White
