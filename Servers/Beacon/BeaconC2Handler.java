@@ -2,7 +2,6 @@ package Servers.Beacon;
 
 import java.io.IOException;
 import java.net.Socket;
-
 import Servers.Duplexer;
 
 public class BeaconC2Handler implements Runnable{

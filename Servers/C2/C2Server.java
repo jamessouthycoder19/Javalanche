@@ -100,7 +100,8 @@ public class C2Server implements Runnable{
 
     public static void main(String[] args) throws IOException{
         C2Server server = new C2Server();
-        server.run();
+        Thread serverThread = new Thread(server);
+        serverThread.start();
     }
 }
 

