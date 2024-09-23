@@ -6,12 +6,14 @@ This tool is meant to be used in Red Vs. Blue style Cybersecurity Competitions f
 
 Windows C2 Server
 
-ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/-/raw/main/Setup/ServerSetup.ps1?ref_type=heads"\n
+ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/-/raw/main/Setup/ServerSetup.ps1?ref_type=heads"
+
 ps> .\setup.ps1
 
 Windows Long Range Beacon Server
 
-ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/-/raw/main/Setup/ServerSetup.ps1?ref_type=heads"\n
+ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/-/raw/main/Setup/ServerSetup.ps1?ref_type=heads"
+
 ps> .\setup.ps1 -server Beacon
 
 **Network Diagram:**
