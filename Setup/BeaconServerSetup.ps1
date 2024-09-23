@@ -38,4 +38,4 @@ Set-Location "C:\james-danny-ritsecredteamrecruiting"
 & "C:\Program Files\Java\jdk-17\bin\javac.exe" "@C:\james-danny-ritsecredteamrecruiting\files.txt"
 
 # Run the Server
-& "C:\Program Files\Java\jdk-17\bin\java.exe" "Servers\Beacon\BeaconServer.java"
+& "C:\Program Files\Java\jdk-17\bin\java.exe" "Servers/Beacon/BeaconServer"

@@ -33,7 +33,7 @@ public class C2ServerUserHandler implements Runnable{
      * 
      * @param server Pointer to the C2 Server
      */
-    public C2ServerUserHandler(C2Server server){
+    protected C2ServerUserHandler(C2Server server){
         this.C2server = server;
         this.userInputScanner = new Scanner(System.in);
         this.passwordDigest = null;
@@ -51,7 +51,7 @@ public class C2ServerUserHandler implements Runnable{
      * @return Either 'Authentication Successful', 'Authentication Failed: Incorrect Password', 'Authentication 
      * Failed: User Denied MFA Prompt', or 'Authentication Failed: Authentication Process could not be completed'
      */
-    public String authenticateToC2(String enteredPasswordHash, String IPAddress){
+    protected String authenticateToC2(String enteredPasswordHash, String IPAddress){
         if(enteredPasswordHash.equals(passwordDigest)){
             beaconsWaitingForMFA.put(IPAddress, "Waiting");
         } else{
@@ -82,7 +82,7 @@ public class C2ServerUserHandler implements Runnable{
      * 
      * @param message Message to be displayed
      */
-    public void outputToCLI(String message){
+    protected void outputToCLI(String message){
         System.out.println(message);
     }
 
