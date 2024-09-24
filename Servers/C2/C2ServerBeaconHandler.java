@@ -20,7 +20,7 @@ public class C2ServerBeaconHandler implements Runnable{
      * @param IP IP address of the long range Beacon that this thread is handling
      * @param server Pointer to the C2 Server
      */
-    public C2ServerBeaconHandler(Duplexer duplexer, String IP, C2Server server){
+    protected C2ServerBeaconHandler(Duplexer duplexer, String IP, C2Server server){
         this.duplexer = duplexer;
         this.IP = IP;
         this.C2server = server;
@@ -31,7 +31,7 @@ public class C2ServerBeaconHandler implements Runnable{
      * 
      * @param message
      */
-    public void sendToBeacon(String message){
+    protected void sendToBeacon(String message){
         duplexer.send(message);
     }
 

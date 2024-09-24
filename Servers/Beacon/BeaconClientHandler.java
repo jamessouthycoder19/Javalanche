@@ -14,13 +14,13 @@ public class BeaconClientHandler implements Runnable{
      * @param IPAddress IP address of the client (victim)
      * @param duplexer Pointer to the duplexer so that this thread can receive messages from the victim.
      */
-    public BeaconClientHandler(String IPAddress, Duplexer duplexer, BeaconServer beaconServer){
+    protected BeaconClientHandler(String IPAddress, Duplexer duplexer, BeaconServer beaconServer){
         this.IPAddress = IPAddress;
         this.duplexer = duplexer;
         this.beaconServer = beaconServer;
     }
 
-    public void quit(String reason) throws IOException{
+    protected void quit(String reason) throws IOException{
         duplexer.close();
     }
 
@@ -29,7 +29,7 @@ public class BeaconClientHandler implements Runnable{
      * 
      * @param message Message to be sent
      */
-    public void sendToClient(String message){
+    protected void sendToClient(String message){
         duplexer.send(message);
     }
 

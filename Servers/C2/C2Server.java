@@ -49,7 +49,7 @@ public class C2Server implements Runnable{
      * 
      * @param message Message to be displayed in the User CLI
      */
-    public void outputToUserHandler(String message){
+    protected void outputToUserHandler(String message){
         synchronized(userHandler){
             userHandler.outputToCLI(message);
         }

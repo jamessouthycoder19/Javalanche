@@ -19,7 +19,6 @@ public class BeaconServer implements Runnable{
     private HashMap<String,BeaconClientHandler> windowsClientObjects;
     private HashMap<String,BeaconClientHandler> linuxClientObjects;
     
-
     // Pointer to the Thread responsible for interacting with the C2 Server
     private BeaconC2Handler C2Handler;
 
@@ -56,7 +55,7 @@ public class BeaconServer implements Runnable{
      * @param reason
      * @throws IOException
      */
-    public void quit(String reason) throws IOException{
+    protected void quit(String reason) throws IOException{
         synchronized(windowsClientObjects){
             for(BeaconClientHandler clientHandler : windowsClientObjects.values()){
                 clientHandler.quit(reason);
@@ -77,7 +76,7 @@ public class BeaconServer implements Runnable{
      * @param IPAddress the IP Address of the Client that the response came from
      * @param Response The Response sent from the client
      */
-    public void addDataToResponsesDictionaries(String IPAddress, String Response){
+    protected void addDataToResponsesDictionaries(String IPAddress, String Response){
         synchronized(windowsClientResponses){
             synchronized(linuxClientResponses){
                 if(windowsClientResponses.keySet().contains(IPAddress)){
@@ -95,7 +94,7 @@ public class BeaconServer implements Runnable{
      * @param IPAddress IP Address of the client that the C2 requests the responses to.
      * @return ArrayList of all of the responses from the desired client
      */
-    public ArrayList<String> getSingleClientResponses(String IPAddress){
+    protected ArrayList<String> getSingleClientResponses(String IPAddress){
         synchronized(windowsClientResponses){
             synchronized(linuxClientResponses){
                 if(windowsClientResponses.keySet().contains(IPAddress)){
@@ -114,7 +113,7 @@ public class BeaconServer implements Runnable{
      * @return HashMap of all Responses. Keys are the IP Addresses that the Responses come from,
      * and the Value is an ArrayList of all of the responses to commands sent by the C2
      */
-    public HashMap<String, ArrayList<String>> getMultipleClientResponses(String OS){
+    protected HashMap<String, ArrayList<String>> getMultipleClientResponses(String OS){
         if(OS.equals("Windows")){
             synchronized(windowsClientResponses){
                 return windowsClientResponses;
@@ -134,7 +133,7 @@ public class BeaconServer implements Runnable{
      * @return Returns A HashMap, With All of the Keys as IP Addresses, and the Value True or False. True if the client can
      * communicate with the Beacon, False if the client cannot communicate with the Beacon
      */
-    public HashMap<String, Boolean> getClientStatus(String Scope){
+    protected HashMap<String, Boolean> getClientStatus(String Scope){
         // Create a HashMap, to store Key/Value pairs in the form of IP's, and True/False.
         // True if the client is still active, false if the client is no longer active.
         HashMap<String, Boolean> clientStatus = new HashMap<>();

@@ -2,7 +2,21 @@ This is a tool developed by James Southcott and Danny Nichols for the RITSEC Red
 
 This tool is meant to be used in Red Vs. Blue style Cybersecurity Competitions for educational purposes.
 
-Network Diagram:
+**Usage:**
+
+Windows C2 Server
+
+ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/-/raw/main/Setup/ServerSetup.ps1?ref_type=heads"
+
+ps> .\setup.ps1
+
+Windows Long Range Beacon Server
+
+ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/-/raw/main/Setup/ServerSetup.ps1?ref_type=heads"
+
+ps> .\setup.ps1 -server Beacon
+
+**Network Diagram:**
 ![alt text](Images/C2NetworkDiagram.drawio.png)
 
 Main C2 Server - Java
