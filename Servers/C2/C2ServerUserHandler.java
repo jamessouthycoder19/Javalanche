@@ -1,5 +1,6 @@
 package Servers.C2;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HashMap;
@@ -113,7 +114,27 @@ public class C2ServerUserHandler implements Runnable{
     }
 
     private void printAttackChain(){
-        // TODO: Ascii Art for the attack chain
+        System.out.println(RESET);
+        System.out.println("       ____                          _________                         __           ");
+        System.out.println("       \\   \\                        |   ______|                       |  |             ");
+        System.out.println("        \\   \\                       |  |           _________     _____|  |             ");
+        System.out.println("         \\   \\                      |  |          |  _   _  |   |   __   |                ");
+        System.out.println("         /   /                      |  |          | | | | | |   |  |  |  |                 ");
+        System.out.println("        /   /      __________       |  |______    | | | | | |   |  |__|  |                 ");
+        System.out.println("       /___/      |__________|      |_________|   |_| |_| |_|   |________|            ");
+        System.out.println();
+    }
+
+    private void printRequest(){
+        System.out.println(RESET);
+        System.out.println("              _.-/`)        _________                                                                           __    ");
+        System.out.println("             // / / )      |   ___   \\                                                                         |  |");
+        System.out.println("          .=// / / / )     |  |___)   |    ________     _________    __     __     ________     ________    ___|  |___  ");
+        System.out.println("         //`/ / / / /      |   ___   /    |  ______|   |   ___   |  |  |   |  |   |  ______|   | _______|  |___    ___|");
+        System.out.println("        // /     ` /       |  |  \\  \\     | |______    |  |   |  |  |  |   |  |   | |______    |______  |      |  |    ");
+        System.out.println("       ||         /        |  |   \\  \\    | |______    |  |___| _|  |  |___|  |   | |______     ______| |      |  |           ");
+        System.out.println("        \\\\_______/         |__|    \\__\\   |________|   |_______\\_\\  |_________|   |________|   |________|      |__|          ");
+        System.out.println();
     }
 
     /**
@@ -293,7 +314,7 @@ public class C2ServerUserHandler implements Runnable{
                     System.out.println("Invalid Input");
                 }
             } else if(currentUserPath.equals("Request")){
-                printAttackChain();
+                printRequest();
                 System.out.println("1. Request from ALL Windows Clients");
                 System.out.println("2. Request from ALL Linux Clients");
                 System.out.println("3. Request from single IP Address");
@@ -330,6 +351,11 @@ public class C2ServerUserHandler implements Runnable{
                 }
             }
         }
+    }
+    public static void main(String[] args) throws IOException {
+        C2Server server = new C2Server();
+        C2ServerUserHandler CLI = new C2ServerUserHandler(server);
+        CLI.printRequest();
     }
 }
 
