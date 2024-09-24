@@ -17,7 +17,7 @@ if($server -eq "C2"){
     $response2 = "Ok.","woo"
 } else {
     $response = netsh adv f a r n="Allow C2 Port Outbound" dir=out act=allow prof=any prot=tcp remoteport=1234
-    $response2 = netsh adv f a r n="Allow Client Traffic Inbound" dir=out act=allow prof=any prot=tcp localport=80
+    $response2 = netsh adv f a r n="Allow Client Traffic Inbound" dir=in act=allow prof=any prot=tcp localport=80
 }
 
 if($response[0] -eq "Ok." -and $response2[0] -eq "Ok."){
