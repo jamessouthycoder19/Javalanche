@@ -9,13 +9,17 @@ import Servers.Duplexer;
 public class C2Server implements Runnable{
     // Dictionary of all of the longRangeBeacons currently reporting back to the C2
     // Formatted IP Address, Duplexer Pointer
-    private HashMap<String,C2ServerBeaconHandler> longRangeBeacons;
+    protected HashMap<String,C2ServerBeaconHandler> longRangeBeacons;
 
     // Bionded Server Socket
     private ServerSocket serverSocket;
 
     // Pointer to the Handler for User Input
     private C2ServerUserHandler userHandler;
+
+    // Boolean to determine if server should remain running
+    private boolean sentinel = true;
+
 
     /**
      * Initializes a Command and Control Server to handle connections from Long Range Beacons
@@ -52,13 +56,18 @@ public class C2Server implements Runnable{
         
     }
 
+    protected void stopServer(){
+        sentinel = false; 
+    }
+    
     @Override
     public void run(){
         // Start Thread to handle commands from the user
         Thread userHandlerThread = new Thread(userHandler);
         userHandlerThread.start();
+        
         // Always listen for new long range beacons
-        while(true){
+        while(sentinel){
             try{
                 // Accept a new connection
                 Socket socket = serverSocket.accept();

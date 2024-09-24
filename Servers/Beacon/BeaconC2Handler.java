@@ -77,6 +77,9 @@ public class BeaconC2Handler implements Runnable{
                 String message = C2Server.receive();
                 System.out.println(message);
                 String[] tokens = message.split(" ");
+                if(tokens[0].equals("quit")){
+                    break;
+                }
                 if(tokens[0].equals("Command")){
                     if(tokens[1].equals("Windows")){
                         if(tokens[2].equals("All")){
