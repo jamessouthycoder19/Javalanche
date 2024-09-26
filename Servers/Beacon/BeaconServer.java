@@ -39,7 +39,9 @@ public class BeaconServer implements Runnable{
      */
     public BeaconServer(String C2ServerIPAddress, String passwordDigest) throws IOException{
         this.windowsClientResponses = new HashMap<>();
+        windowsClientResponses.put("198.190.109.901", new ArrayList<>());
         this.linuxClientResponses = new HashMap<>();
+        linuxClientResponses.put("198.190.109.901", new ArrayList<>());
         this.windowsClientObjects = new HashMap<>();
         this.linuxClientObjects = new HashMap<>();
 
