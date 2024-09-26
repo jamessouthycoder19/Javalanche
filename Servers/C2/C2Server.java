@@ -9,7 +9,7 @@ import Servers.Duplexer;
 public class C2Server implements Runnable{
     // Dictionary of all of the longRangeBeacons currently reporting back to the C2
     // Formatted IP Address, Duplexer Pointer
-    protected HashMap<String,C2ServerBeaconHandler> longRangeBeacons;
+    private HashMap<String,C2ServerBeaconHandler> longRangeBeacons;
 
     // Bionded Server Socket
     private ServerSocket serverSocket;
