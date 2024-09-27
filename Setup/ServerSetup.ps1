@@ -26,12 +26,19 @@ if($response[0] -eq "Ok." -and $response2[0] -eq "Ok."){
     Write-Host "[" -NoNewline; Write-Host "ERROR" -ForegroundColor Red -NoNewline; Write-Host "] Firewall Rules could not be set" -ForegroundColor White
 }
 
-
 # Set up all of the directories
-New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting" | Out-Null
-New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\Servers" | Out-Null
-New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon" | Out-Null
-New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\Servers\C2" | Out-Null
+if(!(Test-Path "C:\james-danny-ritsecredteamrecruiting")){
+    New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting" | Out-Null
+    if(!(Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers")){
+        New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\Servers" | Out-Null
+    }
+    if(!(Test-Path "C:\james-danny-ritsecredteamrecruiting\Beacon")){
+        New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\Beacon" | Out-Null
+    }
+    if(!(Test-Path "C:\james-danny-ritsecredteamrecruiting\C2")){
+        New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\C2" | Out-Null
+    }
+}
 
 $testOne = Test-Path "C:\james-danny-ritsecredteamrecruiting"
 $testTwo = Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers"
