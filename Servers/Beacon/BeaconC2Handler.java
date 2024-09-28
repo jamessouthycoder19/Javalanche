@@ -99,8 +99,9 @@ public class BeaconC2Handler implements Runnable{
                                 for (String IP : windowsClientResponseList.keySet()){
                                     responseToRequest += IP + ": \n";
                                     for (int i = 1; i < windowsClientResponseList.get(IP).size()+1; i++){
-                                        responseToRequest += i + ". " + windowsClientResponseList.get(IP).get(i-1);
+                                        responseToRequest += i + ". " + windowsClientResponseList.get(IP).get(i-1) + "\n";
                                     }
+                                    responseToRequest += "\n";
                                 }
                             }else{
                                 responseToRequest = beaconServer.getSingleClientResponses(tokens[3]).toString();
