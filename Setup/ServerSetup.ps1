@@ -32,11 +32,11 @@ if(!(Test-Path "C:\james-danny-ritsecredteamrecruiting")){
     if(!(Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers")){
         New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\Servers" | Out-Null
     }
-    if(!(Test-Path "C:\james-danny-ritsecredteamrecruiting\Beacon")){
-        New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\Beacon" | Out-Null
+    if(!(Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon")){
+        New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\Servers\Beacon" | Out-Null
     }
-    if(!(Test-Path "C:\james-danny-ritsecredteamrecruiting\C2")){
-        New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\C2" | Out-Null
+    if(!(Test-Path "C:\james-danny-ritsecredteamrecruiting\Servers\C2")){
+        New-Item -ItemType "Directory" -path "C:\james-danny-ritsecredteamrecruiting\Servers\C2" | Out-Null
     }
 }
 
