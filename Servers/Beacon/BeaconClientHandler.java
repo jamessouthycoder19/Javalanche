@@ -7,7 +7,6 @@ public class BeaconClientHandler implements Runnable{
     private String IPAddress;
     private Duplexer duplexer;
     private BeaconServer beaconServer;
-    private String key;
 
     /**
      * Use this Class to create a new thread to handle each victim connection
@@ -19,7 +18,6 @@ public class BeaconClientHandler implements Runnable{
         this.IPAddress = IPAddress;
         this.duplexer = duplexer;
         this.beaconServer = beaconServer;
-        this.key = "SuPeRSecReTKey";
     }
 
     protected void quit(String reason) throws IOException{
@@ -27,56 +25,28 @@ public class BeaconClientHandler implements Runnable{
     }
 
 
-    // Method to encrypt the plaintext
-    public String encrypt(String plaintext) {
+    /**
+     * Encrypts/Decrypts the plain text with a simple rot13 cipher - Shifts each letter by 13 spots.
+     * (ex. A --> B, E --> R, Y --> L)
+     * 
+     * Because each letter is just shifted by 13 characters, encrypting/decrypting are the same algorithm
+     * 
+     * @param plaintext - The text to be shifted
+     * @return - The new encrypted/decrypted text
+     */
+    private String encrypt(String plaintext) {
         StringBuilder encryptedText = new StringBuilder();
-        int keyIndex = 0;
-        int keyLength = key.length();
 
-        for (int i = 0; i < plaintext.length(); i++) {
-            char currentChar = plaintext.charAt(i);
-
-            if (Character.isLetter(currentChar)) {
-                int shift = key.charAt(keyIndex % keyLength) - 'a';
-                if (Character.isLowerCase(currentChar)) {
-                    char encryptedChar = (char) (((currentChar - 'a' + shift) % 26) + 'a');
-                    encryptedText.append(encryptedChar);
-                } else {
-                    char encryptedChar = (char) (((currentChar - 'A' + shift) % 26) + 'A');
-                    encryptedText.append(encryptedChar);
-                }
-                keyIndex++;  // Only increment keyIndex if the character is alphabetic
+        for (char character : plaintext.toCharArray()) {
+            if (character >= 'a' && character <= 'z') {
+                encryptedText.append((char) ('a' + (character - 'a' + 13) % 26));
+            } else if (character >= 'A' && character <= 'Z') {
+                encryptedText.append((char) ('A' + (character - 'A' + 13) % 26));
             } else {
-                encryptedText.append(currentChar);  // Non-alphabet characters remain unchanged
+                encryptedText.append(character);
             }
         }
         return encryptedText.toString();
-    }
-
-    // Method to decrypt the ciphertext
-    public String decrypt(String ciphertext) {
-        StringBuilder decryptedText = new StringBuilder();
-        int keyIndex = 0;
-        int keyLength = key.length();
-
-        for (int i = 0; i < ciphertext.length(); i++) {
-            char currentChar = ciphertext.charAt(i);
-
-            if (Character.isLetter(currentChar)) {
-                int shift = key.charAt(keyIndex % keyLength) - 'a';
-                if (Character.isLowerCase(currentChar)) {
-                    char decryptedChar = (char) (((currentChar - 'a' - shift + 26) % 26) + 'a');
-                    decryptedText.append(decryptedChar);
-                } else {
-                    char decryptedChar = (char) (((currentChar - 'A' - shift + 26) % 26) + 'A');
-                    decryptedText.append(decryptedChar);
-                }
-                keyIndex++;  // Only increment keyIndex if the character is alphabetic
-            } else {
-                decryptedText.append(currentChar);  // Non-alphabet characters remain unchanged
-            }
-        }
-        return decryptedText.toString();
     }
 
     /**
@@ -94,7 +64,7 @@ public class BeaconClientHandler implements Runnable{
         while(true){
             try{
                 String response = duplexer.receive();
-                response = decrypt(response);
+                response = encrypt(response);
                 beaconServer.addDataToResponsesDictionaries(IPAddress, response);
 
             } catch (IOException e){
