@@ -71,7 +71,16 @@ Duplexer.java - This Java Class is utilized by all of the Servers. It is meant t
 instructions, down to just send() and receive().
 
 Payloads
-    TBD
+    windowsPayload.ps1
+    linuxPayload.bash
 
 UML:
 ![alt text](Images/DannyJamesC2UML.drawio.png)
+
+**TODO**
+Simple rot13 simple cipher
+Implement AES + RSA for HTTPS
+Sticky Keys backdoor
+the goose
+clear history after running commands
+status tests
