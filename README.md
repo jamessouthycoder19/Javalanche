@@ -80,6 +80,7 @@ Duplexer.java - This Java Class is utilized by all of the Servers. It is meant t
 instructions, down to just send() and receive().
 
 Payloads
+
     windowsPayload.ps1 - This Powershell Script is the Payload for all Windows clients. The Payload does a few things, 
     incuding: Add a backup script to reacquire the main payload, scheduled tasks for both the payload and backup script,
     firewall rules, extra Users, and the tcp connection via port 80 with the Long Range Beacon. The Payload also handles
