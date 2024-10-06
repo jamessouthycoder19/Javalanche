@@ -1,7 +1,7 @@
-C:\james-danny-ritsecredteamrecruiting\Servers\Duplexer.java
-C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconC2Handler.java
-C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconClientHandler.java
-C:\james-danny-ritsecredteamrecruiting\Servers\Beacon\BeaconServer.java
-C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2Server.java
-C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2ServerBeaconHandler.java
-C:\james-danny-ritsecredteamrecruiting\Servers\C2\C2ServerUserHandler.java
+C:\Javalanche\Servers\Duplexer.java
+C:\Javalanche\Servers\Beacon\BeaconC2Handler.java
+C:\Javalanche\Servers\Beacon\BeaconClientHandler.java
+C:\Javalanche\Servers\Beacon\BeaconServer.java
+C:\Javalanche\Servers\C2\C2Server.java
+C:\Javalanche\Servers\C2\C2ServerBeaconHandler.java
+C:\Javalanche\Servers\C2\C2ServerUserHandler.java
