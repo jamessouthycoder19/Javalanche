@@ -76,8 +76,10 @@ Long Range Beacon Server - Java
     2. Provide data to the C2 Server (ex. Connection Status of all of the vicims, responses of victims to certain 
     commands)
 
-Duplexer.java - This Java Class is utilized by all of the Servers. It is meant to simplify networking java networking
-instructions, down to just send() and receive().
+Networking
+
+    Duplexer.java - This Java Class is utilized by all of the Servers. It is meant to simplify networking java networking
+    instructions, down to just send() and receive().
 
 Payloads
 
@@ -95,10 +97,10 @@ UML:
 ![alt text](Images/DannyJamesC2UML.drawio.png)
 
 **TODO**
-Sticky Keys backdoor
-clear history after running commands
-status tests
-fix windows backup payload script
-Look into Bitsadmin to transfer files
-the goose
+Sticky Keys backdoor,
+clear history after running commands,
+status tests,
+fix windows backup payload script,
+Look into Bitsadmin to transfer files,
+the goose,
 Implement AES + RSA for HTTPS
