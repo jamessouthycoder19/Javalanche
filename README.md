@@ -100,7 +100,6 @@ UML:
 Sticky Keys backdoor,
 clear history after running commands,
 status tests,
-fix windows backup payload script,
 Look into Bitsadmin to transfer files,
 the goose,
 Implement AES + RSA for HTTPS
