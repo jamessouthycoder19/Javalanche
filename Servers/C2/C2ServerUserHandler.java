@@ -321,15 +321,13 @@ public class C2ServerUserHandler implements Runnable{
                 System.out.println();
                 System.out.print(currentUserPath + " >> ");
                 userInput = userInputScanner.nextLine();
-                
+                String target = "";
                 HashSet<String> validInputs = new HashSet<>(Arrays.asList("1","2","3","4","5"));
                 if(validInputs.contains(userInput)){
                     System.out.println("Enter IP address of target, 'Windows','Linux', or 'All");
                     System.out.print(" >> ");
-                    String target = userInputScanner.nextLine();
+                    target = userInputScanner.nextLine();
                 }
-                System.out.println("Enter IP address of individual target, or 'All' for all clients: ");
-                String target = userInputScanner.nextLine();
                 if(userInput.equals("1")){
                     // TODO: Figure out how to launch the goose.
                 } else if (userInput.equals("2")){
