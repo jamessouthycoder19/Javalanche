@@ -97,7 +97,24 @@ UML:
 ![alt text](Images/DannyJamesC2UML.drawio.png)
 
 **TODO**
+Add actual HTTP protocol instead of just tcp port 80,
+
+Add Linux Attack Chains,
+
+Add Linux Server Setup,
+
+Add Linux Usage Instructions,
+
+Fix Linux Payload,
+
+Javalanche ASCII Art,
+
+Clear Terminal,
+
 status tests,
+
 Look into Bitsadmin to transfer files,
+
 the goose,
+
 Implement AES + RSA for HTTPS
