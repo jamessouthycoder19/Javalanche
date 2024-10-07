@@ -98,7 +98,6 @@ UML:
 
 **TODO**
 Sticky Keys backdoor,
-clear history after running commands,
 status tests,
 Look into Bitsadmin to transfer files,
 the goose,
