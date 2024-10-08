@@ -97,10 +97,24 @@ UML:
 ![alt text](Images/DannyJamesC2UML.drawio.png)
 
 **TODO**
-Sticky Keys backdoor,
-clear history after running commands,
+Add actual HTTP protocol instead of just tcp port 80,
+
+Add Linux Attack Chains,
+
+Add Linux Server Setup,
+
+Add Linux Usage Instructions,
+
+Fix Linux Payload,
+
+Javalanche ASCII Art,
+
+Clear Terminal,
+
 status tests,
-fix windows backup payload script,
+
 Look into Bitsadmin to transfer files,
+
 the goose,
+
 Implement AES + RSA for HTTPS

