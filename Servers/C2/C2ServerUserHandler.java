@@ -93,6 +93,26 @@ public class C2ServerUserHandler implements Runnable{
         messageQueue.add(message);
     }
 
+    private void printJAVALANCHE(){
+        System.out.println(RESET);
+        System.out.println("*          *             *        *    *       *        * /\\   *      *     *      *      *     *            *             *        *         ");
+        System.out.println("      *        *         *      *  /\\     *       *      //\\\\*      * *      *    *  /\\           *     *             *           *     ");
+        System.out.println("     *                        /\\  //\\\\      *       *   ///\\\\\\   *        *     /\\  //\\\\   *         *         *         * *        *");
+        System.out.println("          *        *   /\\ *  //\\\\///\\\\\\   *    /\\      ////\\\\\\\\   *   *  /\\    //\\\\///\\\\\\ *   *  /\\  *  *   *     */\\      *    *");
+        System.out.println("  *    *     *   *    //\\\\  ///\\////\\\\\\\\  /\\  //\\\\    /  ^ ^^  \\     *  //\\\\  ///\\////\\\\\\\\  /\\  //\\\\  *     *    *//\\\\  *    *   *");
+        System.out.println(" *       /\\  *    *  /  ^ \\/^ ^/^  ^  ^ \\/^ \\/  ^ \\  /  ^  /\\  ^\\   *  /  ^\\ /^ ^/^  ^  ^ \\/^ \\/  ^ \\  /\\        ///\\\\\\    /\\        *      ");
+        System.out.println("     *  / ^\\    /\\  / ^   /  ^/ ^ ^ ^   ^\\ ^/  ^^  \\/  ^^ / ^\\^  \\/\\  / ^   /  ^/ ^ ^ ^   ^\\ ^/  ^^  \\/^ \\  /\\  /^  ^^ \\  //\\\\ *       ");
+        System.out.println(" *     /^   \\* / ^\\/ ^ ^   ^ / ^  ^    ^  \\/ ^   ^  \\ ^  /^   \\  / ^\\/ ^ ^   ^ / ^  ^    ^  \\/ ^   ^  \\  ^\\/ ^\\/  ^^  ^ \\///\\\\\\     *      ");
+        System.out.println("     */  ^ ^ \\/^  ^\\ ^ ^ ^   ^  ^   ^         ^   ^  \\  /  ^ ^ \\/^  ^\\ ^ ^ ^   ^  ^   ^    ^    ^   ^  \\   \\  /    ^ ^  /  ^  ^\\ *        ");
+        System.out.println("   * / ^ ^  ^ \\ ^  _^ ^ ^  ___ ^ __ ^  ^   __ ^ ___  ^^   _^ ^ ^ ^   ^ ___  ^^ ^ ___ ^  ^_ ^ _______ ^ _ ^^ _ ^ _______   ^  ^  \\ *  *");
+        System.out.println("    / ^^  ^ ^ ^\\  | |     / _ \\  \\ \\      / /  / _ \\     | |          / _ \\     |   \\   | | |  _____| | |  | | |  _____|    ^^   \\    ");
+        System.out.println(" * /  ^  ^^ ^ ^ \\ | |    / /_\\ \\  \\ \\    / /  / /_\\ \\    | |         / /_\\ \\    | |\\ \\  | | | |       | |__| | | |___   ^    ^    \\ *");
+        System.out.println( "  /^ ^  ^  ^^ _   | |   / _____ \\  \\ \\  / /  / _____ \\   | |        / ____  \\   | | \\ \\ | | | |       |  __  | |  ___|      ^   ^  \\     ");
+        System.out.println(" / ^   ^   ^ | |__| |  / /     \\ \\  \\ \\/ /  / /     \\ \\  | |____   / /     \\ \\  | |  \\ \\| | | |_____  | |  | | | |_____   ^    ^    \\");
+        System.out.println("/ ^ ^ ^  ^  ^|______| /_/       \\_\\  \\__/  /_/       \\_\\ |______| /_/       \\_\\ |_|   \\___| |_______| |_|  |_| |_______|    ^      ^ \\");
+        System.out.println("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
+    }
+
     private void printHome(){
         System.out.println(RESET);
         System.out.println("      _..---^---.._         __    __                                                      ");
@@ -262,7 +282,7 @@ public class C2ServerUserHandler implements Runnable{
             }
             
             if(currentUserPath.equals("")){
-                printHome();
+                printJAVALANCHE();
                 System.out.println("1. Send a command to all Clients");
                 System.out.println("2. Launch an Attack Chain");
                 System.out.println("3. Request Data from Clients");
@@ -409,7 +429,7 @@ public class C2ServerUserHandler implements Runnable{
     public static void main(String[] args) throws IOException {
         C2Server server = new C2Server();
         C2ServerUserHandler CLI = new C2ServerUserHandler(server);
-        CLI.printRequest();
+        CLI.printJAVALANCHE();
     }
 }
 
