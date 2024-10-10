@@ -109,7 +109,7 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println("   * / ^ ^  ^ \\ ^  _^ ^ ^  ___ ^ __ ^  ^   __ ^ ___  ^^   _^ ^ ^ ^   ^ ___  ^^ ^ ___ ^  ^_ ^ _______ ^ _ ^^ _ ^ _______   ^  ^  \\ *  *");
         System.out.println("    / ^^  ^ ^ ^\\  | |     / _ \\  \\ \\      / /  / _ \\     | |          / _ \\     |   \\   | | |  _____| | |  | | |  _____|    ^^   \\    ");
         System.out.println(" * /  ^  ^^ ^ ^ \\ | |    / /_\\ \\  \\ \\    / /  / /_\\ \\    | |         / /_\\ \\    | |\\ \\  | | | |       | |__| | | |___   ^    ^    \\ *");
-        System.out.println( "  /^ ^  ^  ^^ _   | |   / _____ \\  \\ \\  / /  / _____ \\   | |        / ____  \\   | | \\ \\ | | | |       |  __  | |  ___|      ^   ^  \\     ");
+        System.out.println( "  /^ ^  ^  ^^ _   | |   / _____ \\  \\ \\  / /  / _____ \\   | |        / _____ \\   | | \\ \\ | | | |       |  __  | |  ___|      ^   ^  \\     ");
         System.out.println(" / ^   ^   ^ | |__| |  / /     \\ \\  \\ \\/ /  / /     \\ \\  | |____   / /     \\ \\  | |  \\ \\| | | |_____  | |  | | | |_____   ^    ^    \\");
         System.out.println("/ ^ ^ ^  ^  ^|______| /_/       \\_\\  \\__/  /_/       \\_\\ |______| /_/       \\_\\ |_|   \\___| |_______| |_|  |_| |_______|    ^      ^ \\");
         System.out.println("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
