@@ -56,6 +56,8 @@ public class BeaconClientHandler implements Runnable{
      */
     protected void sendToClient(String message){
         message = encrypt(message);
+        String httpHeader = "HTTP/1.1 200 OK\r\n" +  "Content-Length: " + message.length() + "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n";
+        message = httpHeader + message;
         duplexer.send(message);
     }
 
@@ -64,9 +66,10 @@ public class BeaconClientHandler implements Runnable{
         while(true){
             try{
                 String response = duplexer.receive();
-                response = encrypt(response);
-                beaconServer.addDataToResponsesDictionaries(IPAddress, response);
-
+                if(!(response.equals("GET / HTTP/1.1")) && !(response.contains("Content-Length")) && !(response.equals("Content-Type: text/plain; charset=utf-8")) && !(response.isBlank())){
+                    response = encrypt(response);
+                    beaconServer.addDataToResponsesDictionaries(IPAddress, response);
+                }
             } catch (IOException e){
                 e.printStackTrace();
             }
