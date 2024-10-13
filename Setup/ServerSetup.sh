@@ -52,11 +52,11 @@ curl -o /home/javalanche/files.txt https://gitlab.ritsec.cloud/jms9508/Javalanch
 cd /home/javalanche
 
 # Compile
-"$javacDir" "@/home/javalanche/files.txt"
+sudo "$javacDir" "@/home/javalanche/files.txt"
 
 # Run the desired server
 if [ "$server" == "C2" ]; then
-    "$javaDir" "Servers/C2/C2Server"
+    sudo "$javaDir" "Servers/C2/C2Server"
 else
-    "$javaDir" "Servers/BeaconBeaconServer"
+    sudo "$javaDir" "Servers/BeaconBeaconServer"
 fi
