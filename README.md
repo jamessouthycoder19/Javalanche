@@ -26,7 +26,24 @@ ps> Start-Process -FilePath "powershell.exe" -ArgumentList "set-executionpolicy 
 
 
 Linux C2 Server
+$ sudo mkdir /home/javalanche
+
+$ sudo cd /home/javalanche
+
 $ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.sh?ref_type=heads
+
+$ sudo ./serverSetup.sh
+
+
+Linux Long Range Beacon Server
+$ sudo mkdir /home/javalanche
+
+$ sudo cd /home/javalanche
+
+$ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.sh?ref_type=heads
+
+$ sudo ./serverSetup.sh -server Beacon
+
 
 Linux Payload
 
@@ -108,7 +125,9 @@ Fix Linux Payload,
 
 Clean up Linux Server Setup output,
 
-Javalanche ASCII Art,
+Ansible Deployment,
+
+Change readme usage to be Ansible instructions, and move current instructions to their own file,
 
 Clear Terminal,
 

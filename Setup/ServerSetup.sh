@@ -4,9 +4,6 @@
 sudo apt update
 sudo apt install curl
 
-# Set up directory for everything to go in
-sudo mkdir /home/javalanche
-
 # Get command line parameters
 server="C2"
 
@@ -37,19 +34,16 @@ sudo mkdir /home/javalanche/Servers/Beacon
 sudo mkdir /home/javalanche/Servers/C2
 
 # Download all of the java files
-curl -o /home/javalanche/Servers/C2/C2Server.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/C2/C2Server.java?ref_type=heads
-curl -o /home/javalanche/Servers/C2/C2ServerUserHandler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/C2/C2ServerUserHandler.java?ref_type=heads
-curl -o /home/javalanche/Servers/C2/C2ServerBeaconHandler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/C2/C2ServerBeaconHandler.java?ref_type=heads
-curl -o /home/javalanche/Servers/Beacon/BeaconServer.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Beacon/BeaconServer.java?ref_type=heads
-curl -o /home/javalanche/Servers/Beacon/BeaconClientHandler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Beacon/BeaconClientHandler.java?ref_type=heads
-curl -o /home/javalanche/Servers/Beacon/BeaconC2Handler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Beacon/BeaconC2Handler.java?ref_type=heads
-curl -o /home/javalanche/Servers/Duplexer.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Duplexer.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/C2/C2Server.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/C2/C2Server.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/C2/C2ServerUserHandler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/C2/C2ServerUserHandler.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/C2/C2ServerBeaconHandler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/C2/C2ServerBeaconHandler.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/Beacon/BeaconServer.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Beacon/BeaconServer.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/Beacon/BeaconClientHandler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Beacon/BeaconClientHandler.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/Beacon/BeaconC2Handler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Beacon/BeaconC2Handler.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/Duplexer.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Duplexer.java?ref_type=heads
 
 # Download file for javac to use
-curl -o /home/javalanche/files.txt https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/linuxFiles.txt?ref_type=heads
-
-# Change directory so java and javac work correctly
-cd /home/javalanche
+sudo curl -o /home/javalanche/files.txt https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/linuxFiles.txt?ref_type=heads
 
 # Compile
 sudo "$javacDir" "@/home/javalanche/files.txt"
@@ -58,5 +52,5 @@ sudo "$javacDir" "@/home/javalanche/files.txt"
 if [ "$server" == "C2" ]; then
     sudo "$javaDir" "Servers/C2/C2Server"
 else
-    sudo "$javaDir" "Servers/BeaconBeaconServer"
+    sudo "$javaDir" "Servers/Beacon/BeaconServer"
 fi
