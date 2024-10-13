@@ -51,6 +51,8 @@ $ sudo curl -o /etc/javalanche.sh "https://gitlab.ritsec.cloud/jms9508/Javalanch
 
 $ sudo chmod +x /etc/javalanche.sh
 
+$ sudo /etc/javalanche.sh {IP Address of Beacon}
+
 **Network Diagram:**
 ![alt text](Images/C2NetworkDiagram.drawio.png)
 
@@ -115,9 +117,7 @@ UML:
 **TODO**
 Add Linux Attack Chains,
 
-Add Linux Usage Instructions,
-
-Fix Linux Payload,
+Fix Linux starting process in background for both usage and backup script,
 
 Clean up Linux Server Setup output,
 

