@@ -77,7 +77,7 @@ if($testOne -eq "True" -and $testTwo -eq "True" -and $testThree -eq "True" -and 
 
 
 # Set up file for javac
-Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/files.txt?ref_type=heads" -OutFile "C:\Javalanche\files.txt"
+Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/windowsFiles.txt?ref_type=heads" -OutFile "C:\Javalanche\files.txt"
 
 
 # Change Location so that compilation and Running the server work correctly
