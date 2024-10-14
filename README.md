@@ -26,6 +26,7 @@ ps> Start-Process -FilePath "powershell.exe" -ArgumentList "set-executionpolicy 
 
 
 Linux C2 Server
+
 $ sudo mkdir /home/javalanche
 
 $ sudo cd /home/javalanche
@@ -36,6 +37,7 @@ $ sudo ./serverSetup.sh
 
 
 Linux Long Range Beacon Server
+
 $ sudo mkdir /home/javalanche
 
 $ sudo cd /home/javalanche
