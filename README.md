@@ -27,22 +27,34 @@ ps> Start-Process -FilePath "powershell.exe" -ArgumentList "set-executionpolicy 
 
 Linux C2 Server
 
+$ sudo apt update
+
+$ sudo apt install curl
+
 $ sudo mkdir /home/javalanche
 
-$ sudo cd /home/javalanche
+$ cd /home/javalanche
 
 $ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.sh?ref_type=heads
+
+$ sudo chmod +x serverSetup.sh
 
 $ sudo ./serverSetup.sh
 
 
 Linux Long Range Beacon Server
 
+$ sudo apt update
+
+$ sudo apt install curl
+
 $ sudo mkdir /home/javalanche
 
-$ sudo cd /home/javalanche
+$ cd /home/javalanche
 
 $ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.sh?ref_type=heads
+
+$ sudo chmod +x serverSetup.sh
 
 $ sudo ./serverSetup.sh -server Beacon
 

@@ -1,9 +1,5 @@
 #!/bin/bash
 
-#update and install dependencies
-sudo apt update
-sudo apt install curl
-
 # Get command line parameters
 server="C2"
 
@@ -12,7 +8,7 @@ if [ "$1" == "-server" ]; then
 fi
 
 # install Java development kit
-sudo curl -o /home/javalanche/jdkinstaller.tar.gz https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.tar.gz
+sudo curl -o /home/javalanche/jdkinstaller.tar.gz https://download.oracle.com/java/23/latest/jdk-23_linux-x64_bin.tar.gz
 sudo gzip -d /home/javalanche/jdkinstaller.tar.gz
 sudo tar -xf /home/javalanche/jdkinstaller.tar -C /home/javalanche
 jdkDir=$(ls /home/javalanche | grep jdk-)
