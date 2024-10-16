@@ -118,3 +118,5 @@ Look into Bitsadmin to transfer files,
 the goose,
 
 Implement AES + RSA for HTTPS
+
+Fix UML / Network Diagram
