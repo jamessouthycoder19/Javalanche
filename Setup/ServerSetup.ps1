@@ -6,7 +6,7 @@ param(
 # installing the JDK takes a REALLY long time doing it via powershell, so optimally just go
 # to Oracle's website and download it, then run this script
 if($installJDK){
-    Invoke-WebRequest -Uri "https://download.oracle.com/java/17/latest/jdk-17_windows-x64_bin.exe" -OutFile "C:\jdkinstaller.exe"
+    Invoke-WebRequest -Uri "https://download.oracle.com/java/23/latest/jdk-23_windows-x64_bin.exe" -OutFile "C:\jdkinstaller.exe"
     & "C:\jdkinstaller.exe"
 }
 
@@ -77,7 +77,7 @@ if($testOne -eq "True" -and $testTwo -eq "True" -and $testThree -eq "True" -and 
 
 
 # Set up file for javac
-Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/files.txt?ref_type=heads" -OutFile "C:\Javalanche\files.txt"
+Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/windowsFiles.txt?ref_type=heads" -OutFile "C:\Javalanche\files.txt"
 
 
 # Change Location so that compilation and Running the server work correctly
@@ -85,7 +85,7 @@ Set-Location "C:\Javalanche"
 
 
 # Compile
-& "C:\Program Files\Java\jdk-17\bin\javac.exe" "@C:\Javalanche\files.txt"
+& "C:\Program Files\Java\jdk-23\bin\javac.exe" "@C:\Javalanche\files.txt"
 
 $testOne = Test-Path "C:\Javalanche\Servers\C2\C2Server.class"
 $testTwo = Test-Path "C:\Javalanche\Servers\C2\C2ServerBeaconHandler.class"
@@ -104,7 +104,7 @@ if($testOne -eq "True" -and $testTwo -eq "True" -and $testThree -eq "True" -and 
 
 # Run the Server
 if($server -eq "C2"){
-    & "C:\Program Files\Java\jdk-17\bin\java.exe" "Servers/C2/C2Server"
+    & "C:\Program Files\Java\jdk-23\bin\java.exe" "Servers/C2/C2Server"
 } else {
-    & "C:\Program Files\Java\jdk-17\bin\java.exe" "Servers/Beacon/BeaconServer"
+    & "C:\Program Files\Java\jdk-23\bin\java.exe" "Servers/Beacon/BeaconServer"
 }

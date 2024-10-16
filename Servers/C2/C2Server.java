@@ -38,7 +38,7 @@ public class C2Server implements Runnable{
      * 
      * @param command Command issued to the long range beacons.
      */
-    public void broadcastToBeacons(String command){
+    protected void broadcastToBeacons(String command){
         for(C2ServerBeaconHandler beaconHandler : longRangeBeacons.values()){
             beaconHandler.sendToBeacon(command);
         }
@@ -53,7 +53,6 @@ public class C2Server implements Runnable{
         synchronized(userHandler){
             userHandler.outputToCLI(message);
         }
-        
     }
 
     protected void stopServer(){
