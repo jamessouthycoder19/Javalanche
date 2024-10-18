@@ -227,6 +227,11 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println();
         System.out.println("Waiting for response...");
         Thread.sleep(5000);
+        synchronized(messageQueue){
+            for (String message : messageQueue){
+                System.out.println(message);
+            }
+        }
         System.out.println();
     }
 

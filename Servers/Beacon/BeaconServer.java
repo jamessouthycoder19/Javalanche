@@ -205,6 +205,7 @@ public class BeaconServer implements Runnable{
             table += "|\t" +ip + ":\t|\t" + status + "\t|";
         }
         table += "|__________________________________________|\n";
+        System.out.println(table);
         return table;
     }
 
