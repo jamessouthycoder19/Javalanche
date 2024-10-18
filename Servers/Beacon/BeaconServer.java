@@ -167,15 +167,18 @@ public class BeaconServer implements Runnable{
         HashMap<String, Boolean> clientStatus = new HashMap<>();
 
         // Check all Windows Boxes
-        distributeCommands("Windows", "echo 'Hello World'");
+        distributeCommands("Windows", "");
         for (String ip : windowsClientResponses.keySet()){
             ArrayList<String> responses = getSingleClientResponses(ip);
-        if (responses.get(responses.size()-1).equals("Hello World")){
+        if (responses.size() == 0){
+            if (responses.get(responses.size()-1).equals("Hello World")){
             clientStatus.put(ip, true);
+            }
+            else {
+                clientStatus.put(ip, false);
+            }
         }
-        else {
-            clientStatus.put(ip, false);
-        }
+        
         }
         // Check all Linux Boxes
         distributeCommands("Linux", "echo 'Hello World'");
