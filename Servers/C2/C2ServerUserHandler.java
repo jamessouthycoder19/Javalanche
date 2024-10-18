@@ -500,7 +500,7 @@ public class C2ServerUserHandler implements Runnable{
                     System.out.println("Invalid Input");
                 }
             } else if(currentUserPath.equals("Status")){
-                C2server.broadcastToBeacons("Status ClientStatus All");
+                C2server.broadcastToBeacons("Status ClientStatus All_ ");
             }
         }
     }
