@@ -501,6 +501,7 @@ public class C2ServerUserHandler implements Runnable{
                 }
             } else if(currentUserPath.equals("Status")){
                 C2server.broadcastToBeacons("Status ClientStatus All All_ ");
+                currentUserPath = "";
             }
         }
     }
