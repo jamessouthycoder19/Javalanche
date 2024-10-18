@@ -97,21 +97,21 @@ public class C2ServerUserHandler implements Runnable{
 
     private void printJAVALANCHE(){
         System.out.println(RESET);
-        System.out.println("*          *             *        *    *       *        * /\\   *      *     *      *      *     *            *             *        *         ");
-        System.out.println("      *        *         *      *  /\\     *       *      //\\\\*      * *      *    *  /\\           *     *             *           *     ");
+        System.out.println("*          *             *        *    *       *        * /\\   *      *     *      *      *     *            *             *        *");
+        System.out.println("      *        *         *      *  /\\     *       *      //\\\\*      * *      *    *  /\\           *     *             *           *");
         System.out.println("     *                        /\\  //\\\\      *       *   ///\\\\\\   *        *     /\\  //\\\\   *         *         *         * *        *");
         System.out.println("          *        *   /\\ *  //\\\\///\\\\\\   *    /\\      ////\\\\\\\\   *   *  /\\    //\\\\///\\\\\\ *   *  /\\  *  *   *     */\\      *    *");
         System.out.println("  *    *     *   *    //\\\\  ///\\////\\\\\\\\  /\\  //\\\\    /  ^ ^^  \\     *  //\\\\  ///\\////\\\\\\\\  /\\  //\\\\  *     *    *//\\\\  *    *   *");
-        System.out.println(" *       /\\  *    *  /  ^ \\/^ ^/^  ^  ^ \\/^ \\/  ^ \\  /  ^  /\\  ^\\   *  /  ^\\ /^ ^/^  ^  ^ \\/^ \\/  ^ \\  /\\        ///\\\\\\    /\\        *      ");
+        System.out.println(" *       /\\  *    *  /  ^ \\/^ ^/^  ^  ^ \\/^ \\/  ^ \\  /  ^  /\\  ^\\   *  /  ^\\ /^ ^/^  ^  ^ \\/^ \\/  ^ \\  /\\        ///\\\\\\    /\\        * ");
         System.out.println("     *  / ^\\    /\\  / ^   /  ^/ ^ ^ ^   ^\\ ^/  ^^  \\/  ^^ / ^\\^  \\/\\  / ^   /  ^/ ^ ^ ^   ^\\ ^/  ^^  \\/^ \\  /\\  /^  ^^ \\  //\\\\ *       ");
         System.out.println(" *     /^   \\* / ^\\/ ^ ^   ^ / ^  ^    ^  \\/ ^   ^  \\ ^  /^   \\  / ^\\/ ^ ^   ^ / ^  ^    ^  \\/ ^   ^  \\  ^\\/ ^\\/  ^^  ^ \\///\\\\\\     *      ");
         System.out.println("     */  ^ ^ \\/^  ^\\ ^ ^ ^   ^  ^   ^         ^   ^  \\  /  ^ ^ \\/^  ^\\ ^ ^ ^   ^  ^   ^    ^    ^   ^  \\   \\  /    ^ ^  /  ^  ^\\ *        ");
-        System.out.println("   * / ^ ^  ^ \\ ^  _^ ^ ^  ___ ^ __ ^  ^   __ ^ ___  ^^   _^ ^ ^ ^   ^ ___  ^^ ^ ___ ^  ^_ ^ _______ ^ _ ^^ _ ^ _______   ^  ^  \\ *  *");
-        System.out.println("    / ^^  ^ ^ ^\\  | |     / _ \\  \\ \\      / /  / _ \\     | |          / _ \\     |   \\   | | |  _____| | |  | | |  _____|    ^^   \\    ");
-        System.out.println(" * /  ^  ^^ ^ ^ \\ | |    / /_\\ \\  \\ \\    / /  / /_\\ \\    | |         / /_\\ \\    | |\\ \\  | | | |       | |__| | | |___   ^    ^    \\ *");
-        System.out.println( "  /^ ^  ^  ^^ _   | |   / _____ \\  \\ \\  / /  / _____ \\   | |        / _____ \\   | | \\ \\ | | | |       |  __  | |  ___|      ^   ^  \\     ");
-        System.out.println(" / ^   ^   ^ | |__| |  / /     \\ \\  \\ \\/ /  / /     \\ \\  | |____   / /     \\ \\  | |  \\ \\| | | |_____  | |  | | | |_____   ^    ^    \\");
-        System.out.println("/ ^ ^ ^  ^  ^|______| /_/       \\_\\  \\__/  /_/       \\_\\ |______| /_/       \\_\\ |_|   \\___| |_______| |_|  |_| |_______|    ^      ^ \\");
+        System.out.println("   * / ^ ^  ^ \\ ^  "+RED+ "_"+RESET+"^ ^ ^  "+RED+"___"+RESET+" ^ "+RED+"__"+RESET+" ^  ^   "+RED+"__"+RESET+" ^ "+RED+"___"+RESET+"  ^^   "+RED+"_"+RESET+"^ ^ ^ ^   ^ "+RED+"___"+RESET+"  ^^ ^ "+RED+"___"+RESET+" ^  ^"+RED+"_"+RESET+" ^ "+RED+"_______"+RESET+" ^ "+RED+"_"+RESET+" ^^ "+RED+"_"+RESET+" ^ "+RED+"_______"+RESET+"   ^  ^  \\ *  *");
+        System.out.println("    / ^^  ^ ^ ^\\  "+RED+"| |     / _ \\  \\ \\      / /  / _ \\     | |          / _ \\     |   \\   | | |  _____| | |  | | |  _____|"+RESET+"    ^^   \\    ");
+        System.out.println(" * /  ^  ^^ ^ ^ \\ "+RED+"| |    / /_\\ \\  \\ \\    / /  / /_\\ \\    | |         / /_\\ \\    | |\\ \\  | | | |       | |__| | | |___"+RESET+"   ^    ^    \\ *");
+        System.out.println( "  /^ ^  ^  ^^ "+RED+"_   | |   / _____ \\  \\ \\  / /  / _____ \\   | |        / _____ \\   | | \\ \\ | | | |       |  __  | |  ___|"+RESET+"      ^   ^  \\     ");
+        System.out.println(" / ^   ^   ^ "+RED+"| |__| |  / /     \\ \\  \\ \\/ /  / /     \\ \\  | |____   / /     \\ \\  | |  \\ \\| | | |_____  | |  | | | |_____"+RESET+"   ^    ^    \\");
+        System.out.println("/ ^ ^ ^  ^  ^"+RED+"|______| /_/       \\_\\  \\__/  /_/       \\_\\ |______| /_/       \\_\\ |_|   \\___| |_______| |_|  |_| |_______|"+RESET+"    ^      ^ \\");
         System.out.println("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
         System.out.println();
     }
@@ -289,7 +289,8 @@ public class C2ServerUserHandler implements Runnable{
                 System.out.println("1. Send a command to all Clients");
                 System.out.println("2. Launch an Attack Chain");
                 System.out.println("3. Request Data from Clients");
-                System.out.println("4. Exit CLI / Close Servers");
+                System.out.println("4. Get Status from Clients");
+                System.out.println("5. Exit CLI / Close Servers");
                 System.out.println();
                 System.out.print(currentUserPath + " >> ");
                 userInput = userInputScanner.nextLine();
@@ -300,6 +301,8 @@ public class C2ServerUserHandler implements Runnable{
                 } else if(userInput.equals("3")){
                     currentUserPath = "Request";
                 } else if(userInput.equals("4")){
+                    currentUserPath = "Status";
+                } else if(userInput.equals("5")){
                     System.out.println(RED + "Closing Server..."+ RESET);
                     System.out.println();
                     C2server.stopServer();
@@ -462,8 +465,8 @@ public class C2ServerUserHandler implements Runnable{
                 
             } else if(currentUserPath.equals("Request")){
                 printRequest();
-                System.out.println("1. Request from ALL Windows Clients");
-                System.out.println("2. Request from ALL Linux Clients");
+                System.out.println("1. Request from ALL " + BLUE + "Windows" + RESET + " Clients");
+                System.out.println("2. Request from ALL " + RED + "Linux" + RESET + " Clients");
                 System.out.println("3. Request from single IP Address");
                 System.out.println("4. Back");
                 System.out.println();
@@ -496,6 +499,8 @@ public class C2ServerUserHandler implements Runnable{
                 } else {
                     System.out.println("Invalid Input");
                 }
+            } else if(currentUserPath.equals("Status")){
+                C2server.broadcastToBeacons("Status ClientStatus All");
             }
         }
     }
