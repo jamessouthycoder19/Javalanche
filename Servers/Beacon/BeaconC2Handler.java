@@ -144,7 +144,9 @@ public class BeaconC2Handler implements Runnable{
                             }
                         }
                     }else if(scope.equals("ClientStatus")){
+                        System.out.println("Erm");
                         responseToRequest = beaconServer.getClientStatus();
+                        responseToRequest = "Erm";
                     }
                     C2Server.send(responseToRequest);
                 }
