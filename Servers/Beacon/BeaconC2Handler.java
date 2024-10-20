@@ -83,7 +83,6 @@ public class BeaconC2Handler implements Runnable{
                 String[] tokens = tokensAndCommands[0].split(" ");
                 String verb = tokens[0];
                 String scope = tokens[1];
-                System.out.println(scope);
                 String target = tokens[2];
                 String commands = tokensAndCommands[1];
                 if(tokens[0].equals("quit")){
