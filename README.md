@@ -9,19 +9,19 @@ This tool is meant to be used in Red Vs. Blue style Cybersecurity Competitions f
 We recommend using Ansible to remotely deploy Windows and Linux agents.
 
 ```
-*Prerequisites: A Linux machine with SSH access to all linux competition mahcines, and winrm access to all windows compeitition machines*
+Prerequisites: A Linux machine with SSH access to all linux competition mahcines, and winrm access to all windows compeitition machines
 $ sudo apt update
 $ sudo apt install curl, ansible
 $ sudo curl -o inventory.yml https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/Ansible/inventory.yml?ref_type=heads
 $ sudo curl -o playbook.yml "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/playbook.yml?ref_type=heads"
-*Note: In some competitions, you will be provided an inventory.yml file for deployment. You will have to edit the **hosts:** line in the playbook to reflect the group of hosts to deploy to.
+Note: In some competitions, you will be provided an inventory.yml file for deployment. You will have to edit the hosts: line in the playbook to reflect the group of hosts to deploy to.
 If you are not given an inventory.yml file, you will need to edit the existing inventory.yml file to include the proper hosts, usernames, and passwords
 $ ansible-playbook -i inventory.yml playbook.yml 
 ```
 
 **C2 Server**
 
-We Recommend Deploying the C2 Server on a linux machine, for the best experience
+We recommend Deploying the C2 Server on a linux machine, for the best experience
 
 ```
 $ sudo apt update
@@ -36,7 +36,7 @@ $ sudo ./serverSetup.sh
 **Proxy Server**
 
 We recommend Deploying the Long Range Beacon Servers on a linux machine, for the best experience.
-*Prerequisite: The Proxy Server must have a Public IP Address. If you are not able to obtain a Public IP Address, then both the Proxy and C2 Servers must be deployed on the same WAN as the competition machines.
+Prerequisite: The Proxy Server must have a Public IP Address. If you are not able to obtain a Public IP Address, then both the Proxy and C2 Servers must be deployed on the same WAN as the competition machines.
 
 ```
 $ sudo apt update
@@ -48,7 +48,8 @@ $ sudo chmod +x serverSetup.sh
 $ sudo ./serverSetup.sh -server Beacon
 ```
 
-**Network Diagram:**
+# Network Diagram:
+
 ![alt text](Images/C2NetworkDiagram.drawio.png)
 
 Main C2 Server - Java
@@ -109,18 +110,15 @@ Payloads
 UML:
 ![alt text](Images/DannyJamesC2UML.drawio.png)
 
-**TODO**
+# TODO
+
 Add Linux Attack Chains,
 
-Fix linux cronjobs,
+Fix linux cronjobs/Service,
 
-Ansible Deployment,
+Fix Ansible Windows Deployment,
 
-Change readme usage to be Ansible instructions, and move current instructions to their own file,
-
-Clear Terminal,
-
-status tests,
+Fix Status Tests
 
 Look into Bitsadmin to transfer files,
 
