@@ -14,8 +14,10 @@ $ sudo apt update
 $ sudo apt install curl, ansible
 $ sudo curl -o inventory.yml https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/Ansible/inventory.yml?ref_type=heads
 $ sudo curl -o playbook.yml "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/playbook.yml?ref_type=heads"
-Note: In some competitions, you will be provided an inventory.yml file for deployment. You will have to edit the hosts: line in the playbook to reflect the group of hosts to deploy to.
-If you are not given an inventory.yml file, you will need to edit the existing inventory.yml file to include the proper hosts, usernames, and passwords
+Note: In some competitions, you will be provided an inventory.yml file for deployment. 
+You will have to edit the hosts: line in the playbook to reflect the group of hosts to deploy to.
+If you are not given an inventory.yml file, you will need to edit the existing inventory.yml 
+file to include the proper hosts, usernames, and passwords
 $ ansible-playbook -i inventory.yml playbook.yml 
 ```
 
@@ -36,9 +38,10 @@ $ sudo ./serverSetup.sh
 **Proxy Server**
 
 We recommend Deploying the Long Range Beacon Servers on a linux machine, for the best experience.
-Prerequisite: The Proxy Server must have a Public IP Address. If you are not able to obtain a Public IP Address, then both the Proxy and C2 Servers must be deployed on the same WAN as the competition machines.
 
 ```
+Prerequisite: The Proxy Server must have a Public IP Address. If you are not able to obtain a Public IP Address, 
+then both the Proxy and C2 Servers must be deployed on the same WAN as the competition machines.
 $ sudo apt update
 $ sudo apt install curl
 $ sudo mkdir /home/javalanche
