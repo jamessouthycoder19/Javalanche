@@ -198,18 +198,18 @@ public class BeaconServer implements Runnable{
         
 
         // Creating fire visually pleasing table of client status
-        String table = "_____________________________________\n";
+        String table = "_____________________________________________\n";
         table += "|\tIP:\t\t Connection Status:\t|\n";
-        table += "|__________________________________________|\n";
+        table += "|______________________________________________|\n";
         for(String ip : clientStatus.keySet()){
             String status;
             if (clientStatus.get(ip) == true) {
-                status = GREEN +"CONNECTED :D" + RESET;
+                status = GREEN +"CONNECTED :D\n" + RESET;
             }
             else {
-                status = RED + "DISCONNECTED D:" + RESET;
+                status = RED + "DISCONNECTED D:\n" + RESET;
             }
-            table += "|\t" +ip + ":\t|\t" + status + "\t|";
+            table += "|\t" +ip + "\t|\t" + status + "\t|\n";
         }
         table += "|__________________________________________|\n";
         System.out.println(table);

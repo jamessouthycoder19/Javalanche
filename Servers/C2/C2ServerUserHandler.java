@@ -171,6 +171,7 @@ public class C2ServerUserHandler implements Runnable{
      */
     private void sendCommand(String OS){
         String color = "";
+        // Send Command to Client Menu
         if(OS == "Windows"){
             color = BLUE;
             System.out.println(color);
@@ -202,18 +203,25 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println(RESET);
         System.out.print(currentUserPath + " >> ");
         String userInput = userInputScanner.nextLine();
+
+        // Send commands to all Windows or Linux machines
         if(userInput.equals("1")){
             currentUserPath += " All";
+
+        // Send commands to single IP
         } else if(userInput.equals("2")){
             System.out.print("Enter IP Address of desired target >> ");
             String IPAddress = userInputScanner.nextLine();
             currentUserPath += " " + IPAddress;
+        
+        // Send user back to Command Menu
         } else if(userInput.equals("3")){
             currentUserPath = "Command";
         } else {
             System.out.println("Invalid Input");
         }
 
+        // Take commands from user
         if(userInput.equals("1") || userInput.equals("2")){
             System.out.print("Enter Command to be run >> ");
             String finalCommand = currentUserPath + "_" + userInputScanner.nextLine();
@@ -224,6 +232,7 @@ public class C2ServerUserHandler implements Runnable{
     }
 
     private void waitForResponse() throws InterruptedException{
+        // Waiting for traffic
         System.out.println();
         System.out.println("Waiting for response...");
         Thread.sleep(5000);
@@ -467,6 +476,7 @@ public class C2ServerUserHandler implements Runnable{
                     }
                 }
                 
+            // Request Menu Data from Clients
             } else if(currentUserPath.equals("Request")){
                 printRequest();
                 System.out.println("1. Request from ALL " + BLUE + "Windows" + RESET + " Clients");
@@ -476,19 +486,26 @@ public class C2ServerUserHandler implements Runnable{
                 System.out.println();
                 System.out.print(currentUserPath + " >> ");
                 userInput = userInputScanner.nextLine();
+
+                // Request from all Windows Boxes
                 if(userInput.equals("1")){
                     String OS = "Windows";
                     C2server.broadcastToBeacons("Request ClientData "+ OS +" All_ ");
                     try {
                         waitForResponse();
                     } catch (InterruptedException e) {e.printStackTrace();}
+
+                // Request from all Linux Boxes
                 } else if (userInput.equals("2")){
                     String OS = "Linux";
                     C2server.broadcastToBeacons("Request ClientData "+ OS +" All_ ");
                     try {
                         waitForResponse();
                     } catch (InterruptedException e) {e.printStackTrace();}
+
+                // Request from single IP
                 } else if (userInput.equals("3")){
+                    // Ask user for IP
                     System.out.print("Enter IP Address for desired request >> ");
                     String IPAddress = userInputScanner.nextLine();
                     C2server.broadcastToBeacons("Request ClientData Windows " + IPAddress + "_ ");
@@ -496,11 +513,15 @@ public class C2ServerUserHandler implements Runnable{
                     try {
                         waitForResponse();
                     } catch (InterruptedException e) {e.printStackTrace();}
+                
+                // Return to home menu
                 } else if (userInput.equals("4")){
                         currentUserPath = "";
                 } else {
                     System.out.println("Invalid Input");
                 }
+
+            // Get Client Status Data
             } else if(currentUserPath.equals("Status")){
                 C2server.broadcastToBeacons("Status ClientStatus All All_ ");
                 try {
