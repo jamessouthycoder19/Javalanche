@@ -199,7 +199,7 @@ public class BeaconServer implements Runnable{
 
         // Creating fire visually pleasing table of client status
         String table = " ________________________________________________\n";
-        table += String.format("| %-20s | %-25s |\n", "IP", "Connection Status");
+        table += String.format("| %-20s | %-23s |\n", "IP", "Connection Status");
         table += "|______________________|_________________________|\n";
         for (String ip : clientStatus.keySet()) {
             String status;
@@ -208,7 +208,7 @@ public class BeaconServer implements Runnable{
             } else {
                 status = RED + "DISCONNECTED D:" + RESET;
             }
-            table += String.format("| %-20s | %-25s |\n", ip, status);
+            table += String.format("| %-20s | %-31s |\n", ip, status);
         }
         table += "|_______________________________________________|\n";
         System.out.println(table);
