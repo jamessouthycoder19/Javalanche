@@ -208,9 +208,9 @@ public class BeaconServer implements Runnable{
             } else {
                 status = RED + "DISCONNECTED D:" + RESET;
             }
-            table += String.format("| %-20s | %-31s |\n", ip, status);
+            table += String.format("| %-20s | %-33s |\n", ip, status);
         }
-        table += "|_______________________________________________|\n";
+        table += "|______________________|_________________________|\n";
         System.out.println(table);
         return table;
     }
