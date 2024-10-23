@@ -170,6 +170,7 @@ public class BeaconServer implements Runnable{
         distributeCommands("Windows", "(pwd).path");
         for (String ip : windowsClientResponses.keySet()){
             if (windowsClientResponses.get(ip).size() != 0){
+                System.out.println(windowsClientResponses.toString());
                 if (windowsClientResponses.get(ip).contains("C:\\Windows\\fonts")){
                     // If responses contains the string we just send a command to get, then remove it, and give it true
                     ArrayList<String> tempList = windowsClientResponses.get(ip);
@@ -203,12 +204,22 @@ public class BeaconServer implements Runnable{
         table += "|______________________|_________________________|\n";
         for (String ip : clientStatus.keySet()) {
             String status;
+            boolean status_bool;
             if (clientStatus.get(ip)) {
                 status = GREEN + "CONNECTED :D" + RESET;
+                status_bool = false;
             } else {
                 status = RED + "DISCONNECTED D:" + RESET;
+                status_bool = true;
             }
-            table += String.format("| %-20s | %-33s |\n", ip, status);
+            // If the status is disconnected
+            if (status_bool){
+                table += String.format("| %-20s | %-33s |\n", ip, status);
+            }
+            // If the status is connected
+            else {
+                table += String.format("| %-20s | %-33s |\n", ip, status);
+            }
         }
         table += "|______________________|_________________________|\n";
         System.out.println(table);
