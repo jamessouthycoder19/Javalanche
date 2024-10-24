@@ -117,11 +117,7 @@ UML:
 
 Add Linux Attack Chains,
 
-Fix linux cronjobs/Service,
-
 Fix Ansible Windows Deployment,
-
-Fix Status Tests
 
 Look into Bitsadmin to transfer files,
 
@@ -130,3 +126,5 @@ the goose,
 Implement AES + RSA for HTTPS
 
 Fix UML / Network Diagram
+
+Develop more complicated payloads (Written in C most likely) that can communicate with each other should they not be able to reach a Beacon
