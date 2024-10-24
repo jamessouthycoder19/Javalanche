@@ -111,7 +111,7 @@ Payloads
     extra users, the tcp connection with the Long Range Beacon, and encryption/decryption.
 
 UML:
-![alt text](Images/DannyJamesC2UML.drawio.png)
+![alt text](<BabysFirstC2UML.drawio (1).png>)
 
 # TODO
 
