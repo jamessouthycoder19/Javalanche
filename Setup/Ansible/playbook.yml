@@ -21,8 +21,6 @@
         name: java-init
         enabled: yes
         state: started
-    - name: Run Agent
-      shell: /etc/javalanche.sh 10.0.10.128 &
 - name: Deploy Windows
   hosts: win
   become: yes
