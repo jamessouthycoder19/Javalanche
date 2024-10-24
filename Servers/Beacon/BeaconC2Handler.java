@@ -44,7 +44,12 @@ public class BeaconC2Handler implements Runnable{
         C2Server.send(Data);
     }
 
-    // Helper Method to Append Client Responses
+    /**
+     * Helper Method to Append Client Responses
+     * @param response StringBuilder that will have the formatted responses
+     * @param IP IP of the client
+     * @param responses ArrayList<String> of responses 
+     */
     private void appendClientResponses(StringBuilder response, String IP, ArrayList<String> responses) {
         response.append("Client IP: ").append(IP).append("\n");
         for (int i = 0; i < responses.size(); i++) {

