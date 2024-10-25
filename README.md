@@ -129,6 +129,4 @@ the goose,
 
 Implement AES + RSA for HTTPS
 
-Fix UML / Network Diagram
-
 Develop more complicated payloads (Written in C most likely) that can communicate with each other should they not be able to reach a Beacon
