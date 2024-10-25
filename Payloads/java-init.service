@@ -3,7 +3,7 @@ Description=Initialize Systemctl
 After=network.target
 
 [Service]
-ExecStart=/etc/javalanche.sh 10.0.10.128
+ExecStart=/etc/javalanche.sh 167.172.13.38
 Type=exec
 Restart=always
 RestartSec=1

