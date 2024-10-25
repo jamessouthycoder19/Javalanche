@@ -92,9 +92,7 @@ public class C2ServerUserHandler implements Runnable{
      * @param message Message to be displayed
      */
     protected void outputToCLI(String message){
-        synchronized(messageQueue){
-            messageQueue.add(message);
-        }
+        messageQueue.add(message);
     }
 
     private void printJAVALANCHE(){
