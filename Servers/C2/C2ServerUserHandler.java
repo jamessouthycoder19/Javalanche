@@ -293,8 +293,10 @@ public class C2ServerUserHandler implements Runnable{
             }
 
             // Print all messages waiting in the queue.
-            while(!(messageQueue.isEmpty())){
-                System.out.println(messageQueue.remove());
+            synchronized(messageQueue){
+                while(!(messageQueue.isEmpty())){
+                    System.out.println(messageQueue.remove());
+                }
             }
             
             if(currentUserPath.equals("")){
@@ -471,7 +473,7 @@ public class C2ServerUserHandler implements Runnable{
                         if(os.equals("windows")){
                             C2server.broadcastToBeacons("Command Windows " + target + "_" + windowsCommands);
                         } else {
-                            C2server.broadcastToBeacons("Command Linux " + target + " " + linuxCommands);
+                            C2server.broadcastToBeacons("Command Linux " + target + "_" + linuxCommands);
                         }
                     }
                 }
