@@ -41,6 +41,8 @@ public class C2ServerBeaconHandler implements Runnable{
             boolean sentinel = true;
             while(sentinel){
                 String response = duplexer.receive();
+
+                // TODO add logic to determine what should be send and in what format
                 C2server.outputToUserHandler(response);
             }
         } catch (IOException e) {
