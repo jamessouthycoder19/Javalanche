@@ -116,17 +116,17 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println();
     }
 
-    private void printHome(){
-        System.out.println(RESET);
-        System.out.println("      _..---^---.._         __    __                                                      ");
-        System.out.println("     /  /  /   \\ \\ \\       |  |  |  |                                   ");
-        System.out.println("    /__/__/_____\\_\\_\\      |  |  |  |   ______    _________    _______                       ");
-        System.out.println("   |   _ _           |     |  |__|  |  |  __  |  |  _   _  |  |  _____|              ");
-        System.out.println("   |  |_|_|    __    |     |   __   |  | |  | |  | | | | | |  | |____                         ");
-        System.out.println("   |  |_|_|   | .|   |     |  |  |  |  | |__| |  | | | | | |  | |_____                       ");
-        System.out.println("   |__________|__|___|     |__|  |__|  |______|  |_| |_| |_|  |_______|                                                      ");
-        System.out.println();
-    }
+    // private void printHome(){
+    //     System.out.println(RESET);
+    //     System.out.println("      _..---^---.._         __    __                                                      ");
+    //     System.out.println("     /  /  /   \\ \\ \\       |  |  |  |                                   ");
+    //     System.out.println("    /__/__/_____\\_\\_\\      |  |  |  |   ______    _________    _______                       ");
+    //     System.out.println("   |   _ _           |     |  |__|  |  |  __  |  |  _   _  |  |  _____|              ");
+    //     System.out.println("   |  |_|_|    __    |     |   __   |  | |  | |  | | | | | |  | |____                         ");
+    //     System.out.println("   |  |_|_|   | .|   |     |  |  |  |  | |__| |  | | | | | |  | |_____                       ");
+    //     System.out.println("   |__________|__|___|     |__|  |__|  |______|  |_| |_| |_|  |_______|                                                      ");
+    //     System.out.println();
+    // }
 
     private void printCommand(){
         System.out.println(RESET);
