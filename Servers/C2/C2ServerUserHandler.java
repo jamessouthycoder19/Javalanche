@@ -92,7 +92,9 @@ public class C2ServerUserHandler implements Runnable{
      * @param message Message to be displayed
      */
     protected void outputToCLI(String message){
-        messageQueue.add(message);
+        synchronized(messageQueue){
+            messageQueue.add(message);
+        }
     }
 
     private void printJAVALANCHE(){
@@ -236,11 +238,6 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println();
         System.out.println("Waiting for response...");
         Thread.sleep(5000);
-        // synchronized(messageQueue){
-        //     for (String message : messageQueue){
-        //         System.out.println(message);
-        //     }
-        // }
         System.out.println();
     }
 
