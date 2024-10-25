@@ -254,9 +254,8 @@ public class BeaconServer implements Runnable{
 
                 // Get clients IP Address
                 // getRemoteSocketAddress retruns in the form /IPAddress:Port (i.e. /1.2.3.4:12345)
-                // We just care about the IP Address though
-                String unformattedIPAddress = socket.getRemoteSocketAddress().toString();
-                String IPAddress = unformattedIPAddress.split(":")[0].substring(1);
+                // Just get ride of the / at the start, because we need the port incase a machine is sitting behind nat
+                String IPAddress = socket.getRemoteSocketAddress().toString().substring(1);
                 String OSMessage = duplexer.receive();
                 System.out.println("Inital Message: " + OSMessage);
                 
