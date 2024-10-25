@@ -167,14 +167,13 @@ public class BeaconServer implements Runnable{
         HashMap<String, Boolean> clientStatus = new HashMap<>();
 
         // Check all Windows Boxes
-        distributeCommands("Windows", "(pwd).path");
+        distributeCommands("Windows", "Test-Path C:\\Windows");
         for (String ip : windowsClientResponses.keySet()){
             if (windowsClientResponses.get(ip).size() != 0){
-                if ((windowsClientResponses.get(ip).contains("C:\\Windows\\fonts") || windowsClientResponses.get(ip).contains("C:\\Windows\\system32")) && !windowsClientResponses.get(ip).contains("DISCONNECTED")){
+                if ((windowsClientResponses.get(ip).get(-1).equals("True")) && !windowsClientResponses.get(ip).contains("DISCONNECTED")){
                     // If responses contains the string we just send a command to get, then remove it, and give it true
                     ArrayList<String> tempList = windowsClientResponses.get(ip);
-                    tempList.remove("C:\\Windows\\fonts");
-                    tempList.remove("C:\\Windows\\system32");
+                    tempList.remove("True")
                     windowsClientResponses.put(ip, tempList);
                     clientStatus.put(ip, true);
                 } else {
@@ -187,7 +186,7 @@ public class BeaconServer implements Runnable{
         // Check all Linux Boxes
         for (String ip : linuxClientResponses.keySet()){
             if (linuxClientResponses.get(ip).size() != 0){
-                if (linuxClientResponses.get(ip).contains("root") && !linuxClientResponses.get(ip).contains("DISCONNECTED")){
+                if (linuxClientResponses.get(ip).get(-1).equals("root") && !linuxClientResponses.get(ip).contains("DISCONNECTED")){
                     // If responses contains the string we just send a command to get, then remove it, and give it true
                     ArrayList<String> tempList = linuxClientResponses.get(ip);
                     tempList.remove("root");
@@ -224,7 +223,6 @@ public class BeaconServer implements Runnable{
             }
         }
         table += "|______________________|_________________________|\n";
-        System.out.println(table);
         return table;
     }
 
