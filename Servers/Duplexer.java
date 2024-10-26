@@ -19,7 +19,7 @@ public class Duplexer {
     public Duplexer(Socket socket) throws IOException{
         this.socket = socket;
         this.socket.setKeepAlive(true);
-        this.socket.setSoTimeout(259200000);
+        this.socket.setSoTimeout(0);
         
         OutputStream out = socket.getOutputStream();
         this.printWriter = new PrintWriter(out);
