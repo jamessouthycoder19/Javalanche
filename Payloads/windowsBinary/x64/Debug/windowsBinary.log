@@ -1,4 +1,0 @@
-﻿  source.cpp
-C:\Users\James\RedTeamRecruiting\Javalanche\Payloads\windowsBinary\source.cpp(70,42): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
-C:\Users\James\RedTeamRecruiting\Javalanche\Payloads\windowsBinary\source.cpp(66,12): warning C4101: 'thread': unreferenced local variable
-  windowsBinary.vcxproj -> C:\Users\James\RedTeamRecruiting\Javalanche\Payloads\windowsBinary\x64\Debug\windowsBinary.exe
