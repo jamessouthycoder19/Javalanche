@@ -3,6 +3,7 @@
 #include <string.h>
 #include <winsock2.h>
 #include <process.h>
+#include <ws2tcpip.h>
 #pragma comment(lib,"ws2_32.lib")
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -52,7 +53,7 @@ int main(void) {
     // Set up server address and port
     const char* serverIPAddress = "167.172.13.38";
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_addr.s_addr = htonl(inet_addr(serverIPAddress));
+    InetPton(AF_INET, (PCWSTR)(serverIPAddress), &serverAddr.sin_addr.s_addr);
     serverAddr.sin_port = htons(80);
 
     // Connect to server
@@ -74,11 +75,39 @@ int main(void) {
     // So instead of specifying clients by their Natted IP Address, we'd rather look at thier
     // Private IP address that is unique for that competition
     char host[256];
-    int hostnameReturnValue = gethostname(host, sizeof(host));
-    struct hostent* host_entry = gethostbyname(host);
-    char* hostIPAddress;
-    hostIPAddress = inet_ntoa(*((struct in_addr*)host_entry->h_addr_list[0]));
-    send(clientSocket, hostIPAddress, strnlen(hostIPAddress, 40), 0);
+    char ipstr[INET_ADDRSTRLEN];
+    struct addrinfo hints, * res, * p;
+    int status;
+
+    // Get the hostname
+    gethostname(host, sizeof(host));
+
+    // Set up the hints structure
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+
+    // Get address information
+    status = getaddrinfo(host, NULL, &hints, &res);
+
+    // Loop through all the results and get the first IPv4 address
+    for (p = res; p != NULL; p = p->ai_next) {
+        void* addr = NULL;
+        if (p->ai_family == AF_INET) {
+            struct sockaddr_in* ipv4 = (struct sockaddr_in*)p->ai_addr;
+            addr = &(ipv4->sin_addr);
+
+            // Convert the IP to a string
+            inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
+            printf("IP Address: %s\n", ipstr);
+
+            // Break after the first IP address is found
+            break;
+        }
+    }
+
+    // Free the linked list
+    freeaddrinfo(res);
 
     while (1) {
         // Get message from Server
