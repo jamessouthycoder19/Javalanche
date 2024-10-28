@@ -64,14 +64,19 @@ int main(void) {
 
     // Set up server address and port
     const char* serverIPAddress = "167.172.13.38";
+    wchar_t wideServerIPAddress[16];
+    size_t convertedChars = 0;
+    mbstowcs_s(&convertedChars, wideServerIPAddress, sizeof(wideServerIPAddress) / sizeof(wchar_t), serverIPAddress, _TRUNCATE);
     serverAddr.sin_family = AF_INET;
-    InetPton(AF_INET, (PCWSTR)(serverIPAddress), &serverAddr.sin_addr.s_addr);
+    InetPton(AF_INET, wideServerIPAddress, &serverAddr.sin_addr.s_addr);
     serverAddr.sin_port = htons(80);
 
     // Connect to server
-    if (connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
-        perror("Error connecting");
-        exit(EXIT_FAILURE);
+    int result = connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+    if (result != 0) {
+        int error = WSAGetLastError();
+        printf("Error Code: %d\n", error);
+        exit(error);
     }
 
     int threadnum = 0;
