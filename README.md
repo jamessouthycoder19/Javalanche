@@ -115,8 +115,6 @@ UML:
 
 # TODO
 
-Have the client send its private ip to better distinguish for comps where the whole infra is sitting behind NAT
-
 Obfuscate payload on linux by changing name from javalanche.sh/ps1 to java-init.sh/ps1
 
 Buy a cheap domain and use dns to make connection to proxy instead of parameter/hard coding ip address of beacon

