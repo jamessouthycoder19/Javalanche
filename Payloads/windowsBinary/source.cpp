@@ -117,6 +117,7 @@ int main(void) {
             // Convert the IP to a string
             inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
             printf("IP Address: %s\n", ipstr);
+            send(clientSocket, ipstr, strnlen(ipstr, 16), 0);
 
             // Break after the first IP address is found
             break;
