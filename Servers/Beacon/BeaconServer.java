@@ -216,6 +216,13 @@ public class BeaconServer implements Runnable{
 
         // Check all Windows Boxes
         distributeCommands("Windows", "Test-Path C:\\Windows");
+        distributeCommands("Linux", "whoami");
+        try{
+            Thread.sleep(3000);
+        } catch(InterruptedException e){
+            e.printStackTrace();
+        }
+
         for (String ip : windowsClientResponses.keySet()){
             if (windowsClientResponses.get(ip).size() != 0){
                 if ((windowsClientResponses.get(ip).contains("True")) && !windowsClientResponses.get(ip).contains("DISCONNECTED")){
@@ -230,7 +237,6 @@ public class BeaconServer implements Runnable{
             }   
         }
 
-        distributeCommands("Linux", "whoami");
         // Check all Linux Boxes
         for (String ip : linuxClientResponses.keySet()){
             if (linuxClientResponses.get(ip).size() != 0){
