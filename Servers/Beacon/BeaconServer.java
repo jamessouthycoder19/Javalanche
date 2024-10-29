@@ -97,20 +97,22 @@ public class BeaconServer implements Runnable{
      * @return All Clients with a matching IP Address
      */
     private ArrayList<String> getIPMatches(String IPAddress){
-        System.out.println("IP Address: " + IPAddress);
         ArrayList<String> matches = new ArrayList<>();
         String octets[] = IPAddress.split(".");
+        System.out.println("IP Address: " + IPAddress);
+        System.out.println("Split: " + octets.toString());
         for(String ip : windowsClientObjects.keySet()){
-            System.out.println("Matching on " + IPAddress);
             String clientOctets[] = ip.split(".");
-            if((octets[0].equals(clientOctets[0]) || octets[0].equals('x')) && (octets[1].equals(clientOctets[1]) || octets[1].equals('x')) && (octets[2].equals(clientOctets[2]) || octets[2].equals('x')) && (octets[3].equals(clientOctets[3]) || octets[3].equals('x'))){
+            System.out.println("Matching on " + ip);
+            System.out.println("Split: " + clientOctets.toString());
+            if((octets[0].equals(clientOctets[0]) || octets[0].equals("x")) && (octets[1].equals(clientOctets[1]) || octets[1].equals("x")) && (octets[2].equals(clientOctets[2]) || octets[2].equals("x")) && (octets[3].equals(clientOctets[3]) || octets[3].equals("x"))){
                 matches.add(ip);
             }
         }
         for(String ip : linuxClientObjects.keySet()){
             System.out.println("Matching on " + IPAddress);
             String clientOctets[] = ip.split(".");
-            if((octets[0].equals(clientOctets[0]) || octets[0].equals('x')) && (octets[1].equals(clientOctets[1]) || octets[1].equals('x')) && (octets[2].equals(clientOctets[2]) || octets[2].equals('x')) && (octets[3].equals(clientOctets[3]) || octets[3].equals('x'))){
+            if((octets[0].equals(clientOctets[0]) || octets[0].equals("x")) && (octets[1].equals(clientOctets[1]) || octets[1].equals("x")) && (octets[2].equals(clientOctets[2]) || octets[2].equals("x")) && (octets[3].equals(clientOctets[3]) || octets[3].equals("x"))){
                 matches.add(ip);
             }
         }
