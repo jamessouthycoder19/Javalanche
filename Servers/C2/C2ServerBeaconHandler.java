@@ -2,6 +2,7 @@ package Servers.C2;
 
 import java.io.IOException;
 import Servers.Duplexer;
+import Servers.keepAlive;
 
 public class C2ServerBeaconHandler implements Runnable{
     // IP address of the Long Range Becaon that this thread is handling
@@ -12,6 +13,11 @@ public class C2ServerBeaconHandler implements Runnable{
 
     // Pointer to the C2 Server
     private C2Server C2server;
+
+    // Class and Thread that send a KEEP_ALIVE Messsage to the Beacon Server every 30 seconds to keep the socket open
+    private keepAlive keepAliveClass;
+    private Thread keepAliveThread;
+    
 
     /**
      * Creates a new thread to handle each Long Range Beacon
@@ -24,6 +30,8 @@ public class C2ServerBeaconHandler implements Runnable{
         this.duplexer = duplexer;
         this.IP = IP;
         this.C2server = server;
+        this.keepAliveClass = new keepAlive(duplexer, false, false);
+        this.keepAliveThread = new Thread(keepAliveClass);
     }
 
     /**
@@ -39,14 +47,16 @@ public class C2ServerBeaconHandler implements Runnable{
     public void run() {
         try {
             boolean sentinel = true;
+            keepAliveThread.start();
             while(sentinel){
                 String response = duplexer.receive();
-
-                // TODO add logic to determine what should be send and in what format
-                C2server.outputToUserHandler(response);
+                if(!(response.equals("KEEP_ALIVE"))){
+                    C2server.outputToUserHandler(response);
+                }   
             }
         } catch (IOException e) {
             e.printStackTrace();
+            keepAliveClass.stopKeepAlive();
         }
     }
 }

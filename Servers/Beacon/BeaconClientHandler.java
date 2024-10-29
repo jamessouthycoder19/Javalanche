@@ -1,6 +1,8 @@
 package Servers.Beacon;
 
 import Servers.Duplexer;
+import Servers.keepAlive;
+
 import java.io.IOException;
 
 public class BeaconClientHandler implements Runnable{
@@ -9,6 +11,8 @@ public class BeaconClientHandler implements Runnable{
     private BeaconServer beaconServer;
     private String os;
     private Boolean sentinel = true;
+    private keepAlive keepAliveClass;
+    private Thread keepAliveThread;
 
     /**
      * Use this Class to create a new thread to handle each victim connection
@@ -21,6 +25,8 @@ public class BeaconClientHandler implements Runnable{
         this.duplexer = duplexer;
         this.beaconServer = beaconServer;
         this.os = os;
+        this.keepAliveClass = new keepAlive(this.duplexer, true, true);
+        this.keepAliveThread = new Thread(keepAliveClass);
     }
 
     protected void quit(String reason) throws IOException{
@@ -68,6 +74,8 @@ public class BeaconClientHandler implements Runnable{
 
     @Override
     public void run(){
+        // Start the Thread to Send KEEP_ALIVE messages to the client every 30 seconds
+        keepAliveThread.start();
         while(sentinel){
             try{
                 String response = duplexer.receive();
@@ -81,6 +89,7 @@ public class BeaconClientHandler implements Runnable{
                 sentinel = false;
                 try{
                     duplexer.close();
+                    keepAliveClass.stopKeepAlive();
                 } catch (IOException d){
                     d.printStackTrace();
                 }
