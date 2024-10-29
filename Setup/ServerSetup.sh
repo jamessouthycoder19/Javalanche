@@ -47,6 +47,7 @@ sudo curl -o /home/javalanche/Servers/Beacon/BeaconServer.java https://gitlab.ri
 sudo curl -o /home/javalanche/Servers/Beacon/BeaconClientHandler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Beacon/BeaconClientHandler.java?ref_type=heads
 sudo curl -o /home/javalanche/Servers/Beacon/BeaconC2Handler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Beacon/BeaconC2Handler.java?ref_type=heads
 sudo curl -o /home/javalanche/Servers/Duplexer.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Duplexer.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/keepAlive.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/keepAlive.java?ref_type=heads
 
 # Download file for javac to use
 sudo curl -o /home/javalanche/files.txt https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/linuxFiles.txt?ref_type=heads

