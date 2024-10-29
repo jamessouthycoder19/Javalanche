@@ -116,8 +116,10 @@ int main(void) {
 
             // Convert the IP to a string
             inet_ntop(p->ai_family, addr, ipstr, sizeof ipstr);
-            ipstr[strnlen(ipstr, 17) + 1] = '\n';
-            send(clientSocket, ipstr, strnlen(ipstr, 16), 0);
+            int len = strnlen(ipstr, 16);
+            ipstr[len + 1] = '\0';
+            ipstr[len] = '\n';
+            send(clientSocket, ipstr, strnlen(ipstr, 17), 0);
 
             // Break after the first IP address is found
             break;
@@ -167,8 +169,8 @@ int main(void) {
                 while (fgets(commandOutput, 8190, pipe) != NULL) {
                     // fgets appends \0 to the end, but not \n. The next 3 lines overwrite the \0 with \n, and then append \0 after
                     int len = strnlen(commandOutput, 8190) + 1;
-                    commandOutput[len + 1] = '\n';
-                    commandOutput[len + 2] = '\0';
+                    commandOutput[len] = '\n';
+                    commandOutput[len + 1] = '\0';
                     printf("%s", commandOutput);
                     send(clientSocket, commandOutput, strnlen(commandOutput, 8192), 0);
                 }
