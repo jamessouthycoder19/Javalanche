@@ -69,6 +69,7 @@ public class BeaconClientHandler implements Runnable{
         if(sentinel){
             message = encrypt(message);
             String httpHeader = "HTTP/1.1 200 OK\r\n" +  "Content-Length: " + message.length() + "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n";
+            System.out.println("Sending: " + message);
             message = httpHeader + message;
             synchronized(sendLock){
                 duplexer.send(message);
