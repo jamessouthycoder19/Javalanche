@@ -146,7 +146,7 @@ int main(void) {
 
         // Decrypt the Message from the server
         encrypt(serverMessage);
-        const char* keepAlive = "KEEP_ALIVE";
+        const char* keepAlive = "KEEP_ALIVE\n";
 
         // Check to make sure the message isn't a keep alive message
         if (strncmp(serverMessage, keepAlive, 11) != 0) {

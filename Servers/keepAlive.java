@@ -13,6 +13,9 @@ public class keepAlive implements Runnable{
     // As long as sentinel is true, then this thread will send KEEP_ALIVE every 30 seconds
     private boolean sentinel;
 
+    // sendLock is a synchronization lock that is used to control who can send messages to the client and when.
+    private Object sendLock;
+
     /**
      * Use this constructor to create a new Keep Alive Thread, to ensure that a Socket is kept alive
      * 
@@ -20,11 +23,12 @@ public class keepAlive implements Runnable{
      * @param encrypt Is the KEEP_ALIVE Message encrypted using a 13 Character Caesar Cipher
      * @param http Is the Message nested in a HTTP Header
      */
-    public keepAlive(Duplexer duplexer, boolean encrypt, boolean http){
+    public keepAlive(Duplexer duplexer, Object sendLock, boolean encrypt, boolean http){
         this.duplexer = duplexer;
         this.encrypt = encrypt;
         this.http = http;
         this.sentinel = true;
+        this.sendLock = sendLock;
     }
 
     public void stopKeepAlive(){
@@ -70,8 +74,9 @@ public class keepAlive implements Runnable{
             if(http){
                 message = "HTTP/1.1 200 OK\r\n" +  "Content-Length: " + message.length() + "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n" + message;
             }
-            duplexer.send(message);
-            
+            synchronized(sendLock){
+                duplexer.send(message);
+            }            
         }
     }
     
