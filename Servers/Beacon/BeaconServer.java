@@ -75,6 +75,46 @@ public class BeaconServer implements Runnable{
     }
 
     /**
+     * This Function takes an IP address, with a wildcard character, and returns all
+     * Matches for that IP Address. 
+     * 
+     * Example
+     * Client IP Address = {192.168.1.1, 192.168.4.5, 10.1.10.1, 10.2.10.1}
+     * 
+     * Parameter 10.x.10.1
+     * Return Value {10.1.10.1, 10.2.10.1}
+     * 
+     * Parameter 192.168.1.x
+     * Return Value {192.168.1.1}
+     * 
+     * Parameter 192.168.x.x
+     * Return Value {192.168.1.1, 192.168.4.5}
+     * 
+     * Parameter 172.16.x.15
+     * Return Value {}
+     * 
+     * @param IPAddress IP Address to Match
+     * @return All Clients with a matching IP Address
+     */
+    private ArrayList<String> getIPMatches(String IPAddress){
+        ArrayList<String> matches = new ArrayList<>();
+        String octets[] = IPAddress.split(".");
+        for(String ip : windowsClientObjects.keySet()){
+            String clientOctets[] = ip.split(".");
+            if((octets[0].equals(clientOctets[0]) || octets[0].equals('x')) && (octets[1].equals(clientOctets[1]) || octets[1].equals('x')) && (octets[2].equals(clientOctets[2]) || octets[2].equals('x')) && (octets[3].equals(clientOctets[3]) || octets[3].equals('x'))){
+                matches.add(ip);
+            }
+        }
+        for(String ip : linuxClientObjects.keySet()){
+            String clientOctets[] = ip.split(".");
+            if((octets[0].equals(clientOctets[0]) || octets[0].equals('x')) && (octets[1].equals(clientOctets[1]) || octets[1].equals('x')) && (octets[2].equals(clientOctets[2]) || octets[2].equals('x')) && (octets[3].equals(clientOctets[3]) || octets[3].equals('x'))){
+                matches.add(ip);
+            }
+        }
+        return matches;
+    }
+
+    /**
      * Distribute commands from the Beacon C2 Handler, to all of the different Beacon Client Handlers.
      * 
      * @param scope - What clients should receive the command
