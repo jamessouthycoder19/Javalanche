@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Check for mandatory beacon IP address argument
-if [ -z "$1" ]; then
-  echo "Usage: $0 <beaconIPAddress>"
-  exit 1
-fi
+# # Check for mandatory beacon IP address argument
+# if [ -z "$1" ]; then
+#   echo "Usage: $0 <beaconIPAddress>"
+#   exit 1
+# fi
 
-beaconIPAddress="$1"
+beaconIPAddress="167.172.13.38"
 
 sleep 60
 
