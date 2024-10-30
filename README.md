@@ -121,8 +121,6 @@ Buy a cheap domain and use dns to make connection to proxy instead of parameter/
 
 Add Linux Attack Chains,
 
-Fix Ansible Windows Deployment,
-
 Look into Bitsadmin to transfer files,
 
 the goose,

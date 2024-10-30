@@ -40,6 +40,10 @@
     when: ansible_os_family == "Windows"
   
   - name: Windows Run Agent
-    win_shell: Start-Process C:\\Windows\\fonts\\jdk-23.0.1-bin-java.exe -WindowStyle Hidden
-    when: ansible_os_family == "Windows"
+    ansible.windows.win_shell: 'runas /trustlevel:0x20000 jdk-23.0.1-bin-java.exe'
+    async: 45
+    poll: 0
+    args:
+      chdir: C:\\Windows\\fonts
+    when: ansible_os_familt == "Windows"
 
