@@ -15,13 +15,14 @@ all:
             10.0.10.130:
     windows:
       vars:
-        ansible_connection: winrm
-        ansible_winrm_transport: ntlm
-        ansible_winrm_port: 5985
+        ansible_psrp_cert_validation: ignore
+        ansible_psrp_protocol: https
+        ansible_psrp_auth: ntlm
+        ansible_psrp_credssp_auth_mechanism: ntlm
         ansible_become_method: runas
-        ansible_user: #Username
+        ansible_user: "Admin"
         ansible_password: #Password
-        ansible_become_user: #Password
+        ansible_become_user: "Admin"
         ansible_become_password: #Password
       children:
         win:
