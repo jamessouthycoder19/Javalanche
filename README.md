@@ -115,7 +115,13 @@ UML:
 
 # TODO
 
-Obfuscate payload on linux by changing name from javalanche.sh/ps1 to java-init.sh/ps1
+Improve Linux and Windows Obfuscation
+
+Register Windows as a service
+
+Add a "Shell" Option, where we can get responses to commands right away, and it will look like i'm in a powershell shell.
+
+Look into SetCurrentAddress and GetCurrentAddress to use cd and pwd more effectively.
 
 Buy a cheap domain and use dns to make connection to proxy instead of parameter/hard coding ip address of beacon
 
