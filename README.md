@@ -115,9 +115,7 @@ UML:
 
 # TODO
 
-Improve Linux and Windows Obfuscation
-
-Register Windows as a service
+Improve Linux Obfuscation
 
 Add a "Shell" Option, where we can get responses to commands right away, and it will look like i'm in a powershell shell.
 

