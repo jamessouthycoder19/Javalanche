@@ -3,6 +3,7 @@ package Servers.C2;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.HashMap;
 import Servers.Duplexer;
 
@@ -19,6 +20,9 @@ public class C2Server implements Runnable{
 
     // Boolean to determine if server should remain running
     private boolean sentinel = true;
+
+    // String for an IP address of a beacaon attempting to authenticate
+    private String attemptedAuthIP;
 
 
     /**
@@ -79,6 +83,7 @@ public class C2Server implements Runnable{
                 // We just care about the IP Address though
                 String unformattedIPAddress = socket.getRemoteSocketAddress().toString();
                 String IPAddress = unformattedIPAddress.split(":")[0].substring(1);
+                attemptedAuthIP = IPAddress;
                 
                 // Receive initial message for authentication from the new Beacon
                 String hashedPassForAuth = duplexer.receive();
@@ -100,6 +105,8 @@ public class C2Server implements Runnable{
                     beaconHandlerThread.start();
                 }
                 
+            } catch(SocketException e){
+                userHandler.outputToCLI("Attempted Beacon Authentication failed from " + attemptedAuthIP);
             } catch(IOException e){
                 e.printStackTrace();
             }
