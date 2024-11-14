@@ -282,18 +282,21 @@ public class C2ServerUserHandler implements Runnable{
             synchronized(messageQueue){
                 while(!(messageQueue.isEmpty())){
                     currentMessage = messageQueue.remove();
+                    System.out.println(currentMessage);
                     if(foundCorrectClient){
+                        System.out.println("Windows Pattern");
                         if(windowsCompiledRegexPattern.matcher(currentMessage).matches()){
-                            System.out.println(currentMessage);
                             currentDirectory = currentMessage;
                             break;
                         }
                         else if(linuxCompiledRegexPattern.matcher(currentMessage).matches()){
+                            System.out.println("Linux Patterns");
                             System.out.println(currentMessage);
                             currentDirectory = currentMessage;
                             break;
                         }
                     } else if(currentMessage.contains(cilentIP)){
+                        System.out.println("Correct IP");
                         foundCorrectClient = true;
                     }
                 }
