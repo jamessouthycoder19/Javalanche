@@ -6,6 +6,7 @@ import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Scanner;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Queue;
 import java.util.HashSet;
@@ -267,8 +268,6 @@ public class C2ServerUserHandler implements Runnable{
                 e.printStackTrace();
             }
 
-            String currentMessage;
-            boolean foundCorrectClient = false;
             String currentDirectory = "C:\\";
 
             // Regex Patterns to search for filepaths (C:\ or /)
@@ -280,25 +279,25 @@ public class C2ServerUserHandler implements Runnable{
     
             // Iterate through each message returned from the client to find the current directory
             synchronized(messageQueue){
-                while(!(messageQueue.isEmpty())){
-                    currentMessage = messageQueue.remove();
-                    System.out.println(currentMessage);
-                    if(foundCorrectClient){
+                Object messages[] = messageQueue.toArray();
+                for(int i = messages.length - 1; i > 0; i++){
+                    System.out.println(messages[i].toString());
+                    Matcher matcher = windowsCompiledRegexPattern.matcher(messages[i].toString());
+                    if(matcher.matches()){
                         System.out.println("Windows Pattern");
-                        if(windowsCompiledRegexPattern.matcher(currentMessage).matches()){
-                            currentDirectory = currentMessage;
-                            break;
-                        }
-                        else if(linuxCompiledRegexPattern.matcher(currentMessage).matches()){
-                            System.out.println("Linux Patterns");
-                            System.out.println(currentMessage);
-                            currentDirectory = currentMessage;
-                            break;
-                        }
-                    } else if(currentMessage.contains(cilentIP)){
-                        System.out.println("Correct IP");
-                        foundCorrectClient = true;
+                        currentDirectory = matcher.group();
+                        break;
                     }
+                    else {
+                        matcher = linuxCompiledRegexPattern.matcher(messages[i].toString());
+                        if(matcher.matches()){
+                            System.out.println("Linux Pattern");
+                            currentDirectory = matcher.group();
+                            break;
+                        }
+                    }
+                    
+
                 }
             }
 
