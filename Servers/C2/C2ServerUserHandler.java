@@ -273,6 +273,8 @@ public class C2ServerUserHandler implements Runnable{
             // readMessages variable is used to ensure that only the results of the command run are output to the user
             ArrayList<String> readMessages;
 
+            ArrayList<String> tempReadMessagesList;
+
             // messages is used to store all client responses
             Object messages[];
     
@@ -285,9 +287,6 @@ public class C2ServerUserHandler implements Runnable{
                 for(Object message : messages){
                     readMessages.add(message.toString());
                 }
-
-                System.out.println("readMessages var: ");
-                System.out.println(readMessages.toString());
 
                 for(int i = messages.length - 1; i > 0; i--){
                     if(messages[i].toString().contains("C:\\")){
@@ -335,11 +334,9 @@ public class C2ServerUserHandler implements Runnable{
 
                         // Get all messages
                         messages = messageQueue.toArray();
-                        System.out.println("readMessages var: ");
-                        System.out.println(readMessages.toString());
 
                         // Store all of the messages just received in a new temp list
-                        ArrayList<String> tempReadMessagesList = new ArrayList<>();
+                        tempReadMessagesList = new ArrayList<>();
                         for(Object message : messages){
                             tempReadMessagesList.add(message.toString());
                         }
@@ -356,7 +353,9 @@ public class C2ServerUserHandler implements Runnable{
                         }
 
                         // Replace the old already read messages list with the new one saved from earlier
+                        System.out.println("Before: " + readMessages);
                         readMessages = tempReadMessagesList;
+                        System.out.println("After: " + readMessages);
 
                     }
                 }
