@@ -281,6 +281,7 @@ public class C2ServerUserHandler implements Runnable{
             // Iterate through each message returned from the client, starting at the end, to find the current directory
             synchronized(messageQueue){
                 messages = messageQueue.toArray();
+                messageQueue.removeAll(messageQueue);
 
                 // Initialize the readMessages ArrayList with all of the messages already in the client responses
                 readMessages = new ArrayList<>();
@@ -334,6 +335,7 @@ public class C2ServerUserHandler implements Runnable{
 
                         // Get all messages
                         messages = messageQueue.toArray();
+                        messageQueue.removeAll(messageQueue);
 
                         // Store all of the messages just received in a new temp list
                         tempReadMessagesList = new ArrayList<>();
@@ -344,19 +346,14 @@ public class C2ServerUserHandler implements Runnable{
                         // Iterate through responses and print only ones that are new
                         for(Object message : messages){
                             if(readMessages.contains(message.toString())){
-                                System.out.println("Removing Object");
                                 readMessages.remove(message.toString());
                             } else {
-                                System.out.println("Correct Print:");
                                 System.out.println(message.toString());
                             }
                         }
 
                         // Replace the old already read messages list with the new one saved from earlier
-                        System.out.println("Before: " + readMessages);
                         readMessages = tempReadMessagesList;
-                        System.out.println("After: " + readMessages);
-
                     }
                 }
             }
