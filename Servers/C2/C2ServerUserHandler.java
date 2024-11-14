@@ -244,7 +244,7 @@ public class C2ServerUserHandler implements Runnable{
         if(clientIP.equals("q")){
             currentUserPath = "";
         } else {
-            System.out.println("Setting up Shell ... ");
+            System.out.println("Setting up Shell ... \n");
 
             // Empty the Message Queue
             synchronized(messageQueue){
@@ -343,12 +343,13 @@ public class C2ServerUserHandler implements Runnable{
                             tempReadMessagesList.add(message.toString());
                         }
 
+                        System.out.println();
                         // Iterate through responses and print only ones that are new
                         for(Object message : messages){
                             if(readMessages.contains(message.toString())){
                                 readMessages.remove(message.toString());
                             } else {
-                                System.out.println(message.toString());
+                                System.out.println(message.toString().substring(5));
                             }
                         }
 
