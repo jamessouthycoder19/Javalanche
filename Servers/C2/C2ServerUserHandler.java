@@ -272,7 +272,7 @@ public class C2ServerUserHandler implements Runnable{
             String currentDirectory = "C:\\";
 
             // Regex Patterns to search for filepaths (C:\ or /)
-            String windowsPathRegexPattern = "^[a-zA-Z]:\\\\(?:[^\\\\:*?\"<>|\\r\\n]+\\\\)*[^\\\\:*?\"<>|\\r\\n]*$";
+            String windowsPathRegexPattern = "\"^C:\\\\\\\\.*$\"";
             Pattern windowsCompiledRegexPattern = Pattern.compile(windowsPathRegexPattern);
 
             String linuxPathRegexPattern = "^(/[^/ ]*)+/?$";
