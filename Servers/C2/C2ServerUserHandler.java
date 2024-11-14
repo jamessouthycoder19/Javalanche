@@ -350,6 +350,7 @@ public class C2ServerUserHandler implements Runnable{
                                 System.out.println("Removing Object");
                                 readMessages.remove(message.toString());
                             } else {
+                                System.out.println("Correct Print:");
                                 System.out.println(message.toString());
                             }
                         }
