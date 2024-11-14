@@ -340,7 +340,7 @@ public class BeaconServer implements Runnable{
                 }
             } catch(IOException e){
                 e.printStackTrace();
-            }
+            } catch (NullPointerException e){}
         }
     }
 

