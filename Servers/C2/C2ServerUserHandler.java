@@ -498,7 +498,7 @@ public class C2ServerUserHandler implements Runnable{
                 String target = "";
                 HashSet<String> validInputs = new HashSet<>(Arrays.asList("1","2","3","4","5"));
                 if(validInputs.contains(userAttackChainChoice)){
-                    System.out.println("Enter 'Windows','Linux', or 'All");
+                    System.out.println("Enter 'Windows','Linux', or 'All'");
                     System.out.print(" >> ");
                     os = userInputScanner.nextLine();
                     os = os.toLowerCase().strip();
