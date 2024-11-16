@@ -115,15 +115,15 @@ UML:
 
 # TODO
 
-Improve Linux Obfuscation
+Fix Windows Attack Chains
 
-Add a "Shell" Option, where we can get responses to commands right away, and it will look like i'm in a powershell shell.
+Fix Linux Attack Chains
+
+Improve Linux Obfuscation
 
 Look into SetCurrentAddress and GetCurrentAddress to use cd and pwd more effectively.
 
 Buy a cheap domain and use dns to make connection to proxy instead of parameter/hard coding ip address of beacon
-
-Add Linux Attack Chains,
 
 Look into Bitsadmin to transfer files,
 
@@ -131,4 +131,6 @@ the goose,
 
 Implement AES + RSA for HTTPS
 
-Develop more complicated payloads (Written in C most likely) that can communicate with each other should they not be able to reach a Beacon
+Have the payloads communicate with each other should they not be able to reach a Beacon
+
+Write Linux C Payload
