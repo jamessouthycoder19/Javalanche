@@ -620,6 +620,12 @@ public class C2ServerUserHandler implements Runnable{
                             C2server.broadcastToBeacons("Command Linux_" + linuxCommands);
                         }
                     } else {
+                        // Temporary fix to have the target match the protocl
+                        if(target.equals("windows")){
+                            target = "Windows";
+                        } else if (target.equals("linux")){
+                            target = "Linux";
+                        }
                         if(os.equals("windows")){
                             C2server.broadcastToBeacons("Command " + target + "_" + windowsCommands);
                         } else {
