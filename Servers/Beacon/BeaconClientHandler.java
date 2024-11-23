@@ -100,7 +100,7 @@ public class BeaconClientHandler implements Runnable{
             // Open a connection to PWNBoard and set some basic variables
             connection = (HttpURLConnection) uri.toURL().openConnection();
             connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            connection.setRequestProperty("Content-Type", "application/json");
             connection.setRequestProperty("Content-Length", Integer.toString(pwnBoardData.length()));
             connection.setRequestProperty("Content-Language", "en-US");  
             connection.setUseCaches(false);
