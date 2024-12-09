@@ -121,9 +121,11 @@ Fix Linux Attack Chains
 
 Improve Linux Obfuscation
 
-Look into SetCurrentAddress and GetCurrentAddress to use cd and pwd more effectively.
+Improve Windows Obfuscation (Randomize name of Service, file name, and file location via ansible (hopefully that's possible))
 
-Buy a cheap domain and use dns to make connection to proxy instead of parameter/hard coding ip address of beacon
+Look into SetCurrentAddress and GetCurrentAddress to use cd and pwd more effectively (within powershell shell).
+
+Buy a cheap domain (javalanche.net??) and use dns to make connection to proxy instead of parameter/hard coding ip address of beacon
 
 Look into Bitsadmin to transfer files,
 
@@ -132,5 +134,6 @@ the goose,
 Implement AES + RSA for HTTPS
 
 Have the payloads communicate with each other should they not be able to reach a Beacon
+    First check to see if the payload can still communicate with desired client, if it can, just send the message to that one, else, send a message to all of the other clients seeing if someone else can communicate with it.
 
 Write Linux C Payload
