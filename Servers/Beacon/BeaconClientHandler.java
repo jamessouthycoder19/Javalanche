@@ -59,7 +59,7 @@ public class BeaconClientHandler implements Runnable{
         } catch (URISyntaxException e){
             e.printStackTrace();
         }
-        this.pwnBoardData = "{'ip': " + IPAddress + ", 'type': 'Javalanche'}";
+        this.pwnBoardData = "{'ip': " + IPAddress + ", 'application': 'Javalanche', 'access_type': 'beacon'}";
     }
 
     protected void quit(String reason) throws IOException{
@@ -107,7 +107,7 @@ public class BeaconClientHandler implements Runnable{
             connection.setDoOutput(true);
 
             // Send Post request
-            DataOutputStream writer = new DataOutputStream (connection.getOutputStream());
+            DataOutputStream writer = new DataOutputStream(connection.getOutputStream());
             writer.writeBytes(pwnBoardData);
             writer.close();
         } catch (Exception e){
