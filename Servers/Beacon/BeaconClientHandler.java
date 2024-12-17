@@ -59,7 +59,7 @@ public class BeaconClientHandler implements Runnable{
         } catch (URISyntaxException e){
             e.printStackTrace();
         }
-        this.pwnBoardData = "{'ip': " + IPAddress + ", 'application': 'Javalanche', 'access_type': 'beacon'}";
+        this.pwnBoardData = "{\"ip\": " + IPAddress + ", \"application\": \"Javalanche\", \"access_type\": \"beacon\"}";
     }
 
     protected void quit(String reason) throws IOException{
