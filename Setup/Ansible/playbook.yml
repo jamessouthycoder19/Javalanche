@@ -1,6 +1,11 @@
 ---
-- name: Deploy
-  hosts: linux:windows
+- name: Deploy Linux
+  hosts: linux
   become: yes
   roles:
-    - javalanche
+    - linux
+
+- name: Deploy Windows
+  hosts: windows
+  roles:
+    - windows
