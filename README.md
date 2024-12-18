@@ -121,8 +121,6 @@ Fix Linux Attack Chains
 
 Improve Linux Obfuscation
 
-Improve Windows Obfuscation (Randomize name of Service, file name, and file location via ansible (hopefully that's possible))
-
 Look into SetCurrentAddress and GetCurrentAddress to use cd and pwd more effectively (within powershell shell).
 
 Buy a cheap domain (javalanche.net??) and use dns to make connection to proxy instead of parameter/hard coding ip address of beacon

@@ -116,15 +116,7 @@ public class BeaconClientHandler implements Runnable{
         writer.writeBytes(pwnboardData);
         writer.close();
 
-        // Debug lines
-        InputStream in = pwnboardConnection.getInputStream();
-        Scanner scanner = new Scanner(in);
-
-        while(scanner.hasNext()){
-            System.out.println(scanner.nextLine());
-        }
-        scanner.close();
-
+        // Close connection
         pwnboardConnection.disconnect();
     }
 
@@ -180,7 +172,6 @@ public class BeaconClientHandler implements Runnable{
                 beaconServer.addDataToResponsesDictionaries(IPAddress, "DISCONNECTED");
                 e.printStackTrace();
             }
-            
         }
     }
 }
