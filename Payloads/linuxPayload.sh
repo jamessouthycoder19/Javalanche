@@ -6,7 +6,7 @@
 #   exit 1
 # fi
 
-beaconIPAddress="167.172.13.38"
+beaconIPAddress="10.0.10.128"
 
 sleep 60
 

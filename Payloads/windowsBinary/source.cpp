@@ -114,7 +114,7 @@ void ServiceMain(DWORD argc, LPTSTR* argv) {
     }
 
     // Set up server address and port
-    const char* serverIPAddress = "167.172.13.38";
+    const char* serverIPAddress = "10.0.10.128";
     wchar_t wideServerIPAddress[16];
     size_t convertedChars = 0;
     mbstowcs_s(&convertedChars, wideServerIPAddress, sizeof(wideServerIPAddress) / sizeof(wchar_t), serverIPAddress, _TRUNCATE);
