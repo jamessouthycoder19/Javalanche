@@ -331,9 +331,9 @@ public class C2ServerUserHandler implements Runnable{
                                 currentDirectory = dir;
                             } else if (dir.equals("..")) {
                                 dirs = currentDirectory.split("/");
-                                currentDirectory = currentDirectory.substring(0, currentDirectory.indexOf(dirs[-1]) - 1);
+                                currentDirectory = currentDirectory.substring(0, currentDirectory.indexOf(dirs[dirs.length - 1]) - 1);
                             } else {
-                                currentDirectory += "/" + dir;
+                                currentDirectory += dir + "/";
                             }
                         } else {
                             // Windows
@@ -342,9 +342,9 @@ public class C2ServerUserHandler implements Runnable{
                                 currentDirectory = dir;
                             } else if (dir.equals("..")) {
                                 dirs = currentDirectory.split("\\");
-                                currentDirectory = currentDirectory.substring(0, currentDirectory.indexOf(dirs[-1]) - 1);
+                                currentDirectory = currentDirectory.substring(0, currentDirectory.indexOf(dirs[dirs.length - 1]) - 1);
                             } else {
-                                currentDirectory += "\\" + dir;
+                                currentDirectory += dir + "\\";
                             }
                         }
                         
