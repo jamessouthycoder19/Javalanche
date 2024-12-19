@@ -12,14 +12,14 @@
 
 - name: Linux | Select Random Path and Random Index for Service Name and Description
   set_fact:
-    linux_random_path: "{{ linux_paths | random_choice }}"
+    linux_random_path: "{{ linux_paths | random }}"
     linux_random_index: "{{ range(0, linux_file_names | length) | random }}"
   when: ansible_os_family in linux_distros
 
 - name: Linux | Select Random File/Service Name and Description
   set_fact:
-    linux_random_file_name: "{{ linus_file_names[random_index] }}"
-    linux_random_service_description: "{{ linux_service_descriptions[random_index] }}"
+    linux_random_file_name: "{{ linux_file_names[linux_random_index | int] }}"
+    linux_random_service_description: "{{ linux_service_descriptions[linux_random_index | int] }}"
   when: ansible_os_family in linux_distros
 
 - name: Linux | Download Agent

@@ -9,8 +9,8 @@
   
 - name: Windows | Select Random Path and File Name
   set_fact:
-    windows_random_path: "{{ windows_paths | random_choice }}"
-    windows_random_file_name: "{{ windows_file_names | random_choice }}"
+    windows_random_path: "{{ windows_paths | random }}"
+    windows_random_file_name: "{{ windows_file_names | random }}"
   when: ansible_os_family == "Windows"
 
 - name: Windows | Select Random Index for Service Name and Description
@@ -20,8 +20,8 @@
 
 - name: Windows | Select Random Service and Description
   set_fact:
-    windows_random_service_name: "{{ windows_service_names[random_index] }}"
-    windows_random_service_description: "{{ windows_service_descriptions[random_index] }}"
+    windows_random_service_name: "{{ windows_service_names[random_index | int] }}"
+    windows_random_service_description: "{{ windows_service_descriptions[random_index | int] }}"
   when: ansible_os_family == "Windows"
 
 - name: Windows | Download agent
