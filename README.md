@@ -119,8 +119,6 @@ Fix Windows Attack Chains
 
 Fix Linux Attack Chains
 
-Look into SetCurrentAddress and GetCurrentAddress to use cd and pwd more effectively (within powershell shell).
-
 Buy a cheap domain (javalanche.net??) and use dns to make connection to proxy instead of parameter/hard coding ip address of beacon
 
 Look into Bitsadmin to transfer files,

