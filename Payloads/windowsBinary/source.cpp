@@ -16,6 +16,12 @@ SERVICE_STATUS_HANDLE hStatus;
 void ServiceMain(DWORD argc, LPTSTR* argv);
 void ControlHandler(DWORD request);
 
+typedef struct otherClient {
+    char ip[20];
+    char username[30];
+    char password[30];
+};
+
 static void encrypt(char* plainText) {
     // This function takes a pointer to a string, and rotates the characters by 13
     // Because the Ceaser Cipher we are using is 13 characters, the same cipher can be applied
@@ -55,7 +61,6 @@ unsigned __stdcall winrmOtherClients(){
     hres = CoInitializeEx(0, COINIT_MULTITHREADED);
     if (FAILED(hres)) {
         printf("Failed to initialize COM library. Error code = 0x%x", hres);
-        return 1;  // Program has failed.
     }
 
     // Set general COM security levels.
@@ -90,22 +95,38 @@ unsigned __stdcall winrmOtherClients(){
         return 1;  // Program has failed.
     }
 
+    // Allocate memory for client
+    otherClient* client1 = (otherClient*)calloc(1, sizeof(struct otherClient));
+    strcpy_s(client1->ip, rsize_t(19), "10.0.10.81");
+    strcpy_s(client1->username, rsize_t(29), "administrator");
+    strcpy_s(client1->password, rsize_t(29), "Password-123456");
+
     // TODO
     // While(true){
     //      sleep(some time)
     //      for client in clients{
     //           wmi commands to make sure that this machine has an agent running
+
     // Connect to the WMI namespace.
     IWbemServices* pSvc = NULL;
+
+    // Create the full wmi namespace path with the ip address
+    char* path = (char*)calloc(40, sizeof(char));
+    strcpy_s(path, 40, "\\\\");
+    strcat_s(path, 36, client1->ip);
+    strcat_s(path, 20, "\\ROOT\\CIMV2");
+
+    BSTR namespacePath = SysAllocString((wchar_t*)path);
+
     hres = pLoc->ConnectServer(
-        _bstr_t(L"ROOT\\CIMV2"), // WMI namespace
-        NULL,                    // User name
-        NULL,                    // User password
-        0,                       // Locale
-        NULL,                    // Security flags
-        0,                       // Authority 
-        0,                       // Context object 
-        &pSvc                    // IWbemServices proxy
+        _bstr_t(namespacePath),     // WMI namespace
+        _bstr_t(client1->username), // User name
+        _bstr_t(client1->password), // User password
+        0,                          // Locale
+        NULL,                       // Security flags
+        0,                          // Authority 
+        0,                          // Context object 
+        &pSvc                       // IWbemServices proxy
     );
 
     if (FAILED(hres)) {
