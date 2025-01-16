@@ -5,6 +5,7 @@ import Servers.Duplexer;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.security.MessageDigest;
@@ -339,7 +340,11 @@ public class BeaconServer implements Runnable{
                     }
                 }
             } catch(IOException e){
-                e.printStackTrace();
+                // If Sentinel is set to false, this means that the "error" occured because the Beacon Server is being shut
+                // down while listenting for connections, and there is no need to print the actual error.
+                if(sentinel = true){
+                    e.printStackTrace();
+                }
             } catch (NullPointerException e){}
         }
     }
