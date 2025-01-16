@@ -71,6 +71,7 @@ public class BeaconServer implements Runnable{
                 clientHandler.quit(reason);
             }
         }
+        sentinel = false;
         serverSocket.close();
         System.out.println("Beacon Server is shutting down. Reason: " + reason);
     }

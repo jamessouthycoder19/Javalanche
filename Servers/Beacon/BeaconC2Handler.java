@@ -97,7 +97,7 @@ public class BeaconC2Handler implements Runnable{
             String message = C2Server.receive();
             if(!(message.equals("Authentication Successful"))){
                 String reason = "Authentication with the C2 Server Unsuccesful. Message Received from C2 Server: " + message;
-                beaconServer.quit(reason);
+                //beaconServer.quit(reason);
                 beaconServer.stopServer();
                 C2Server.close();
                 authenticationSentinel = false;
