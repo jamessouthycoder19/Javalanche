@@ -5,7 +5,6 @@ import Servers.Duplexer;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.security.MessageDigest;
@@ -291,10 +290,6 @@ public class BeaconServer implements Runnable{
      */
     protected void sendDataToC2Server(String data){
         C2Handler.sendDataToC2Server(data);
-    }
-
-    protected void stopServer(){
-        sentinel = false; 
     }
 
     @Override

@@ -55,23 +55,6 @@ public class BeaconC2Handler implements Runnable{
         }
     }
 
-    /**
-     * Helper Method to Append Client Responses
-     * @param response StringBuilder that will have the formatted responses
-     * @param IP IP of the client
-     * @param responses ArrayList<String> of responses 
-     */
-    private void appendClientResponses(StringBuilder response, String IP, ArrayList<String> responses) {
-        response.append("Client IP: ").append(IP).append("\n");
-        for (int i = 0; i < responses.size(); i++) {
-            String line = responses.get(i).trim();
-            if (!line.isEmpty()) {
-                response.append(String.format("  %d. %s%n", i + 1, line));
-            }
-        }
-        response.append("\n"); // Add newline between different clients
-    }
-
     @Override
     public void run(){
         /**
@@ -98,7 +81,6 @@ public class BeaconC2Handler implements Runnable{
             if(!(message.equals("Authentication Successful"))){
                 String reason = "Authentication with the C2 Server Unsuccesful. Message Received from C2 Server: " + message;
                 beaconServer.quit(reason);
-                //beaconServer.stopServer();
                 C2Server.close();
                 authenticationSentinel = false;
             } else {
