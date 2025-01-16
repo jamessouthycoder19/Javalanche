@@ -10,8 +10,10 @@ import java.util.Queue;
 import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.io.Console;
 
 public class C2ServerUserHandler implements Runnable{
+    // Strings used to make the console look cool
     private String RED = "\u001B[31m";
     private String BLUE = "\u001B[34m";
     private String RESET = "\u001B[37m";
@@ -36,6 +38,9 @@ public class C2ServerUserHandler implements Runnable{
     // Queue of messages to be printed to the CLI
     private Queue<String> messageQueue;
 
+    // Console Used so that the User's input of passwords is masked
+    private Console passwordInputConsole;
+
     /**
      * Class to handle input from the user controlling the C2
      * and send it back to the C2 Server.
@@ -49,6 +54,7 @@ public class C2ServerUserHandler implements Runnable{
         this.beaconsWaitingForMFA = new HashMap<>();
         this.currentUserPath = "";
         this.messageQueue = new LinkedList<String>();
+        this.passwordInputConsole = System.console();
     }
 
     /**
@@ -429,10 +435,8 @@ public class C2ServerUserHandler implements Runnable{
         String password1 = "";
         String password2 = "a";
         while(!(password1.equals(password2))){
-            System.out.print("Enter Password for authentication: ");
-            password1 = userInputScanner.nextLine();
-            System.out.print("Re-enter Password: ");
-            password2 = userInputScanner.nextLine();
+            password1 = new String(passwordInputConsole.readPassword("Enter Password for authentication: "));
+            password2 = new String(passwordInputConsole.readPassword("Re-enter Password: "));
             if(!(password1.equals(password2))){
                 System.out.println("Passwords do not match");
             }
