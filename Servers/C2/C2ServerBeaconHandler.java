@@ -59,10 +59,12 @@ public class C2ServerBeaconHandler implements Runnable{
                 }   
             }
         } catch (IOException e) {
-            System.out.println("Lost Beacon Server at " + IP);
+            String errorMessage = "Lost Beacon Server at " + IP;
+            C2server.outputToUserHandler(errorMessage);
             keepAliveClass.stopKeepAlive();
         } catch (NullPointerException e) {
-            System.out.println("Lost Beacon Server at " + IP);
+            String errorMessage = "Lost Beacon Server at " + IP;
+            C2server.outputToUserHandler(errorMessage);
             keepAliveClass.stopKeepAlive();
         }
     }
