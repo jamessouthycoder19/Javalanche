@@ -97,7 +97,9 @@ public class BeaconC2Handler implements Runnable{
                     System.out.println(message);
                     if(message.equals("quit")){
                         beaconServer.quit("C2 Server Shutting Down");
+                        C2Server.close();
                         authenticationSentinel = false;
+                        keepAliveClass.stopKeepAlive();
                         break;
                     }
                     String[] tokensAndCommands = message.split("_");
