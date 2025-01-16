@@ -2,6 +2,8 @@ package Servers.Beacon;
 
 import java.util.Scanner;
 import Servers.Duplexer;
+
+import java.io.Console;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -350,9 +352,11 @@ public class BeaconServer implements Runnable{
         Scanner userScanner = new Scanner(System.in);
         System.out.print("Enter C2 Server IP Address: ");
         String C2ServerIPAddress = userScanner.next();
-        // Have the user enter in the password
-        System.out.print("Enter Password: ");
-        String password = userScanner.next();
+
+        // Have the user enter in the password (Console is used so that the input is masked)
+        Console passwordInputConsole = System.console();
+        String password = new String(passwordInputConsole.readPassword("Enter Password: "));
+
         // Hash the Password
         String passwordDigest = "";
         try{
