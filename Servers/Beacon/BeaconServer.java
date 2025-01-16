@@ -342,7 +342,7 @@ public class BeaconServer implements Runnable{
             } catch(IOException e){
                 // If Sentinel is set to false, this means that the "error" occured because the Beacon Server is being shut
                 // down while listenting for connections, and there is no need to print the actual error.
-                if(sentinel = true){
+                if(sentinel == true){
                     e.printStackTrace();
                 }
             } catch (NullPointerException e){}
