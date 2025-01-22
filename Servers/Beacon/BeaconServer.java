@@ -306,8 +306,16 @@ public class BeaconServer implements Runnable{
                 Socket socket = serverSocket.accept();
                 Duplexer duplexer = new Duplexer(socket);
 
-                // First message is from the client is the Operating System, Windows or Linux
-                String OSMessage = duplexer.receive();
+                // First message is either
+                //      Get request from a potential client, to make sure the client can reach the server 
+                //      An initial connection message from the client with their Operating System, Windows or Linux
+                String firstMessage = duplexer.receive();
+                String OSMessage = "";
+                if(firstMessage.equals("GET / HTTP/1.1")){
+                    duplexer.send("<!DOCTYPE html>\r\n<html>\r\n<head>\r\n<title>My First HTML Page</title>\r\n</head>\r\n<body>\r\n<h1>Welcome to My Website</h1>\r\n</body>\r\n</html>\r\n");
+                } else {
+                    OSMessage = firstMessage;
+                }
                 System.out.println("Inital Message: " + OSMessage);
 
                 // Second Message is from the client to the server, the IP address of the client.
