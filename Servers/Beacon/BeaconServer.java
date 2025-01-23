@@ -317,7 +317,7 @@ public class BeaconServer implements Runnable{
                 } else {
                     OSMessage = firstMessage;
                 }
-                System.out.println("Inital Message: " + OSMessage);
+                System.out.println("Inital Message: " + firstMessage);
 
                 if(!(OSMessage.isEmpty())){
                     // Second Message is from the client to the server, the IP address of the client.
