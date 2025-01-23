@@ -94,31 +94,30 @@ static int resolveBeaconServerIPAddr(char* ipAddressBuf) {
 
                 // Connect to server
                 int connectResult = connect(resolvedClientSocket, (struct sockaddr*)&resolvedServerAddr, sizeof(resolvedServerAddr));
-                if (connectResult != 0) {
-                    int error = WSAGetLastError();
-                    printf("Error Code: %d\n", error);
-                    exit(error);
-                }
+                if (connectResult == 0){
+                    // connectResult == 0 means that the client was able to connect to the server,
+                    // so now we can send a request to the server
+                    
+                    // Send a get request to the server, to see if the client is able to reach this server
+                    const char* osMessage = "GET / HTTP/1.1\n";
+                    send(resolvedClientSocket, osMessage, strnlen(osMessage, 15), 0);
 
-                // Send a get request to the server, to see if the client is able to reach this server
-                const char* osMessage = "GET / HTTP/1.1\n";
-                send(resolvedClientSocket, osMessage, strnlen(osMessage, 15), 0);
+                    // Receive response from Server
+                    for (int i = 0; i < 1024; i++) serverResponse[i] = '\0';
+                    int bytesRead = recv(resolvedClientSocket, serverResponse, 1023, 0);
+                    serverResponse[bytesRead] = '\0';
 
-                // Receive response from Server
-                for (int i = 0; i < 1024; i++) serverResponse[i] = '\0';
-                int bytesRead = recv(resolvedClientSocket, serverResponse, 1023, 0);
-                serverResponse[bytesRead] = '\0';
+                    // Check output from server with the expected output from Server
+                    char expectedOutput[] = "<!DOCTYPE html>\r\n<html>\r\n<head>\r\n<title>Javalanche</title>\r\n</head>\r\n<body>\r\n<h1>Welcome to Javalanche</h1>\r\n</body>\r\n</html>\r\n";
 
-                // Check output from server with the expected output from Server
-                char expectedOutput[] = "<!DOCTYPE html>\r\n<html>\r\n<head>\r\n<title>Javalanche</title>\r\n</head>\r\n<body>\r\n<h1>Welcome to Javalanche</h1>\r\n</body>\r\n</html>\r\n";
-
-                if (strncmp(serverResponse, expectedOutput, size_t(200))) {
-                    // Once we have confirmed that we can communicate with the Server, return this ip address
-                    // as the one to reach out to.
-                    strcpy_s(ipAddressBuf, rsize_t(20), resolvedIP);
-                    freeaddrinfo(result);
-                    WSACleanup();
-                    return 0;
+                    if (strncmp(serverResponse, expectedOutput, size_t(200))) {
+                        // Once we have confirmed that we can communicate with the Server, return this ip address
+                        // as the one to reach out to.
+                        strcpy_s(ipAddressBuf, rsize_t(20), resolvedIP);
+                        freeaddrinfo(result);
+                        WSACleanup();
+                        return 0;
+                    }
                 }
             }
         }

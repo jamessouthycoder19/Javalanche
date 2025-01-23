@@ -27,11 +27,12 @@ We recommend Deploying the C2 Server on a linux machine, for the best experience
 
 ```
 $ sudo apt update
-$ sudo apt install curl
+$ sudo apt install curl tmux -y
 $ sudo mkdir /home/javalanche
 $ cd /home/javalanche
 $ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.sh?ref_type=heads
 $ sudo chmod +x serverSetup.sh
+$ tmux new -s c2
 $ sudo ./serverSetup.sh
 ```
 
@@ -43,11 +44,12 @@ We recommend Deploying the Long Range Beacon Servers on a linux machine, for the
 Prerequisite: The Proxy Server must have a Public IP Address. If you are not able to obtain a Public IP Address, 
 then both the Proxy and C2 Servers must be deployed on the same WAN as the competition machines.
 $ sudo apt update
-$ sudo apt install curl
+$ sudo apt install curl tmux -y
 $ sudo mkdir /home/javalanche
 $ cd /home/javalanche
 $ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.sh?ref_type=heads
 $ sudo chmod +x serverSetup.sh
+$ tmux new -s c2
 $ sudo ./serverSetup.sh -server Beacon
 ```
 
@@ -118,8 +120,6 @@ UML:
 Fix Windows Attack Chains
 
 Fix Linux Attack Chains
-
-Buy a cheap domain (javalanche.net??) and use dns to make connection to proxy instead of parameter/hard coding ip address of beacon
 
 Look into Bitsadmin to transfer files,
 
