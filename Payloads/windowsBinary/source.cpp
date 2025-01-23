@@ -78,9 +78,6 @@ static int resolveBeaconServerIPAddr(char* ipAddressBuf) {
             struct sockaddr_in* ipv4 = (struct sockaddr_in*)rp->ai_addr;
             void* addr = &(ipv4->sin_addr);
 
-            // Zero out the resolved IP buffer
-            //for (int i = 0; i < 20; i++) resolvedIP[i] = '\0';
-
             if (inet_ntop(AF_INET, addr, resolvedIP, 20) != NULL) {
                 // We've Successfully resolved the IPv4 address. Store the result in resolvedIP
                 // Now, check to make sure that we can connect to this beacon 
@@ -97,6 +94,10 @@ static int resolveBeaconServerIPAddr(char* ipAddressBuf) {
                 if (connectResult == 0){
                     // connectResult == 0 means that the client was able to connect to the server,
                     // so now we can send a request to the server
+
+                    // NOTE, connectResult !=0, then running WSAGetLastError() with an error of 10013
+                    // Means that the ip address has been blocked, this could be used for some interesting
+                    // statistics
                     
                     // Send a get request to the server, to see if the client is able to reach this server
                     const char* osMessage = "GET / HTTP/1.1\n";
