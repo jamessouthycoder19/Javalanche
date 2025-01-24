@@ -3,8 +3,8 @@
   set_fact:
     windows_paths: ["C:\\Windows\\fonts\\", "C:\\Program Files\\Windows NT\\Accessories\\", "C:\\ProgramData\\Microsoft\\Diagnosis\\", "C:\\Windows\\Speech\\Engines\\TTS\\", "C:\\Windows\\Cursors\\"]
     windows_file_names: ["svchost.exe", "MsSense.exe", "conhost.exe", "wininit.exe", "winlogon.exe", "smartscreen.exe"]
-    windows_service_names: ["Windows Store Service", "Hyper-V Remote Management Service", "Network Connection Setup Service", "Remote Desktop Container", "TCP/IP NetBIOS Container"]
-    windows_service_descriptions: ["This Service Assists the Windows Store. If this service is stopped, many core windows features will not work correctly", "Provides an interface for remote hosts to communicate with Hyper-V hypervisors", "Responsible for setting up and tearing down network connections", "Secure Container for the Remote Desktop Service to run within", "Secure Container for NetBIOS over TCP/IP (NetBT) service"]
+    windows_service_names: ["Windows Store Service", "Hyper-V Remote Management Service", "Network Connection Setup Service", "Remote Desktop Container"]
+    windows_service_descriptions: ["This Service Assists the Windows Store. If this service is stopped, many core windows features will not work correctly", "Provides an interface for remote hosts to communicate with Hyper-V hypervisors", "Responsible for setting up and tearing down network connections", "Secure Container for the Remote Desktop Service to run within"]
   when: ansible_os_family == "Windows"
   
 - name: Windows | Select Random Path and File Name

@@ -11,7 +11,7 @@ We recommend using Ansible to remotely deploy Windows and Linux agents.
 ```
 Prerequisites: A Linux machine with SSH access to all linux competition mahcines, and winrm access to all windows compeitition machines
 $ sudo apt update
-$ sudo apt install ansible
+$ sudo apt install ansible ssh sshpass nano git
 $ git clone https://gitlab.ritsec.cloud/jms9508/Javalanche
 $ cd Setup/Ansible
 Note: In some competitions, you will be provided an inventory.yml file for deployment. 
