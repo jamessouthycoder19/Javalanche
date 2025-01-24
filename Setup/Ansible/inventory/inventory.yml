@@ -16,12 +16,21 @@ all:
             10.0.10.135:
     windows:
       vars:
+        # Everyting commented out can be used to deploy via psrp isntead of winrm
+        #ansible_connection: psrp
+        #ansible_psrp_cert_validation: ignore
+        #ansible_psrp_protocol: http
+        #ansible_psrp_auth: ntlm
+        #ansible_credssp_auth_mechanism: ntlm
+        #ansible_become_method: runas
         ansible_connection: winrm
         ansible_winrm_server_cert_validation: ignore
         ansible_winrm_port: 5985
         ansible_winrm_transport: ntlm
         ansible_user: "Admin"
         ansible_password: #Password
+        #ansible_become_user: "Administrator"
+        #ansible_become_password #Password
       children:
         win:
           hosts:

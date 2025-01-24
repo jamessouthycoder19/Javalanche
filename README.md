@@ -11,14 +11,18 @@ We recommend using Ansible to remotely deploy Windows and Linux agents.
 ```
 Prerequisites: A Linux machine with SSH access to all linux competition mahcines, and winrm access to all windows compeitition machines
 $ sudo apt update
-$ sudo apt install ansible ssh sshpass nano git
+$ sudo apt install ansible ssh sshpass nano git -y
+Note: the above dependencies satisfy windows deployment via winrm, and linux deployment via ssh. 
+if deploying windows via psrp, the additional 2 commands will need to be run
+$ sudo apt install pip -y
+$ pip install pypsrp
 $ git clone https://gitlab.ritsec.cloud/jms9508/Javalanche
 $ cd Setup/Ansible
 Note: In some competitions, you will be provided an inventory.yml file for deployment. 
 You will have to edit the hosts: line in the playbook to reflect the group of hosts to deploy to.
 If you are not given an inventory.yml file, you will need to edit the existing inventory.yml 
 file to include the proper hosts, usernames, and passwords
-$ ansible-playbook -i inventory.yml playbook.yml
+$ ansible-playbook -i inventory/inventory.yml playbook.yml
 ```
 
 **C2 Server**
@@ -132,4 +136,4 @@ Implement AES + RSA for HTTPS
 Have the payloads communicate with each other should they not be able to reach a Beacon
     First check to see if the payload can still communicate with desired client, if it can, just send the message to that one, else, send a message to all of the other clients seeing if someone else can communicate with it.
 
-Write Linux C Payload
+Write Linux C Payload, for multiple distros
