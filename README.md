@@ -125,6 +125,8 @@ Look into Bitsadmin to transfer files,
 
 the goose,
 
+find something other than nslookup to resolve ip addresses on linux
+
 Implement AES + RSA for HTTPS
 
 Have the payloads communicate with each other should they not be able to reach a Beacon
