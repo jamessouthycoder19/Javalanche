@@ -211,7 +211,7 @@ unsigned __stdcall sendKeepAlive(SOCKET* clientSocket) {
         Sleep(randomTime);
 
         // Send KEEP_ALIVE Message
-        send(clientConnection, keepAlive, strnlen(keepAlive, 11), 0);
+        send(clientConnection, message, strnlen(message, 70), 0);
     }
 }
 
