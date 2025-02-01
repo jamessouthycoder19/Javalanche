@@ -120,7 +120,7 @@ public class BeaconClientHandler implements Runnable{
         Scanner scanner = new Scanner(in);
 
         while(scanner.hasNext()){
-            System.out.println(scanner.nextLine());
+            scanner.nextLine();
         }
         scanner.close();
 
