@@ -1,4 +1,5 @@
 package Servers;
+import java.util.Random;
 
 public class keepAlive implements Runnable{
     // The Socket used to send the KEEP_ALIVE Message
@@ -16,6 +17,9 @@ public class keepAlive implements Runnable{
     // sendLock is a synchronization lock that is used to control who can send messages to the client and when.
     private Object sendLock;
 
+    // RNG to randomize time of keep alive messages sent
+    private Random randomTimeGenerator;
+
     /**
      * Use this constructor to create a new Keep Alive Thread, to ensure that a Socket is kept alive
      * 
@@ -29,6 +33,7 @@ public class keepAlive implements Runnable{
         this.http = http;
         this.sentinel = true;
         this.sendLock = sendLock;
+        this.randomTimeGenerator = new Random();
     }
 
     public void stopKeepAlive(){
@@ -63,7 +68,8 @@ public class keepAlive implements Runnable{
     public void run() {
         while(sentinel){
             try{
-                Thread.sleep(30000);
+                double randomTime = 30000.0 + 60000.0 * randomTimeGenerator.nextDouble(0, 0);
+                Thread.sleep((long)randomTime);
             } catch (InterruptedException e){
                 e.printStackTrace();
             }

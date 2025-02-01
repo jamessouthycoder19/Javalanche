@@ -31,7 +31,8 @@ rot13() {
 
 send_keep_alive() {
   while true; do
-    sleep 30
+    # Sleep random amount of time between 30 and 90 seconds
+    sleep $(((RANDOM % 60) + 30))
     keepalive=$(rot13 "KEEP_ALIVE")
 
     # Check to make sure that our connection is still alive

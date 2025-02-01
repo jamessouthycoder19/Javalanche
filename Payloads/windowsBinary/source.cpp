@@ -194,11 +194,23 @@ unsigned __stdcall sendKeepAlive(SOCKET* clientSocket) {
     SOCKET clientConnection = *clientSocket;
     // Every 30 seconds, send a KEEP_ALIVE message to the server, to keep the socket open
     while (1) {
+        // Create KEEP_ALIVE Message and 'encrypt it'
         char keepAlive[1024] = "KEEP_ALIVE\n";
         char message[1200] = "HTTP/1.1 200 OK\r\nContent-Length: 11\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n";
         encrypt(keepAlive);
         strncat_s(message, keepAlive, 12);
-        Sleep(30000);
+
+        // Choose random interval between 30 and 90 seconds to sleep
+        int randomTime = rand();
+        if (randomTime < 30000) {
+            randomTime = 30000;
+        }
+        else if (randomTime > 90000) {
+            randomTime = randomTime % 90000;
+        }
+        Sleep(randomTime);
+
+        // Send KEEP_ALIVE Message
         send(clientConnection, keepAlive, strnlen(keepAlive, 11), 0);
     }
 }
