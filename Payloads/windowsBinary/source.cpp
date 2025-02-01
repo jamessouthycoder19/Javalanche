@@ -193,6 +193,8 @@ unsigned __stdcall winrmOtherClients(){
 
 unsigned __stdcall sendKeepAlive(SOCKET* clientSocket) {
     SOCKET clientConnection = *clientSocket;
+
+    int seedValue = time(NULL);
     // Every 30 seconds, send a KEEP_ALIVE message to the server, to keep the socket open
     while (1) {
         // Create KEEP_ALIVE Message and 'encrypt it'
@@ -202,7 +204,8 @@ unsigned __stdcall sendKeepAlive(SOCKET* clientSocket) {
         strncat_s(message, keepAlive, 12);
 
         // Choose random interval between 30 and 90 seconds to sleep
-        srand(time(NULL));
+        seedValue = seedValue * seedValue % 100;
+        srand(seedValue);
         int randomTime = 30000 + rand() % (90000 - 30000 + 1);
         Sleep(randomTime);
 
