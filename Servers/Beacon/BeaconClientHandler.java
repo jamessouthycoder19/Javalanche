@@ -5,11 +5,13 @@ import Servers.keepAlive;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Scanner;
 
 public class BeaconClientHandler implements Runnable{
     // IP address of the client
@@ -113,8 +115,17 @@ public class BeaconClientHandler implements Runnable{
         writer.writeBytes(pwnboardData);
         writer.close();
 
-        // Close connection
+        // Debug lines
+        InputStream in = pwnboardConnection.getInputStream();
+        Scanner scanner = new Scanner(in);
+
+        while(scanner.hasNext()){
+            System.out.println(scanner.nextLine());
+        }
+        scanner.close();
+
         pwnboardConnection.disconnect();
+
     }
 
     /**
