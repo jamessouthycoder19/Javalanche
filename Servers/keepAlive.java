@@ -69,6 +69,7 @@ public class keepAlive implements Runnable{
         while(sentinel){
             try{
                 double randomTime = 30000.0 + 60000.0 * randomTimeGenerator.nextDouble(0, 0);
+                System.out.println("Sleeping for " + (long)randomTime + " Miliseconds");
                 Thread.sleep((long)randomTime);
             } catch (InterruptedException e){
                 e.printStackTrace();
