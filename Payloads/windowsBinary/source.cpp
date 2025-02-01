@@ -4,6 +4,7 @@
 #include <winsock2.h>
 #include <process.h>
 #include <ws2tcpip.h>
+#include <time.h>
 #pragma comment(lib,"ws2_32.lib")
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -201,13 +202,8 @@ unsigned __stdcall sendKeepAlive(SOCKET* clientSocket) {
         strncat_s(message, keepAlive, 12);
 
         // Choose random interval between 30 and 90 seconds to sleep
-        int randomTime = rand();
-        if (randomTime < 30000) {
-            randomTime = 30000;
-        }
-        else if (randomTime > 90000) {
-            randomTime = randomTime % 90000;
-        }
+        srand(time(NULL));
+        int randomTime = 30000 + rand() % (90000 - 30000 + 1);
         Sleep(randomTime);
 
         // Send KEEP_ALIVE Message
