@@ -138,5 +138,3 @@ Have the payloads communicate with each other should they not be able to reach a
     First check to see if the payload can still communicate with desired client, if it can, just send the message to that one, else, send a message to all of the other clients seeing if someone else can communicate with it.
 
 Write Linux C Payload, for multiple distros
-
-Fix PRNG algo in Windows Payload for random interval between keep_alive messages

