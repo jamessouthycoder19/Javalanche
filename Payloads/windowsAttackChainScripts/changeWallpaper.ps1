@@ -4,7 +4,6 @@ param(
 )
 
 $fileExtension = $wallpaperURL.Substring($wallpaperURL.LastIndexOf('.') + 1)
-
 $wallpaper = "C:\Windows\System32\wallpaper.$($fileExtension)"
 
 # Download wallpaper
@@ -25,5 +24,9 @@ namespace Win32 {
 "@
 Add-Type -TypeDefinition $code
 
-# Set the wallpaper
-[Win32.Wallpaper]::SetWallpaper($wallpaper)
+# Set the wallpaper for the currently logged-in user
+$UserProfile = [System.Environment]::GetFolderPath("UserProfile")
+$UserWallpaper = "$UserProfile\AppData\Roaming\Microsoft\Windows\Themes\TranscodedWallpaper"
+
+Copy-Item -Path $wallpaper -Destination $UserWallpaper -Force
+[Win32.Wallpaper]::SetWallpaper($UserWallpaper)
