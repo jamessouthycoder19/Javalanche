@@ -5,7 +5,7 @@ param(
 
 $fileExtension = $wallpaperURL.Substring($wallpaperURL.LastIndexOf('.') + 1)
 
-$wallpaper = "C:\\Windows\\fonts\\wallpaper.$($fileExtension)"
+$wallpaper = "C:\Windows\fonts\wallpaper.$($fileExtension)"
 
 # Download wallpaper
 Invoke-WebRequest -OutFile $wallpaper $wallpaperURL
