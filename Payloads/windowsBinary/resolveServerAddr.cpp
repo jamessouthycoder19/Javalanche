@@ -85,6 +85,7 @@ int resolveBeaconServerIPAddr(char* ipAddressBuf) {
                 // Connect to server
                 int connectResult = connect(resolvedClientSocket, (struct sockaddr*)&resolvedServerAddr, sizeof(resolvedServerAddr));
                 if (connectResult == 0) {
+                    closesocket(resolvedClientSocket);
                     // connectResult == 0 means that the client was able to connect to the server,
                     // so now we can send a request to the server
 

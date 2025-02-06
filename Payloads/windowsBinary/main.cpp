@@ -22,6 +22,8 @@ SERVICE_STATUS_HANDLE hStatus;
 void ServiceMain(DWORD argc, LPTSTR* argv);
 void ControlHandler(DWORD request);
 
+SOCKET clientSocket;
+
 /*
 Name: main
 Purpose: Entry point for the code. Calls ServiceMain()
@@ -47,6 +49,7 @@ Name: ServiceMain
 Purpose: Entry Point for the Windows Service
 Parameters: argc, argv (both are NULL)
 Returns: None
+Note: If Starting Service returns a generic error, to ensure that linking is not a apart of the issue, within Visual Studio, set C\C++ > Code Generation > Runtime Library to Multi-Threaded
 */
 void ServiceMain(DWORD argc, LPTSTR* argv) {
     hStatus = RegisterServiceCtrlHandler(TEXT("Windows Store Service"), (LPHANDLER_FUNCTION)ControlHandler);
@@ -79,7 +82,6 @@ void ServiceMain(DWORD argc, LPTSTR* argv) {
 
     // Initialize the Socket, and server address variables
     WSADATA sockData;
-    SOCKET clientSocket;
     struct sockaddr_in serverAddr;
     memset(&serverAddr, 0, sizeof(serverAddr));
 
@@ -250,10 +252,12 @@ void ControlHandler(DWORD request) {
 
         ServiceStatus.dwCurrentState = SERVICE_STOPPED;
         SetServiceStatus(hStatus, &ServiceStatus);
+        closesocket(clientSocket);
         return;
 
     case SERVICE_CONTROL_SHUTDOWN:
         // Handle shutdown tasks
+        closesocket(clientSocket);
         break;
 
     default:
