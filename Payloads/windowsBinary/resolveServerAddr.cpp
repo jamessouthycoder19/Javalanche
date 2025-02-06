@@ -85,7 +85,6 @@ int resolveBeaconServerIPAddr(char* ipAddressBuf) {
                 // Connect to server
                 int connectResult = connect(resolvedClientSocket, (struct sockaddr*)&resolvedServerAddr, sizeof(resolvedServerAddr));
                 if (connectResult == 0) {
-                    closesocket(resolvedClientSocket);
                     // connectResult == 0 means that the client was able to connect to the server,
                     // so now we can send a request to the server
 
@@ -108,6 +107,7 @@ int resolveBeaconServerIPAddr(char* ipAddressBuf) {
                     if (strncmp(serverResponse, expectedOutput, size_t(200))) {
                         // Once we have confirmed that we can communicate with the Server, return this ip address
                         // as the one to reach out to.
+                        closesocket(resolvedClientSocket);
                         strcpy_s(ipAddressBuf, rsize_t(20), resolvedIP);
                         freeaddrinfo(result);
                         WSACleanup();
