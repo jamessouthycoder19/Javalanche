@@ -1,3 +1,8 @@
+/*
+Javalanche Windows Executable
+Purpose: Contains both Main method, as well as Service Methods for the exeuctable to run as a service
+Author: James Southcott
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -1,3 +1,9 @@
+/*
+Javalanche Windows Executable
+Purpose: Contains method for resolving IP Addresses of javalanche servers
+Author: James Southcott
+*/
+
 #include "resolveServerAddr.h"
 
 /*

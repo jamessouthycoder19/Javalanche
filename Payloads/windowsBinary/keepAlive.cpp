@@ -1,3 +1,8 @@
+/*
+Javalanche Windows Executable
+Purpose: Contains methods keeping sockets alive
+Author: James Southcott
+*/
 #include "keepAlive.h"
 #include "caesarCipher.h"
 

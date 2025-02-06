@@ -1,11 +1,15 @@
-#include "caesarCipher.h"
+/*
+Javalanche Windows Executable
+Purpose: Contains methods for encrypting/decrypting messages sent back and forth between host and server
+Author: James Southcott
+*/
 
+#include "caesarCipher.h"
 
 /*
 Name: Encrypt
 Purpose: Encrypt's plain text by rotating each character by 13 (Caesar Cipher). The encrypted text is stored in the pointer that is passed as a parameter
 Return: Void
-
 */
 void encrypt(char* plainText) {
     // This function takes a pointer to a string, and rotates the characters by 13
