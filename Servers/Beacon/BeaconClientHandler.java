@@ -151,7 +151,14 @@ public class BeaconClientHandler implements Runnable{
         while(sentinel){
             try{
                 String response = duplexer.receive();
-                sendPwnBoardRequest();
+                // If sending pwnboard requests fail, this isn't really critical to javalanche's connection to the client,
+                // so we don't want to stop the main while loop, so this smaller try catch block is just for catching 
+                // exceptions related to sending pwnboard
+                try {
+                    sendPwnBoardRequest();
+                } catch (IOException e){
+                    System.out.println(IPAddress + " unable to update PWNBoard");
+                }
                 if(!(response.equals("GET / HTTP/1.1")) && !(response.contains("Content-Length")) && !(response.equals("Content-Type: text/plain; charset=utf-8")) && !(response.equals("HTTP/1.1 200 OK")) && !(response.isBlank())){
                     response = encrypt(response);
                     if(!(response.equals("KEEP_ALIVE"))){
