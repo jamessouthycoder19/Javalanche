@@ -4,8 +4,35 @@
   become: yes
   roles:
     - linux
+  tags:
+    - linux
+    - never
+    - deploy
 
 - name: Deploy Windows
   hosts: windows
   roles:
     - windows
+  tags:
+    - windows
+    - never
+    - deploy
+
+- name: Restart Linux
+  hosts: linux
+  become: yes
+  roles:
+    - linux
+  tags:
+    - linuxRestart
+    - never
+    - restart
+
+- name: Restart Windows
+  hosts: windows
+  roles:
+    - windows
+  tags:
+    - windowsRestart
+    - never
+    - restart

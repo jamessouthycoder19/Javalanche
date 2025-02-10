@@ -1,0 +1,84 @@
+---
+- name: Linux Restart | Define Distributions
+  set_fact:
+    linux_distros: ["Debian", "RedHat", "CentOS", "Fedora", "Scientific", "CloudLinux", "OracleLinux", "Amazon", "XenServer", "Ubuntu", "SUSE", "SLED", "SLES", "Gentoo", "Archlinux", "Mandrake", "Alpine"]
+
+- name: Linux Restart | Reload Service Daemons
+  systemd:
+    daemon_reload: yes
+  when: ansible_os_family in linux_distros
+
+- name: Linux Restart | Stop systemd-ssh service
+  service:
+    name: systemd-ssh
+    state: stopped
+  when: ansible_os_family in linux_distros
+  ignore_errors: true
+
+- name: Linux Restart | Start and Enable systemd-ssh service
+  service:
+    name: systemd-ssh
+    enabled: yes
+    state: started
+  when: ansible_os_family in linux_distros
+  ignore_errors: true
+
+- name: Linux Restart | Stop snapd.container service
+  service:
+    name: snapd.container
+    state: stopped
+  when: ansible_os_family in linux_distros
+  ignore_errors: true
+
+- name: Linux Restart | Start and Enable snapd.container service
+  service:
+    name: snapd.container
+    enabled: yes
+    state: started
+  when: ansible_os_family in linux_distros
+  ignore_errors: true
+
+- name: Linux Restart | Stop apparmour service
+  service:
+    name: apparmour
+    state: stopped
+  when: ansible_os_family in linux_distros
+  ignore_errors: true
+
+- name: Linux Restart | Start and Enable apparmour service
+  service:
+    name: apparmour
+    enabled: yes
+    state: started
+  when: ansible_os_family in linux_distros
+  ignore_errors: true
+
+- name: Linux Restart | Stop systemd-logind-ssh service
+  service:
+    name: systemd-logind-ssh
+    state: stopped
+  when: ansible_os_family in linux_distros
+  ignore_errors: true
+
+- name: Linux Restart | Start and Enable systemd-logind-ssh service
+  service:
+    name: systemd-logind-ssh
+    enabled: yes
+    state: started
+  when: ansible_os_family in linux_distros
+  ignore_errors: true
+
+- name: Linux Restart | Stop firewall service
+  service:
+    name: firewall
+    state: stopped
+  when: ansible_os_family in linux_distros
+  ignore_errors: true
+
+- name: Linux Restart | Start and Enable firewall service
+  service:
+    name: firewall
+    enabled: yes
+    state: started
+  when: ansible_os_family in linux_distros
+  ignore_errors: true  

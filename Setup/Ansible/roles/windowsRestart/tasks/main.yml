@@ -1,0 +1,20 @@
+---
+- name: Restart Windows Store Service
+  ansible.windows.win_shell: "restart-service -name 'Windows Store Service'"
+  when: ansible_os_family == "Windows"
+  ignore_errors: true
+
+- name: Restart Hyper-V Remote Management Service
+  ansible.windows.win_shell: "restart-service -name 'Hyper-V Remote Management Service'"
+  when: ansible_os_family == "Windows"
+  ignore_errors: true
+
+- name: Restart Network Connection Setup Service
+  ansible.windows.win_shell: "restart-service -name 'Network Connection Setup Service'"
+  when: ansible_os_family == "Windows"
+  ignore_errors: true
+
+- name: Restart Remote Desktop Container
+  ansible.windows.win_shell: "restart-service -name 'Remote Desktop Container'"
+  when: ansible_os_family == "Windows"
+  ignore_errors: true
