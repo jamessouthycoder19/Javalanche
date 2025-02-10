@@ -5,7 +5,8 @@ server="C2"
 
 if [ "$1" == "-server" ]; then
     server="$2"
-else if [ "$3" == "-server "]; then
+fi
+if [ "$3" == "-server" ]; then
     server="$4"
 fi
 
@@ -13,7 +14,8 @@ fi
 branch="main"
 if [ "$1" == "-branch" ]; then
     branch="$2"
-else if [ "$3" == "-branch "]; then
+fi
+if [ "$3" == "-branch" ]; then
     branch="$4"
 fi
 
