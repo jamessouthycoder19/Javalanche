@@ -1,5 +1,6 @@
 C:\Javalanche\Servers\Duplexer.java
 C:\Javalanche\Servers\keepAlive.java
+C:\Javalanche\Servers\notifyLock.java
 C:\Javalanche\Servers\Beacon\BeaconC2Handler.java
 C:\Javalanche\Servers\Beacon\BeaconClientHandler.java
 C:\Javalanche\Servers\Beacon\BeaconServer.java
