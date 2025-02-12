@@ -1,5 +1,6 @@
 /home/javalanche/Servers/Duplexer.java
 /home/javalanche/Servers/keepAlive.java
+/home/javalanche/Servers/notifyLock.java
 /home/javalanche/Servers/Beacon/BeaconC2Handler.java
 /home/javalanche/Servers/Beacon/BeaconClientHandler.java
 /home/javalanche/Servers/Beacon/BeaconServer.java

