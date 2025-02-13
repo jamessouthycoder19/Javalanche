@@ -26,7 +26,7 @@ int resolveBeaconServerIPAddr(char* ipAddressBuf) {
         "beacon4.javalanche.net",
         "beacon5.javalanche.net"
     };
-    PSTR resolvedIP = (PSTR)calloc(20, sizeof(PSTR));
+    PSTR resolvedIP = (PSTR)malloc(20 * sizeof(char));
     char serverResponse[1024];
 
     int attemptedTries = 0;
@@ -60,7 +60,7 @@ int resolveBeaconServerIPAddr(char* ipAddressBuf) {
         hints.ai_socktype = SOCK_STREAM;
 
         // Use getaddrinfo to resolve the address.
-        status = getaddrinfo(beacons[attemptedTries % 3], NULL, &hints, &result);
+        status = getaddrinfo(beacons[attemptedTries % 5], NULL, &hints, &result);
         if (status != 0) {
             WSACleanup();
             return 2;
@@ -75,13 +75,12 @@ int resolveBeaconServerIPAddr(char* ipAddressBuf) {
                 // We've Successfully resolved the IPv4 address. Store the result in resolvedIP
                 // Now, check to make sure that we can connect to this beacon 
 
-                wchar_t wideResolvedIPAddress[16];
+                wchar_t wideResolvedIPAddress[20];
                 size_t convertedChars = 0;
                 mbstowcs_s(&convertedChars, wideResolvedIPAddress, sizeof(wideResolvedIPAddress) / sizeof(wchar_t), resolvedIP, _TRUNCATE);
                 resolvedServerAddr.sin_family = AF_INET;
                 InetPton(AF_INET, wideResolvedIPAddress, &resolvedServerAddr.sin_addr.s_addr);
                 resolvedServerAddr.sin_port = htons(80);
-
                 // Connect to server
                 int connectResult = connect(resolvedClientSocket, (struct sockaddr*)&resolvedServerAddr, sizeof(resolvedServerAddr));
                 if (connectResult == 0) {

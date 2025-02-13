@@ -105,7 +105,7 @@ void ServiceMain(DWORD argc, LPTSTR* argv) {
         exit(-1);
     }
 
-    wchar_t wideServerIPAddress[16];
+    wchar_t wideServerIPAddress[20];
     size_t convertedChars = 0;
     mbstowcs_s(&convertedChars, wideServerIPAddress, sizeof(wideServerIPAddress) / sizeof(wchar_t), serverIPAddress, _TRUNCATE);
     serverAddr.sin_family = AF_INET;
