@@ -101,7 +101,7 @@ int resolveBeaconServerIPAddr(char* ipAddressBuf) {
                     serverResponse[bytesRead] = '\0';
 
                     // Check output from server with the expected output from Server
-                    char expectedOutput[] = "<!DOCTYPE html>\r\n<html>\r\n<head>\r\n<title>Javalanche</title>\r\n</head>\r\n<body>\r\n<h1>Welcome to Javalanche</h1>\r\n</body>\r\n</html>\r\n";
+                    char expectedOutput[] = "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE html>\r\n<html>\r\n<head>\r\n<title>Javalanche</title>\r\n</head>\r\n<body>\r\n<h1>Welcome to Javalanche</h1>\r\n</body>\r\n</html>\r\n";
 
                     if (strncmp(serverResponse, expectedOutput, size_t(200))) {
                         // Once we have confirmed that we can communicate with the Server, return this ip address

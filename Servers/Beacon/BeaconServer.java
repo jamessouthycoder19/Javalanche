@@ -390,7 +390,7 @@ public class BeaconServer implements Runnable{
                 String firstMessage = duplexer.receive();
                 String OSMessage = "";
                 if(firstMessage.equals("GET / HTTP/1.1")){
-                    duplexer.send("<!DOCTYPE html>\r\n<html>\r\n<head>\r\n<title>Javalanche</title>\r\n</head>\r\n<body>\r\n<h1>Welcome to Javalanche</h1>\r\n</body>\r\n</html>\r\n");
+                    duplexer.send("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n<!DOCTYPE html>\r\n<html>\r\n<head>\r\n<title>Javalanche</title>\r\n</head>\r\n<body>\r\n<h1>Welcome to Javalanche</h1>\r\n</body>\r\n</html>\r\n");
                 } else {
                     OSMessage = firstMessage;
                 }

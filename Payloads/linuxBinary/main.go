@@ -38,8 +38,11 @@ func resolveBeaconIPAddr() string {
 					message7, err7 := reader.ReadString('\n')
 					message8, err8 := reader.ReadString('\n')
 					message9, err9 := reader.ReadString('\n')
-					if err1 == nil && err2 == nil && err3 == nil && err4 == nil && err5 == nil && err6 == nil && err7 == nil && err8 == nil && err9 == nil {
-						if message1 == "<!DOCTYPE html>\r\n" && message2 == "<html>\r\n" && message3 == "<head>\r\n" && message4 == "<title>Javalanche</title>\r\n" && message5 == "</head>\r\n" && message6 == "<body>\r\n" && message7 == "<h1>Welcome to Javalanche</h1>\r\n" && message8 == "</body>\r\n" && message9 == "</html>\r\n" {
+					message10, err10 := reader.ReadString('\n')
+					message11, err11 := reader.ReadString('\n')
+					message12, err12 := reader.ReadString('\n')
+					if err1 == nil && err2 == nil && err3 == nil && err4 == nil && err5 == nil && err6 == nil && err7 == nil && err8 == nil && err9 == nil && err10 == nil && err11 == nil && err12 == nil{
+						if message1 == "HTTP/1.1 200 OK\r\n" && message2 == "Content-Type: text/html\r\n" && message3 == "\r\n" && message4 == "<!DOCTYPE html>\r\n" && message5 == "<html>\r\n" && message6 == "<head>\r\n" && message7 == "<title>Javalanche</title>\r\n" && message8 == "</head>\r\n" && message9 == "<body>\r\n" && message10 == "<h1>Welcome to Javalanche</h1>\r\n" && message11 == "</body>\r\n" && message12 == "</html>\r\n" {
 							return ip.String()
 						}
 					} else {
