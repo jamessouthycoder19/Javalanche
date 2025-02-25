@@ -180,6 +180,7 @@ public class BeaconClientHandler implements Runnable{
                                 response = response.substring(0, response.indexOf("END_OF_OUTPUT"));
                                 notify = true;
                             }
+                            System.out.println("Adding: " + response);
                             beaconServer.addDataToResponsesDictionaries(IPAddress, response);
 
                             // If this client is currently being used as a shell, notify the lock so that the server knows
