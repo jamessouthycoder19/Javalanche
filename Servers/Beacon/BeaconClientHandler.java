@@ -174,22 +174,18 @@ public class BeaconClientHandler implements Runnable{
                 if(response != null){
                     if(!(response.equals("GET / HTTP/1.1")) && !(response.contains("Content-Length")) && !(response.equals("Content-Type: text/plain; charset=utf-8")) && !(response.equals("HTTP/1.1 200 OK")) && !(response.isBlank())){
                         response = encrypt(response);
-                        System.out.println("Full message received: " + response);
                         if(!(response.equals("KEEP_ALIVE"))){
                             // Remove the END_OF_OUTPUT part of the end of the response to the command
                             if(response.contains(("END_OF_OUTPUT"))){
                                 response = response.substring(0, response.indexOf("END_OF_OUTPUT"));
-                                System.out.println("end of output in message");
                                 notify = true;
                             }
-                            System.out.println("Adding: " + response);
                             beaconServer.addDataToResponsesDictionaries(IPAddress, response);
 
                             // If this client is currently being used as a shell, notify the lock so that the server knows
                             // to return the responses immediately
                             if(isShell && notify){
                                 synchronized(shellLock){
-                                    System.out.println("notify called");
                                     shellLock.notify();
                                 }
                             }
