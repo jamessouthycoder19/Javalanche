@@ -109,9 +109,9 @@ func main() {
 							// As long as the message is not a KEEP_ALIVE message or apart of the
 							// HTTP header, execute it as a command
 							cmd := exec.Command("bash", "-c", "sudo "+serverMessage)
+							output, err := cmd.Output()
 							cmd.Stdout = io.Discard
 							cmd.Stderr = io.Discard
-							output, err := cmd.Output()
 							if err != nil {
 								fmt.Println("Error Executing command: ", err)
 
