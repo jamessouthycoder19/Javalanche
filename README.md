@@ -15,6 +15,7 @@ We recommend using Ansible to remotely deploy Windows and Linux agents.
 ```
 Prerequisites: A Linux machine with SSH access to all linux competition mahcines, and winrm access to all windows compeitition machines
 $ sudo apt update
+$ sudo apt upgrade -y
 $ sudo apt install ansible ssh sshpass nano git -y
 Note: the above dependencies satisfy windows deployment via winrm, and linux deployment via ssh. 
 if deploying windows via psrp, the additional 2 commands will need to be run
@@ -29,16 +30,30 @@ file to include the proper hosts, usernames, and passwords
 $ ansible-playbook -i inventory/inventory.yml playbook.yml
 ```
 
+**Redirect Server**
+
+The Redirect Server shortens many different URL's, to make deployment of agents and servers much easier
+
+```
+$ sudo apt update
+$ sudo apt upgrade -y
+$ sudo apt install curl -y
+$ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/redirectServerSetup.sh?ref_type=heads
+$ sudo chmod +x serverSetup.sh
+$ sudo ./serverSetup.sh
+```
+
 **C2 Server**
 
 We recommend Deploying the C2 Server on a linux machine, for the best experience
 
 ```
 $ sudo apt update
+$ sudo apt upgrade -y
 $ sudo apt install curl tmux -y
 $ sudo mkdir /home/javalanche
 $ cd /home/javalanche
-$ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.sh?ref_type=heads
+$ sudo curl -o serverSetup.sh http://javalanche.net/linuxServerSetup
 $ sudo chmod +x serverSetup.sh
 $ tmux new -s c2
 $ sudo ./serverSetup.sh
@@ -55,7 +70,7 @@ $ sudo apt update
 $ sudo apt install curl tmux -y
 $ sudo mkdir /home/javalanche
 $ cd /home/javalanche
-$ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.sh?ref_type=heads
+$ sudo curl -o serverSetup.sh http://javalanche.net/linuxServerSetup
 $ sudo chmod +x serverSetup.sh
 $ tmux new -s c2
 $ sudo ./serverSetup.sh -server Beacon
@@ -182,5 +197,3 @@ Implement AES + RSA for HTTPS
 
 Have the payloads communicate with each other should they not be able to reach a Beacon
     First check to see if the payload can still communicate with desired client, if it can, just send the message to that one, else, send a message to all of the other clients seeing if someone else can communicate with it.
-
-Test new Linux payload more

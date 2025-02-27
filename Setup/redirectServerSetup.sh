@@ -18,6 +18,8 @@ sed -i "$linenumber i\\
 Redirect /linuxServiceFile https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxBinary/linuxServiceFile.service?ref_type=heads\\
 Redirect /linuxPayload https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxBinary/main?ref_type=heads\\
 Redirect /windowsPayload https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsBinary/x64/Debug/windowsBinary.exe?ref_type=heads\\
+Redirect /linuxServerSetup https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.sh?ref_type=heads\\
+Redirect /windowsServerSetup https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/ServerSetup.ps1?ref_type=heads\\
 Redirect / https://gitlab.ritsec.cloud/jms9508/Javalanche\\
 " /etc/apache2/apache2.conf
 
