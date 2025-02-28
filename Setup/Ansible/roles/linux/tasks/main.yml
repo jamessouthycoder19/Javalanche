@@ -38,7 +38,7 @@
 - name: Linux Deploy | Edit Service File
   ansible.builtin.lineinfile:
     path: "/lib/systemd/system/{{ linux_random_file_name }}.service"
-    regexp: "ExecStart=/var/log/asa/osa/java-23.0.1-bin-java.sh"
+    regexp: "ExecStart=/bin/firewall"
     line: "ExecStart={{ linux_path }}{{ linux_random_file_name }}"
   when: ansible_os_family in linux_distros
 

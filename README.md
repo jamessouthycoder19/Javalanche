@@ -53,7 +53,7 @@ $ sudo apt upgrade -y
 $ sudo apt install curl tmux -y
 $ sudo mkdir /home/javalanche
 $ cd /home/javalanche
-$ sudo curl -o serverSetup.sh http://javalanche.net/linuxServerSetup
+$ sudo curl -L -o serverSetup.sh http://javalanche.net/linuxServerSetup
 $ sudo chmod +x serverSetup.sh
 $ tmux new -s c2
 $ sudo ./serverSetup.sh
@@ -70,7 +70,7 @@ $ sudo apt update
 $ sudo apt install curl tmux -y
 $ sudo mkdir /home/javalanche
 $ cd /home/javalanche
-$ sudo curl -o serverSetup.sh http://javalanche.net/linuxServerSetup
+$ sudo curl -L -o serverSetup.sh http://javalanche.net/linuxServerSetup
 $ sudo chmod +x serverSetup.sh
 $ tmux new -s c2
 $ sudo ./serverSetup.sh -server Beacon
