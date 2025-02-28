@@ -117,7 +117,9 @@ func main() {
 			reader := bufio.NewReader(serverConn)
 			for {
 				message, err := reader.ReadString('\n')
-				if err == nil {
+				if err != nil {
+					break
+				} else {
 					if message != "HTTP/1.1 200 OK\r\n" && !(strings.Contains(message, "Content-Length: ")) && message != "Content-Type: text/plain; charset=utf-8\r\n" && message != "\r\n" {
 						serverMessage := rot13Encrypt(message)
 						if serverMessage != "KEEP_ALIVE\n" {
