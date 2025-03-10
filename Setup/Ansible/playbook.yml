@@ -22,14 +22,14 @@
   hosts: linux
   become: yes
   roles:
-    - linux
+    - linuxRestart
   tags:
     - linuxRestart
     - never
     - restart
 
 - name: Restart Windows
-  hosts: windows
+  hosts: windowsRestart
   roles:
     - windows
   tags:

@@ -22,12 +22,12 @@ if deploying windows via psrp, the additional 2 commands will need to be run
 $ sudo apt install pip -y
 $ pip install pypsrp
 $ git clone https://gitlab.ritsec.cloud/jms9508/Javalanche
-$ cd Setup/Ansible
+$ cd Javalanche/Setup/Ansible
 Note: In some competitions, you will be provided an inventory.yml file for deployment. 
 You will have to edit the hosts: line in the playbook to reflect the group of hosts to deploy to.
 If you are not given an inventory.yml file, you will need to edit the existing inventory.yml 
 file to include the proper hosts, usernames, and passwords
-$ ansible-playbook -i inventory/inventory.yml playbook.yml
+$ ansible-playbook -i inventory/inventory.yml playbook.yml -deploy
 ```
 
 **Redirect Server**
