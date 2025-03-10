@@ -59,6 +59,7 @@ Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/mai
 Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Beacon/BeaconC2Handler.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\Beacon\BeaconC2Handler.java"
 Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Beacon/BeaconClientHandler.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\Beacon\BeaconClientHandler.java"
 Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Beacon/BeaconServer.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\Beacon\BeaconServer.java"
+Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Beacon/pwnBoardRequest.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\Beacon\pwnBoardRequest.java"
 Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Duplexer.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\Duplexer.java"
 Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/keepAlive.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\keepAlive.java"
 Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/notifyLock.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\notifyLock.java"

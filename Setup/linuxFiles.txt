@@ -4,6 +4,7 @@
 /home/javalanche/Servers/Beacon/BeaconC2Handler.java
 /home/javalanche/Servers/Beacon/BeaconClientHandler.java
 /home/javalanche/Servers/Beacon/BeaconServer.java
+/home/javalanche/Servers/Beacon/pwnBoardRequest.java
 /home/javalanche/Servers/C2/C2Server.java
 /home/javalanche/Servers/C2/C2ServerBeaconHandler.java
 /home/javalanche/Servers/C2/C2ServerUserHandler.java

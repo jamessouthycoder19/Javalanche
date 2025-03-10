@@ -4,6 +4,7 @@ C:\Javalanche\Servers\notifyLock.java
 C:\Javalanche\Servers\Beacon\BeaconC2Handler.java
 C:\Javalanche\Servers\Beacon\BeaconClientHandler.java
 C:\Javalanche\Servers\Beacon\BeaconServer.java
+C:\Javalanche\Servers\Beacon\pwnBoardRequest.java
 C:\Javalanche\Servers\C2\C2Server.java
 C:\Javalanche\Servers\C2\C2ServerBeaconHandler.java
 C:\Javalanche\Servers\C2\C2ServerUserHandler.java
