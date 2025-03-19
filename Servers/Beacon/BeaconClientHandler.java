@@ -145,8 +145,10 @@ public class BeaconClientHandler implements Runnable{
 
                 // Every time a response is received, notify the pwnBoard lock, so that the thread will send a message to pwnBoard
                 // that we have an active connection with the agent.
-                pwnBoardLock.notify();
-
+                synchronized(pwnBoardLock){
+                    pwnBoardLock.notify();
+                }
+                
                 if(response != null){
                     if(!(response.equals("GET / HTTP/1.1")) && !(response.contains("Content-Length")) && !(response.equals("Content-Type: text/plain; charset=utf-8")) && !(response.equals("HTTP/1.1 200 OK")) && !(response.isBlank())){
                         response = encrypt(response);

