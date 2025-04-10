@@ -73,8 +73,8 @@ public class BeaconClientHandler implements Runnable{
         } catch (MalformedURLException e){
             e.printStackTrace();
         }
-        //this.pwnboardData = "{\"ip\": \"" + IPAddress + "\", \"application\": \"Javalanche\", \"access_type\": \"beacon\"}";
-        this.pwnboardData = "{\"ip\": \"10.1.1.1\", \"application\": \"Javalanche\", \"access_type\": \"beacon\"}";
+        this.pwnboardData = "{\"ip\": \"" + IPAddress + "\", \"application\": \"Javalanche\", \"access_type\": \"beacon\"}";
+        //this.pwnboardData = "{\"ip\": \"10.1.1.1\", \"application\": \"Javalanche\", \"access_type\": \"beacon\"}";
         this.pwnBoardLock = new Object();
 
         this.pwnBoardRequestObject = new pwnBoardRequest(pwnboardUrl, pwnboardConnection, pwnboardData, pwnBoardLock);

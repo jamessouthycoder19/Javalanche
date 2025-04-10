@@ -72,7 +72,7 @@ $ sudo mkdir /home/javalanche
 $ cd /home/javalanche
 $ sudo curl -L -o serverSetup.sh http://javalanche.net/linuxServerSetup
 $ sudo chmod +x serverSetup.sh
-$ tmux new -s c2
+$ tmux new -s beacon
 $ sudo ./serverSetup.sh -server Beacon
 ```
 
