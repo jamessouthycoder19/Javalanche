@@ -145,7 +145,7 @@ public class BeaconClientHandler implements Runnable{
                 String response = duplexer.receive();
 
                 // When the linux clients disconnect, they don't actually stop, they just repeatedly send null over and over
-                if(response.equals("null")){
+                if(response == null){
                     sentinel = false;
                     try{
                         duplexer.close();
