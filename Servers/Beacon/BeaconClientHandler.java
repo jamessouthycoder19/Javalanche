@@ -138,6 +138,7 @@ public class BeaconClientHandler implements Runnable{
         pwnBoardRequestThread.start();
 
         Boolean notify;
+        int pwnBoardCounter = 0;
         while(sentinel){
             try{
                 notify = false;
@@ -145,8 +146,11 @@ public class BeaconClientHandler implements Runnable{
 
                 // Every time a response is received, notify the pwnBoard lock, so that the thread will send a message to pwnBoard
                 // that we have an active connection with the agent.
-                synchronized(pwnBoardLock){
-                    pwnBoardLock.notify();
+                pwnBoardCounter++;
+                if(pwnBoardCounter % 5 == 0){
+                    synchronized(pwnBoardLock){
+                        pwnBoardLock.notify();
+                    }
                 }
                 
                 if(response != null){
