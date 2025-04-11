@@ -147,7 +147,8 @@ public class BeaconClientHandler implements Runnable{
                 // Every time a response is received, notify the pwnBoard lock, so that the thread will send a message to pwnBoard
                 // that we have an active connection with the agent.
                 pwnBoardCounter++;
-                if(pwnBoardCounter % 5 == 0){
+                if(pwnBoardCounter % 10 == 0){
+                    System.out.println("pwnboardCounter: " + pwnBoardCounter);
                     synchronized(pwnBoardLock){
                         pwnBoardLock.notify();
                     }
