@@ -28,6 +28,7 @@ public class pwnBoardRequest implements Runnable{
         while(true){
             synchronized(pwnBoardLock){
                 try{
+                    Thread.sleep(120000);
                     pwnBoardLock.wait();
                 } catch (InterruptedException e){
                     e.printStackTrace();
