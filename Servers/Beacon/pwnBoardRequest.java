@@ -55,6 +55,7 @@ public class pwnBoardRequest implements Runnable{
 
                     pwnboardConnection.disconnect();
                 } catch (IOException e){
+                    System.out.println("when sending " + pwnboardData);
                     e.printStackTrace();
                 }   
             }

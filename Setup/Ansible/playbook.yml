@@ -29,7 +29,7 @@
     - restart
 
 - name: Restart Windows
-  hosts: windowsRestart
+  hosts: windows
   roles:
     - windows
   tags:
