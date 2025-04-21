@@ -5,5 +5,12 @@
 #include <string.h>
 #include <winsock2.h>
 #include <time.h>
+#include <stdint.h>
 
-unsigned __stdcall sendKeepAlive(SOCKET* clientSocket);
+typedef struct {
+    SOCKET* clientSocket;
+    uint8_t* masterKey;
+    int numRounds;
+} KeepAliveParams;
+
+unsigned __stdcall sendKeepAlive(void* arg);

@@ -63,6 +63,13 @@ Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/mai
 Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/Duplexer.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\Duplexer.java"
 Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/keepAlive.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\keepAlive.java"
 Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/notifyLock.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\notifyLock.java"
+Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/encryption/aes/aes.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\encryption\aes\aes.java"
+Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/encryption/aes/encryption.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\encryption\aes\encryption.java"
+Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/encryption/aes/decryption.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\encryption\aes\decryption.java"
+Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/encryption/aes/keyExpansion.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\encryption\aes\keyExpansion.java"
+Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/encryption/aes/modes.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\encryption\aes\modes.java"
+Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/encryption/rot13/rot13.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\encryption\rot13\rot13.java"
+Invoke-WebRequest -Uri "https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Servers/encryption/rsa/rsa.java?ref_type=heads" -OutFile "C:\Javalanche\Servers\encryption\rsa\rsa.java"
 
 $testOne = Test-Path "C:\Javalanche\Servers\C2\C2Server.java"
 $testTwo = Test-Path "C:\Javalanche\Servers\C2\C2ServerBeaconHandler.java"

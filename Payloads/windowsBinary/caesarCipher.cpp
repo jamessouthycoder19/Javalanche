@@ -6,12 +6,14 @@ Author: James Southcott
 
 #include "caesarCipher.h"
 
-/*
-Name: Encrypt
-Purpose: Encrypt's plain text by rotating each character by 13 (Caesar Cipher). The encrypted text is stored in the pointer that is passed as a parameter
-Return: Void
-*/
-void encrypt(char* plainText) {
+
+/**
+ * Encrypt's plain text by rotating each character by 13 (Caesar Cipher). The encrypted text is stored in the pointer that is passed as a parameter
+ *
+ * @param plainText[in, out] plain text to be encryptd. This same buffer will contain the cipher text after the function is done
+ * @return void
+ */
+void rot13Encrypt(char* plainText) {
     // This function takes a pointer to a string, and rotates the characters by 13
     // Because the Ceaser Cipher we are using is 13 characters, the same cipher can be applied
     // To do both encryption and decryption
