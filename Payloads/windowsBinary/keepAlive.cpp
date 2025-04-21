@@ -5,13 +5,21 @@ Author: James Southcott
 */
 #include "keepAlive.h"
 #include "caesarCipher.h"
+#include "aes.h"
 
-/*
-Name: sendKeepAlive
-Purpose: Keeps the clientSocket SOCKET alive by sending KEEP_ALIVE messages back and forth with the server. Time between messages is pseudo-random, between 30 and 90 seconds. Messages are in an HTTP packet
-Return: Void
-*/
-unsigned __stdcall sendKeepAlive(SOCKET* clientSocket) {
+
+/**
+ * Keeps the clientSocket SOCKET alive by sending KEEP_ALIVE messages back and forth with the server. Time between messages is pseudo-random, between 30 and 90 seconds. 
+ *
+ * @param arg[in] - KeepAliveParams struct that contains the client socket, AES master key, and the number of rounds for aes encryption
+ * @return void
+ */
+unsigned __stdcall sendKeepAlive(void* arg) {
+    KeepAliveParams* params = (KeepAliveParams*)arg;
+    SOCKET* clientSocket = params->clientSocket;
+    uint8_t* masterKey = params->masterKey;
+    int numRounds = params->numRounds;
+
     SOCKET clientConnection = *clientSocket;
 
     // Get number of seconds since January 1, 1970, UTC as the seed value for our PRNG
@@ -28,10 +36,16 @@ unsigned __stdcall sendKeepAlive(SOCKET* clientSocket) {
     // Every 30 seconds, send a KEEP_ALIVE message to the server, to keep the socket open
     while (1) {
         // Create KEEP_ALIVE Message and 'encrypt it'
-        char keepAlive[1024] = "KEEP_ALIVE\n";
-        char message[1200] = "HTTP/1.1 200 OK\r\nContent-Length: 11\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n";
-        encrypt(keepAlive);
-        strncat_s(message, keepAlive, 12);
+        char keepAlive[60] = "KEEP_ALIVE";
+
+        aesEncrypt(keepAlive, masterKey, numRounds);
+
+        int totalBytesSent = encodeStringToUTF8(keepAlive, 16);
+        char* finalBuffer = (char*)malloc(sizeof(char) * 60);
+        sprintf_s(finalBuffer, 60, "%d\n%s", 16, keepAlive);
+
+        totalBytesSent += 3;
+
 
         // Choose Pseudo-Random Number
         // To create our PRNG, we are using the middle square method.
@@ -66,6 +80,6 @@ unsigned __stdcall sendKeepAlive(SOCKET* clientSocket) {
         Sleep(PRNG % 60000 + 30000);
 
         // Send KEEP_ALIVE Message
-        send(clientConnection, message, strnlen(message, 120), 0);
+        send(clientConnection, finalBuffer, totalBytesSent, 0);
     }
 }

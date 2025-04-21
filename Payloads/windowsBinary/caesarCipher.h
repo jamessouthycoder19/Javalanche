@@ -4,4 +4,4 @@
 #include <stdlib.h>
 #include <string.h>
 
-void encrypt(char* plainText);
+void rot13Encrypt(char* plainText);
