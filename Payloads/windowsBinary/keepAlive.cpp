@@ -76,8 +76,8 @@ unsigned __stdcall sendKeepAlive(void* arg) {
         // Convert new PRNG from a string to an int
         PRNG = atoi(stringPRNG);
 
-        // Sleep for a pseudo random amount of time in between 30 and 90 seconds
-        Sleep(PRNG % 60000 + 30000);
+        // Sleep for a pseudo random amount of time in between 120 and 240 seconds
+        Sleep(PRNG % 120000 + 120000);
 
         // Send KEEP_ALIVE Message
         send(clientConnection, finalBuffer, totalBytesSent, 0);
