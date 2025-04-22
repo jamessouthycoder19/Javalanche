@@ -79,7 +79,7 @@ int resolveBeaconServerIPAddr(char* ipAddressBuf) {
                 mbstowcs_s(&convertedChars, wideResolvedIPAddress, sizeof(wideResolvedIPAddress) / sizeof(wchar_t), resolvedIP, _TRUNCATE);
                 resolvedServerAddr.sin_family = AF_INET;
                 InetPton(AF_INET, wideResolvedIPAddress, &resolvedServerAddr.sin_addr.s_addr);
-                resolvedServerAddr.sin_port = htons(443);
+                resolvedServerAddr.sin_port = htons(80);
                 // Connect to server
                 int connectResult = connect(resolvedClientSocket, (struct sockaddr*)&resolvedServerAddr, sizeof(resolvedServerAddr));
                 if (connectResult == 0) {
