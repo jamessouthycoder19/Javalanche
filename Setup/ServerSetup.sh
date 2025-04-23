@@ -22,7 +22,7 @@ fi
 
 if [ ! -f "/home/javalanche/jdkinstaller.tar" ]; then
     # install Java development kit
-    sudo curl -o /home/javalanche/jdkinstaller.tar.gz https://download.oracle.com/java/24/latest/jdk-24_linux-x64_bin.tar.gzz > /dev/null
+    sudo curl -o /home/javalanche/jdkinstaller.tar.gz https://download.oracle.com/java/24/latest/jdk-24_linux-x64_bin.tar.gz > /dev/null
     sudo gzip -d /home/javalanche/jdkinstaller.tar.gz
     sudo tar -xf /home/javalanche/jdkinstaller.tar -C /home/javalanche
 fi
