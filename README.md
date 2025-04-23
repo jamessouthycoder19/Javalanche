@@ -189,13 +189,7 @@ Fix Windows Attack Chains
 
 Fix Linux Attack Chains
 
-Look into Bitsadmin to transfer files,
-
 the goose,
-
-Implement AES + RSA for HTTPS
 
 Have the payloads communicate with each other should they not be able to reach a Beacon
     First check to see if the payload can still communicate with desired client, if it can, just send the message to that one, else, send a message to all of the other clients seeing if someone else can communicate with it.
-
-Make pwnboard request run in it's own thread to speed things up

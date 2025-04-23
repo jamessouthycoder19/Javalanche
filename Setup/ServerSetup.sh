@@ -22,7 +22,7 @@ fi
 
 if [ ! -f "/home/javalanche/jdkinstaller.tar" ]; then
     # install Java development kit
-    sudo curl -o /home/javalanche/jdkinstaller.tar.gz https://download.oracle.com/java/23/latest/jdk-23_linux-x64_bin.tar.gz > /dev/null
+    sudo curl -o /home/javalanche/jdkinstaller.tar.gz https://download.oracle.com/java/24/latest/jdk-24_linux-x64_bin.tar.gzz > /dev/null
     sudo gzip -d /home/javalanche/jdkinstaller.tar.gz
     sudo tar -xf /home/javalanche/jdkinstaller.tar -C /home/javalanche
 fi
@@ -60,7 +60,7 @@ if [ ! -d "/home/javalanche/Servers/encryption/rot13" ]; then
     sudo mkdir /home/javalanche/Servers/encryption/rot13
 fi
 if [ ! -d "/home/javalanche/Servers/encryption/rsa" ]; then
-    sudo mkdir /home/javalanche/Servers/encryption/rot13
+    sudo mkdir /home/javalanche/Servers/encryption/rsa
 fi
 
 # Download all of the java files
