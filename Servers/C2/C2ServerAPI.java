@@ -261,7 +261,7 @@ public class C2ServerAPI implements Runnable {
             // initialise the keystore
             char[] password = "password".toCharArray();
             KeyStore ks = KeyStore.getInstance("JKS");
-            FileInputStream fis = new FileInputStream("testkey.jks");
+            FileInputStream fis = new FileInputStream("/etc/javalanche/testkey.jks");
             ks.load(fis, password);
 
             // setup the key manager factory
