@@ -84,7 +84,7 @@ sudo "$javacDir" -cp /etc/javalanche/Servers/json.jar "@/etc/javalanche/files.tx
 
 if [ ! -f "/etc/javalanche/testkey.jks" ]; then
     echo "[*] Creating self signed HTTPS Certificate"
-    sudo "$keytoolDir" -genkeypair -keyalg RSA -alias selfsigned -keystore /etc/javalanche/testkey.jks -storepass password -validity 360 -keysize 2048
+    sudo "$keytoolDir" -genkeypair -keyalg RSA -alias selfsigned -keystore /etc/javalanche/testkey.jks -storepass password -validity 360 -keysize 2048 -dname "CN=Javalanche, OU=Javalanche, O=Javalanche, L=Rochester, ST=NY, C=US"
 fi
 
 echo ""
