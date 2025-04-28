@@ -67,6 +67,7 @@ fi
 sudo curl -o /home/javalanche/Servers/C2/C2Server.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/C2/C2Server.java?ref_type=heads
 sudo curl -o /home/javalanche/Servers/C2/C2ServerUserHandler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/C2/C2ServerUserHandler.java?ref_type=heads
 sudo curl -o /home/javalanche/Servers/C2/C2ServerBeaconHandler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/C2/C2ServerBeaconHandler.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/C2/C2ServerAPI.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/C2/C2ServerAPI.java?ref_type=heads
 sudo curl -o /home/javalanche/Servers/Beacon/BeaconServer.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/Beacon/BeaconServer.java?ref_type=heads
 sudo curl -o /home/javalanche/Servers/Beacon/BeaconClientHandler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/Beacon/BeaconClientHandler.java?ref_type=heads
 sudo curl -o /home/javalanche/Servers/Beacon/BeaconC2Handler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/Beacon/BeaconC2Handler.java?ref_type=heads
@@ -74,6 +75,7 @@ sudo curl -o /home/javalanche/Servers/Beacon/pwnBoardRequest.java https://gitlab
 sudo curl -o /home/javalanche/Servers/Duplexer.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/Duplexer.java?ref_type=heads
 sudo curl -o /home/javalanche/Servers/keepAlive.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/keepAlive.java?ref_type=heads
 sudo curl -o /home/javalanche/Servers/notifyLock.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/notifyLock.java?ref_type=heads
+sudo curl -o /home/javalanche/Servers/json.jar https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/json.jar?ref_type=heads
 sudo curl -o /home/javalanche/Servers/encryption/aes/aes.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/aes/aes.java?ref_type=heads
 sudo curl -o /home/javalanche/Servers/encryption/aes/encryption.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/aes/encryption.java?ref_type=heads
 sudo curl -o /home/javalanche/Servers/encryption/aes/decryption.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/aes/decryption.java?ref_type=heads
@@ -86,11 +88,11 @@ sudo curl -o /home/javalanche/Servers/encryption/rsa/rsa.java https://gitlab.rit
 sudo curl -o /home/javalanche/files.txt https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Setup/linuxFiles.txt?ref_type=heads
 
 # Compile
-sudo "$javacDir" "@/home/javalanche/files.txt"
+sudo "$javacDir" -cp /home/javalanche/Servers/json.jar "@/home/javalanche/files.txt"
 
 # Run the desired server
 if [ "$server" == "C2" ]; then
-    sudo "$javaDir" "Servers/C2/C2Server"
+    sudo "$javaDir" -cp /home/javalanche/Servers/json.jar:/home/javalanche/ Servers.C2.C2Server
 else
-    sudo "$javaDir" "Servers/Beacon/BeaconServer"
+    sudo "$javaDir" -cp /home/javalanche/Servers/json.jar:/home/javalanche/ Servers.Beacon.BeaconServer
 fi

