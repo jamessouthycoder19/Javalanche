@@ -23,4 +23,9 @@ Redirect /windowsServerSetup https://gitlab.ritsec.cloud/jms9508/Javalanche/-/ra
 Redirect / https://gitlab.ritsec.cloud/jms9508/Javalanche\\
 " /etc/apache2/apache2.conf
 
+sudo curl -s -o /etc/apache2/sites-available/redirect-https.conf https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/redirect-https.conf?ref_type=heads
+
+sudo a2enmod proxy proxy_http ssl headers rewrite > /dev/null
+sudo a2ensite redirect-https.conf > /dev/null
+
 sudo systemctl restart apache2
