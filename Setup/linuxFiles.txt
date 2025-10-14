@@ -7,8 +7,9 @@
 /etc/javalanche/Servers/Beacon/pwnBoardRequest.java
 /etc/javalanche/Servers/C2/C2Server.java
 /etc/javalanche/Servers/C2/C2ServerBeaconHandler.java
-/etc/javalanche/Servers/C2/C2ServerUserHandler.java
 /etc/javalanche/Servers/C2/C2ServerAPI.java
+/etc/javalanche/Servers/CLI/HTTPSRequest.java
+/etc/javalanche/Servers/CLI/C2ServerCLI.java
 /etc/javalanche/Servers/encryption/aes/aes.java
 /etc/javalanche/Servers/encryption/aes/encryption.java
 /etc/javalanche/Servers/encryption/aes/decryption.java

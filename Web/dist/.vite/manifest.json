@@ -1,0 +1,18 @@
+{
+  "index.html": {
+    "file": "assets/index-DuoRVY44.js",
+    "name": "index",
+    "src": "index.html",
+    "isEntry": true,
+    "css": [
+      "assets/index-B8nrcyu-.css"
+    ],
+    "assets": [
+      "assets/RITSECRedTeamLogo-BwXfz84M.png"
+    ]
+  },
+  "src/assets/RITSECRedTeamLogo.png": {
+    "file": "assets/RITSECRedTeamLogo-BwXfz84M.png",
+    "src": "src/assets/RITSECRedTeamLogo.png"
+  }
+}

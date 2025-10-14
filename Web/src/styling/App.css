@@ -1,0 +1,48 @@
+body,
+.app-root {
+  background-color: #f4f4f4;
+  color: #000;
+  transition: background 0.2s, color 0.2s;
+}
+
+.app-root.dark {
+  background-color: #1e1e1e;
+  color: #fff;
+}
+
+.sidebar {
+  background: #f8f9fa;
+  border-right: 1px solid #dee2e6;
+}
+
+.app-root.dark .sidebar {
+  background: #1e1e1e;
+  border-right: 1px solid #333;
+}
+
+.card {
+  background-color: #f4f4f4;
+  color: #000;
+}
+
+.app-root.dark .card {
+  background-color: #1e1e1e;
+  color: #fff;
+  border: 1px solid #dee2e6;
+}
+
+.list-group-item:hover {
+  background-color: #007bff;
+  color: #fff;
+  cursor: pointer;
+}
+
+.app-root.dark .list-group-item {
+  background-color: #1e1e1e;
+  color: #fff;
+}
+
+.app-root.dark .list-group-item:hover {
+  background-color: #007bff;
+  color: #fff;
+}

