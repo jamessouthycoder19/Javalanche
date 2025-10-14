@@ -77,7 +77,7 @@ public class C2ServerBeaconHandler implements Runnable{
      */
     private void beaconDisconnect(Exception e){
         String errorMessage = "Lost Beacon Server at " + IP;
-        C2server.outputToUserHandler(errorMessage);
+        C2server.outputToUser(errorMessage);
         keepAliveClass.stopKeepAlive();
         this.sentinel = false;
         if(e != null){
@@ -113,13 +113,13 @@ public class C2ServerBeaconHandler implements Runnable{
                         }
                     } else if (type.equals("client_connect")) {
                         // When we are notified of a new client, intialize the varaibles, and notify the User that there is a new client
-                        C2server.outputToUserHandler(data + " at " + ip);
+                        C2server.outputToUser(data + " at " + ip);
                         C2server.intializeVars(ip, data);
 
                     } else if (type.equals("client_disconnect")){
                         // When we are notified of a client disconnect, notify the user that there is a new client
                         // and append a message to the end of the dictionaries
-                        C2server.outputToUserHandler(data + " at " + ip);
+                        C2server.outputToUser(data + " at " + ip);
                         C2server.addDataToResponsesDictionaries(ip, "DISCONNECTED");
                     }
                 }   

@@ -144,8 +144,8 @@ public class BeaconClientHandler implements Runnable{
         keepAliveThread.start();
 
         // Create a new thread responsible for updating pwnBoard
-        Thread pwnBoardRequestThread = new Thread(pwnBoardRequestObject);
-        pwnBoardRequestThread.start();
+        // Thread pwnBoardRequestThread = new Thread(pwnBoardRequestObject);
+        // pwnBoardRequestThread.start();
 
         String encrypted = "";
         String response = "";

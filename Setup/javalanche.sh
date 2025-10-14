@@ -16,8 +16,14 @@ elif [ "$server" == "Beacon" ]; then
 fi
 
 # Run the desired server
-if [ "$server" == "C2" ]; then
+if [ "$server" == "C2" ] || [ "$server" == "c2" ]; then
+    sudo systemctl start apache2
     sudo "$javaDir" -cp /etc/javalanche/Servers/json.jar:/etc/javalanche/ Servers.C2.C2Server
-elif [ "$server" == "Beacon" ]; then
+elif [ "$server" == "Beacon" ] || [ "$server" == "beacon" ]; then
     sudo "$javaDir" -cp /etc/javalanche/Servers/json.jar:/etc/javalanche/ Servers.Beacon.BeaconServer
+elif [ "$server" == "CLI" ] || ["$server" == "cli" ]; then
+    sudo "$javaDir" -cp /etc/javalanche/Servers/json.jar:/etc/javalanche/ Servers.CLI.C2ServerCLI
+else
+    echo "Usage: javalanche.sh [C2|Beacon|CLI]"
+    exit 1
 fi
