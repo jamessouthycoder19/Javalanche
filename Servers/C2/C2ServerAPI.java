@@ -223,13 +223,6 @@ public class C2ServerAPI implements Runnable {
                 }
             } else if (validateBearerToken(t.getRequestHeaders().get("Authorization").get(0).split(" ")[1])){
                 if(t.getRequestURI().toString().equals("/status") && t.getRequestMethod().equals("GET")){
-                    C2server.distributeCommandToBeacons("Windows", "whoami");
-                    C2server.distributeCommandToBeacons("Linux", "whoami");
-                    try{
-                        Thread.sleep(1000);
-                    } catch(InterruptedException e){
-                        e.printStackTrace();
-                    }
                     JSONObject clientStatusJSONObject = new JSONObject(C2server.getClientStatus()); 
                     response = clientStatusJSONObject.toString();
                 } else if (t.getRequestURI().toString().equals("/responses") && t.getRequestMethod().equals("POST")){

