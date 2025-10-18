@@ -48,7 +48,7 @@ public class C2ServerAPI implements Runnable {
             hexString.append(hexChars.charAt(secRNG.nextInt(hexChars.length())));
         }
         bearerTokens.put(hexString.toString(), username);
-        bearerTokensExpirationTime.put(hexString.toString(), Instant.now().plusSeconds(3600));
+        bearerTokensExpirationTime.put(hexString.toString(), Instant.now().plusSeconds(36000));
         return hexString.toString();
     }
 
