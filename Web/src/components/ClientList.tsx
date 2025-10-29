@@ -1,3 +1,5 @@
+import { useNavigate} from "react-router-dom" 
+
 export interface ClientListItem {
     ip: string;
     active: boolean;
@@ -7,10 +9,11 @@ export interface ClientListItem {
 interface ClientListProps {
     items: ClientListItem[];
     heading: string;
-    onSelectItem: (item: ClientListItem) => void;
 }
 
-function ClientList({items, heading, onSelectItem}: ClientListProps) {
+function ClientList({items, heading}: ClientListProps) {
+    const navigate = useNavigate();
+
     // Sort items alphabetically by Active status and then by IP address
     const sortedItems = [...items].sort((a, b) => {
         if (a.active === b.active) {
@@ -30,9 +33,7 @@ function ClientList({items, heading, onSelectItem}: ClientListProps) {
                     <li
                         className="list-group-item"
                         key={item.ip}
-                        onDoubleClick={() => {
-                            onSelectItem(item)
-                        }}
+                        onSelect={() => navigate(`/clientshell?client=${encodeURIComponent(item.ip)}`)}
                         style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
                     >
                         <span>{item.ip}</span>

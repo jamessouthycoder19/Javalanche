@@ -142,12 +142,17 @@ export default function Shell() {
     }
   }
 
+   // Add ref for the input element
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!cmd.trim()) return;
     const toSend = cmd;
     setCmd("");
     await sendCommand(toSend);
+    // Focus the input after sending
+    inputRef.current?.focus();
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -220,6 +225,7 @@ export default function Shell() {
 
         <form onSubmit={handleSubmit} style={{ marginTop: 12, display: "flex", gap: 8 }}>
           <input
+            ref={inputRef}
             value={cmd}
             onChange={e => setCmd(e.target.value)}
             onKeyDown={handleKeyDown}

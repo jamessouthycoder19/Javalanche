@@ -1,6 +1,5 @@
 package Servers;
 
-import Servers.Beacon.BeaconServer;
 import Servers.C2.C2Server;
 
 public class notifyLock implements Runnable{
@@ -9,7 +8,6 @@ public class notifyLock implements Runnable{
 
     // Pointer to whichever Class is using this class
     private C2Server C2ServerPointer;
-    private BeaconServer BeaconServerPointer;
 
     // This ID is used to determine if .notify() should still be called or not
     private int shellID;
@@ -18,14 +16,6 @@ public class notifyLock implements Runnable{
     public notifyLock(Object lock, C2Server C2ServerPointer, int shellID){
         this.lock = lock;
         this.C2ServerPointer = C2ServerPointer;
-        this.BeaconServerPointer = null;
-        this.shellID = shellID;
-    }
-
-    public notifyLock(Object lock, BeaconServer beaconServerPointer, int shellID){
-        this.lock = lock;
-        this.C2ServerPointer = null;
-        this.BeaconServerPointer = beaconServerPointer;
         this.shellID = shellID;
     }
 
@@ -45,12 +35,6 @@ public class notifyLock implements Runnable{
                     lock.notify();
                 }
             }
-        } else {
-            if(shellID == BeaconServerPointer.getShellID()){
-                synchronized(lock){
-                    lock.notify();
-                }
-            }
-        }   
+        }  
     }
 }
