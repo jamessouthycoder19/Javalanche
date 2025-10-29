@@ -4,7 +4,8 @@ import Shell from './pages/Shell.tsx';
 import Login from './pages/Login.tsx';
 import Command from './pages/Command.tsx';
 import History from './pages/History.tsx';
-import ProtectedRoute from './components/ProtectedRoute.tsx'; // adjust path if needed
+import ManageUsers from './pages/ManageUsers.tsx';
+import ProtectedRoute from './components/ProtectedRoute.tsx';
 import { BrowserRouter, Routes, Route } from "react-router";
 import 'bootstrap/dist/css/bootstrap.css';
 
@@ -41,6 +42,14 @@ createRoot(document.getElementById('root')!).render(
         element={
           <ProtectedRoute>
             <History />
+            </ProtectedRoute>
+          }
+        />
+      <Route
+        path="/manageusers"
+        element={
+          <ProtectedRoute>
+            <ManageUsers />
             </ProtectedRoute>
           }
         />

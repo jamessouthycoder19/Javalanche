@@ -44,6 +44,8 @@ export async function requestToken(username: string, password: string): Promise<
         throw new Error("Malformed auth response: missing 'bearer' field");
     }
 
+    localStorage.setItem("username", username);
+
     return { bearer: body.bearer, ttl: Number(body.ttl) || 0 };
 }
 

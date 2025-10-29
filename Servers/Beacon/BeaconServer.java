@@ -262,7 +262,11 @@ public class BeaconServer implements Runnable{
                 if(sentinel == true){
                     e.printStackTrace();
                 }
-            } catch (NullPointerException e){}
+            } catch (NullPointerException e){
+                e.printStackTrace();
+            } catch (Exception e){
+                e.printStackTrace();
+            }
         }
     }
 

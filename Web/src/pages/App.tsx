@@ -14,10 +14,13 @@ function App() {
 
   const handleThemeToggle = () => setDarkMode(prev => !prev);
 
-  const [clients, setClients] = useState<{ ip: string; active: boolean }[]>([]);
+  const [clients, setClients] = useState<{ ip: string; active: boolean; status: string }[]>([]);
+
   const handleUpdateClients = async () => {
     try {
       const token = getToken();
+
+      // Get HTTPS clients
       const res = await fetch("https://api.javalanche.net:8000/status", {
         method: "GET",
         headers: token ? { "Authorization": `Bearer ${token}`, "Accept": "application/json" } : { "Accept": "application/json" }
@@ -31,48 +34,55 @@ function App() {
         return;
       }
       const body = await res.json().catch(() => null);
-      if (!body) {
+
+      // Get DNS clients 
+      const res2 = await fetch("https://api.javalanche.net:8000/dnsstatus", {
+        method: "GET",
+        headers: token ? { "Authorization": `Bearer ${token}`, "Accept": "application/json" } : { "Accept": "application/json" }
+      });
+      const body2 = await res2.json().catch(() => ({}));
+
+      if (!body2) {
         console.error("Empty or non-JSON /status response");
-        return;
-      }
-
-      // Normalize response into { ip, active }[]
-      let newClients: { ip: string; active: boolean }[] = [];
-
-      // Case: top-level map of ip -> bool e.g. { "192.168.1.1": true }
-      if (body && typeof body === "object" && !Array.isArray(body)) {
-        const entries = Object.entries(body);
-        const ipRegex = /^\d{1,3}(\.\d{1,3}){3}$/;
-        const ipMapEntries = entries.filter(([k, _]) => ipRegex.test(k));
-        if (ipMapEntries.length) {
-          newClients = ipMapEntries.map(([k, v]) => ({ ip: k, active: Boolean(v) }));
+        if (res2.status === 403 || res2.status === 401) {
+          clearToken();
+          navigate("/login", { replace: true, state: { from: { pathname: "/" } } });
         }
+        return;
+
       }
 
-      // Fallbacks for other shapes
-      if (!newClients.length) {
-        if (Array.isArray(body)) {
-          newClients = body.map((it: any) => ({
-            ip: String(it.ip ?? it.address ?? it.host ?? it),
-            active: Boolean(it.active ?? it.online ?? false)
-          }));
-        } else if (Array.isArray(body.clients)) {
-          newClients = body.clients.map((it: any) => ({
-            ip: String(it.ip ?? it.address ?? it.host ?? it),
-            active: Boolean(it.active ?? it.online ?? false)
-          }));
-        } else if (body.ip) {
-          newClients = [{ ip: String(body.ip), active: Boolean(body.active ?? body.online ?? true) }];
+      // Normalize response into { ip, active, status }[]
+      let newClients: { ip: string; active: boolean; status: string }[] = [];
+      if ((typeof body === "object" && !Array.isArray(body)) || (typeof body2 === "object" && !Array.isArray(body2))) {
+        const entries = Object.entries(body);
+        const entries2 = Object.entries(body2);
+        const ipRegex = /^\d{1,3}(\.\d{1,3}){3}$/;
+        const ipMapEntries = entries.filter(([k]) => ipRegex.test(k));
+        const ipMapEntries2 = entries2.filter(([k]) => ipRegex.test(k));
+        if (ipMapEntries.length || ipMapEntries2.length) {
+          const allIps = new Set([...ipMapEntries.map(([k]) => k), ...ipMapEntries2.map(([k]) => k)]);
+          newClients = Array.from(allIps).map((ip) => {
+            const httpsActive = Boolean(body[ip]);
+            const dnsActive = Boolean(body2[ip]);
+            let status = "disconnected";
+            if (httpsActive && dnsActive) status = "https, dns";
+            else if (httpsActive) status = "https";
+            else if (dnsActive) status = "dns";
+            return { ip, active: httpsActive || dnsActive, status };
+          });
         }
       }
 
       if (newClients.length) {
         setClients(newClients);
+        console.log("Clients updated:", newClients);
       } else {
         console.warn("No clients found in /status response", body);
       }
+
     } catch (err) {
-      console.error("Error fetching clients from /status:", err);
+      console.error("Error fetching clients:", err);
     }
   };
 
@@ -143,6 +153,15 @@ function App() {
               <Link to="clienthistory" className="btn btn-primary">Get Command History</Link>
             </div>
           </div>
+          { localStorage.getItem("username") === "root" && (
+            <div className="card" style={{ width: "15rem", height: "15rem" }}>
+              <div className="card-body">
+                <h5 className="card-title">Manage Users</h5>
+                <p className="card-text">Add, delete, or set passwords of Red Team Operator users</p>
+                <Link to="manageusers" className="btn btn-primary">Manage Users</Link>
+              </div>
+            </div>
+          )}
         </div>
       </main>
     </div>

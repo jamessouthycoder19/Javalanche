@@ -1,6 +1,7 @@
 export interface ClientListItem {
     ip: string;
     active: boolean;
+    status: string;
 }
 
 interface ClientListProps {
@@ -42,7 +43,7 @@ function ClientList({items, heading, onSelectItem}: ClientListProps) {
                                 marginLeft: "1rem"
                             }}
                         >
-                            {item.active ? "Active" : "Disconnected"}
+                            {item.status}
                         </span>
                     </li>
                 )}
