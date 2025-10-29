@@ -5,6 +5,8 @@
 /etc/javalanche/Servers/Beacon/BeaconClientHandler.java
 /etc/javalanche/Servers/Beacon/BeaconServer.java
 /etc/javalanche/Servers/Beacon/pwnBoardRequest.java
+/etc/javalanche/Servers/DnsBeacon/DnsBeaconC2Handler.java
+/etc/javalanche/Servers/DnsBeacon/DnsBeaconServer.java
 /etc/javalanche/Servers/C2/C2Server.java
 /etc/javalanche/Servers/C2/C2ServerBeaconHandler.java
 /etc/javalanche/Servers/C2/C2ServerAPI.java

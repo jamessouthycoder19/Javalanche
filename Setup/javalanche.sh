@@ -13,6 +13,9 @@ if [ "$server" == "C2" ]; then
 elif [ "$server" == "Beacon" ]; then
     sudo iptables -A OUTPUT -p tcp --dport 1234 -j ACCEPT
     sudo iptables -A INPUT -p tcp --dport https -j ACCEPT
+elif [ "$server" == "DnsBeacon" ]; then
+    sudo iptables -A OUTPUT -p tcp --dport 1234 -j ACCEPT
+    sudo iptables -A INPUT -p udp --dport 53 -j ACCEPT
 fi
 
 # Run the desired server
@@ -21,8 +24,11 @@ if [ "$server" == "C2" ] || [ "$server" == "c2" ]; then
     sudo "$javaDir" -cp /etc/javalanche/Servers/json.jar:/etc/javalanche/ Servers.C2.C2Server
 elif [ "$server" == "Beacon" ] || [ "$server" == "beacon" ]; then
     sudo "$javaDir" -cp /etc/javalanche/Servers/json.jar:/etc/javalanche/ Servers.Beacon.BeaconServer
-elif [ "$server" == "CLI" ] || ["$server" == "cli" ]; then
+elif [ "$server" == "CLI" ] || [ "$server" == "cli" ]; then
     sudo "$javaDir" -cp /etc/javalanche/Servers/json.jar:/etc/javalanche/ Servers.CLI.C2ServerCLI
+elif [ "$server" == "DnsBeacon" ] || [ "$server" == "dnsbeacon" ] || [ "$server" == "dnsBeacon" ] || [ "$server" == "Dnsbeacon" ]; then
+    sudo systemctl stop systemd-resolved
+    sudo "$javaDir" -cp /etc/javalanche/Servers/json.jar:/etc/javalanche/ Servers.DnsBeacon.DnsBeaconServer
 else
     echo "Usage: javalanche.sh [C2|Beacon|CLI]"
     exit 1

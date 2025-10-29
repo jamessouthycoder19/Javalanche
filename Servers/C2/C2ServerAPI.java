@@ -195,7 +195,7 @@ public class C2ServerAPI implements Runnable {
              */
             // First, the client needs to present their username and password, to get a BEARER token
             if(t.getRequestMethod().equals("OPTIONS")){
-                t.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
                 t.getResponseHeaders().add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
                 t.getResponseHeaders().add("Access-Control-Allow-Headers", "Authorization, Content-Type");
                 t.sendResponseHeaders(204, -1);
@@ -211,19 +211,22 @@ public class C2ServerAPI implements Runnable {
                         jsonBearerObject.put("ttl", 3600);
                         jsonBearerObject.put("bearer", bearerToken);
                         response = jsonBearerObject.toString();
-                        t.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                        t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
                         t.sendResponseHeaders(200, response.getBytes().length);
                     } else {
                         JSONObject jsonBearerObject = new JSONObject();
                         jsonBearerObject.put("error", "Invalid Credentials");
                         response = jsonBearerObject.toString();
-                        t.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                        t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
                         t.sendResponseHeaders(401, response.getBytes().length);
                     }
                 }
             } else if (validateBearerToken(t.getRequestHeaders().get("Authorization").get(0).split(" ")[1])){
                 if(t.getRequestURI().toString().equals("/status") && t.getRequestMethod().equals("GET")){
                     JSONObject clientStatusJSONObject = new JSONObject(C2server.getClientStatus()); 
+                    response = clientStatusJSONObject.toString();
+                } else if (t.getRequestURI().toString().equals("/dnsstatus") && t.getRequestMethod().equals("GET")) {
+                    JSONObject clientStatusJSONObject = new JSONObject(C2server.getDnsClientStatus()); 
                     response = clientStatusJSONObject.toString();
                 } else if (t.getRequestURI().toString().equals("/responses") && t.getRequestMethod().equals("POST")){
                     // Proper scopes are Linux, Windows, or an ipv4 address, (wildcards are excepted, i.e. 192.168.x.1)
@@ -302,12 +305,12 @@ public class C2ServerAPI implements Runnable {
                 if(bearerTokens.keySet().contains(t.getRequestHeaders().get("Authorization").get(0).split(" ")[1])){
                     jo.put("error", "expired token");
                     response = jo.toString();
-                    t.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                    t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
                     t.sendResponseHeaders(401, response.getBytes().length);
                 } else {
                     jo.put("error", "invalid token");
                     response = jo.toString();
-                    t.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+                    t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
                     t.sendResponseHeaders(403, response.getBytes().length);
                 }
                 
@@ -332,6 +335,7 @@ public class C2ServerAPI implements Runnable {
             httpServer.createContext("/shell", new MyHandler());
             httpServer.createContext("/response", new MyHandler());
             httpServer.createContext("/status", new MyHandler());
+            httpServer.createContext("/dnsstatus", new MyHandler());
             httpServer.createContext("/auth", new MyHandler());
             httpServer.createContext("/user", new MyHandler());
             httpServer.createContext("/messages", new MyHandler());

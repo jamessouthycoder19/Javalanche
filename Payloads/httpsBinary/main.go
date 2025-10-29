@@ -1,5 +1,5 @@
 /*
-Javalanche Linux Payload
+Javalanche HTTPS Payload
 Author: James Southcott
 */
 
