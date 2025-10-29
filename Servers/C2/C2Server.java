@@ -435,14 +435,21 @@ public class C2Server implements Runnable{
 
     protected void updateClientLastSeen(String IPAddress){
         clientLastSeen.put(IPAddress, new Time(System.currentTimeMillis()));
+        
     }
 
     protected void updateDnsClientLastSeen(String IPAddress){
         dnsClientLastSeen.put(IPAddress, new Time(System.currentTimeMillis()));
+        pwnBoardRequest pwnBoardReq = new pwnBoardRequest(IPAddress, "https");
+        Thread pwnBoardReqThread = new Thread(pwnBoardReq);
+        pwnBoardReqThread.start();
     }
 
     protected void updateBeaconClientHttpsMap(String clientIP, String beaconIP){
         beaconClientHttpsMap.put(clientIP, beaconIP);
+        pwnBoardRequest pwnBoardReq = new pwnBoardRequest(clientIP, "dns");
+        Thread pwnBoardReqThread = new Thread(pwnBoardReq);
+        pwnBoardReqThread.start();
     }
 
     protected void updateBeaconClientDnsMap(String clientIP, String beaconIP){

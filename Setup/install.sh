@@ -61,10 +61,10 @@ echo "[*] Downloading Javalanche files"
 sudo curl -s -o /etc/javalanche/Servers/C2/C2Server.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/C2/C2Server.java?ref_type=heads
 sudo curl -s -o /etc/javalanche/Servers/C2/C2ServerBeaconHandler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/C2/C2ServerBeaconHandler.java?ref_type=heads
 sudo curl -s -o /etc/javalanche/Servers/C2/C2ServerAPI.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/C2/C2ServerAPI.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/C2/pwnBoardRequest.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/C2/pwnBoardRequest.java?ref_type=heads
 sudo curl -s -o /etc/javalanche/Servers/Beacon/BeaconServer.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/Beacon/BeaconServer.java?ref_type=heads
 sudo curl -s -o /etc/javalanche/Servers/Beacon/BeaconClientHandler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/Beacon/BeaconClientHandler.java?ref_type=heads
 sudo curl -s -o /etc/javalanche/Servers/Beacon/BeaconC2Handler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/Beacon/BeaconC2Handler.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/Beacon/pwnBoardRequest.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/Beacon/pwnBoardRequest.java?ref_type=heads
 sudo curl -s -o /etc/javalanche/Servers/DnsBeacon/DnsBeaconC2Handler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/DnsBeacon/DnsBeaconC2Handler.java?ref_type=heads
 sudo curl -s -o /etc/javalanche/Servers/DnsBeacon/DnsBeaconServer.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/DnsBeacon/DnsBeaconServer.java?ref_type=heads
 sudo curl -s -o /etc/javalanche/Servers/CLI/HTTPSRequest.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/CLI/HTTPSRequest.java?ref_type=heads
