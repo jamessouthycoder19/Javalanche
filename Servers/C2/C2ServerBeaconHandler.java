@@ -108,7 +108,7 @@ public class C2ServerBeaconHandler implements Runnable{
                     if(type.equals("dnsheartbeat")){
                         C2server.updateDnsClientLastSeen(ip);
                         C2server.updateBeaconClientDnsMap(ip, this.IP);
-                    } else {
+                    } else if (!(type.equals("client_disconnect"))) {
                         C2server.updateClientLastSeen(ip);
                         if (!hasToldStatus){
                             C2server.setBeaconHTTP(this.IP);

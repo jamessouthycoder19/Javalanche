@@ -1,7 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { getToken } from "../lib/auth";
+import { useNavigate } from "react-router";
 
 export default function ManageUsers() {
+  const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -101,11 +103,10 @@ export default function ManageUsers() {
 
           <button
             type="button"
-            onClick={() => { setUsername(""); setPassword(""); setInfo(null); setError(null); }}
-            disabled={loading}
+            onClick={() => navigate("/")}
             style={{ background: "transparent", border: "1px solid #ccc", padding: "8px 12px", borderRadius: 6 }}
           >
-            Reset
+            Home
           </button>
         </div>
 

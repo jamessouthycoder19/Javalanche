@@ -99,7 +99,7 @@ function App() {
         flexDirection: "column"
       }}>
         <div className="listGroup" style={{ flex: 1, overflowY: "auto" }}>
-          <ListGroup items={clients} heading="Clients" onSelectItem={() => console.log("hit")} />
+          <ListGroup items={clients} heading="Clients" />
         </div>
         <Button color="primary" onClick={handleUpdateClients}>
           Refresh Clients

