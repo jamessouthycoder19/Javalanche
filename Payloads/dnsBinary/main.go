@@ -160,7 +160,6 @@ func (p *program) run() {
 
 		randomTime, _ := rand.Int(rand.Reader, big.NewInt(int64(120)))
 		randomTimeInt := randomTime.Int64() + 120
-		print(randomTimeInt)
 		time.Sleep(time.Duration(randomTimeInt) * time.Second)
 		timeToSleep = int(randomTimeInt)
 
