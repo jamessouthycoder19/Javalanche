@@ -31,34 +31,32 @@ public class pwnBoardRequest implements Runnable {
 
     @Override
     public void run() {
-        while(true){
-            try {
-                // Connect to pwnboard
-                HttpURLConnection pwnboardConnection = (HttpURLConnection)pwnboardUrl.openConnection();
-                pwnboardConnection.setDoOutput(true);
-                pwnboardConnection.connect();
+        try {
+            // Connect to pwnboard
+            HttpURLConnection pwnboardConnection = (HttpURLConnection)pwnboardUrl.openConnection();
+            pwnboardConnection.setDoOutput(true);
+            pwnboardConnection.connect();
 
-                // Send api request
-                DataOutputStream writer = new DataOutputStream(pwnboardConnection.getOutputStream());
+            // Send api request
+            DataOutputStream writer = new DataOutputStream(pwnboardConnection.getOutputStream());
 
-                writer.writeBytes(pwnboardData);
-                writer.close();
+            writer.writeBytes(pwnboardData);
+            writer.close();
 
-                // Debug lines
-                InputStream in = pwnboardConnection.getInputStream();
-                Scanner scanner = new Scanner(in);
+            // Debug lines
+            InputStream in = pwnboardConnection.getInputStream();
+            Scanner scanner = new Scanner(in);
 
-                while(scanner.hasNext()){
-                    scanner.nextLine();
-                }
-                scanner.close();
+            while(scanner.hasNext()){
+                scanner.nextLine();
+            }
+            scanner.close();
 
-                pwnboardConnection.disconnect();
-            } catch (IOException e){
-                System.out.println("when sending " + pwnboardData);
-                e.printStackTrace();
-            }   
-        }
+            pwnboardConnection.disconnect();
+        } catch (IOException e){
+            System.out.println("when sending " + pwnboardData);
+            e.printStackTrace();
+        }   
     }
     
 }
