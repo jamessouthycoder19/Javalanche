@@ -29,7 +29,7 @@ public class pwnBoardRequest implements Runnable {
 
         String accessInfo = "https://www.javalanche.net" + " | " + "Username: " + username + " Password: " + password;
 
-        pwnboardData  = "{\"ip\": \"" + IPAddress + "\", \"application\": \"Javalanche\", \"access_type\": \"" + accessType + "\", \"access_info\": \"" + accessInfo + "\",}"; 
+        pwnboardData  = "{\"ip\": \"" + IPAddress + "\", \"application\": \"Javalanche\", \"access_type\": \"" + accessType + "\", \"access_info\": \"" + accessInfo + "\"}"; 
         pwnboardToken = "Bearer " + pwnboard_api_key;
     }
 
