@@ -13,13 +13,13 @@ fi
 
 
 if [ "$server" == "C2" ]; then
-    if [ ! -f "etc/letsencrypt/live/api.javalanche.net/fullchain.pem" ] || [ ! -f "etc/letsencrypt/live/api.javalanche.net/privkey.pem" ]; then
+    if [ ! -f "/etc/letsencrypt/live/api.javalanche.net/fullchain.pem" ] || [ ! -f "/etc/letsencrypt/live/api.javalanche.net/privkey.pem" ]; then
         sudo apt update
         sudo apt-get install certbot -y
         sudo certbot certonly -d "api.javalanche.net" --agree-tos --email jms9508@rit.edu --manual --preferred-challenges dns
     fi
 
-    if [ ! -f "etc/letsencrypt/live/www.javalanche.net/fullchain.pem" ] || [ ! -f "etc/letsencrypt/live/www.javalanche.net/privkey.pem" ]; then
+    if [ ! -f "/etc/letsencrypt/live/www.javalanche.net/fullchain.pem" ] || [ ! -f "/etc/letsencrypt/live/www.javalanche.net/privkey.pem" ]; then
         sudo apt update
         sudo apt-get install certbot -y
         sudo certbot certonly -d "www.javalanche.net" --agree-tos --email jms9508@rit.edu --manual --preferred-challenges dns
@@ -49,6 +49,6 @@ elif [ "$server" == "DnsBeacon" ] || [ "$server" == "dnsbeacon" ] || [ "$server"
     sudo systemctl stop systemd-resolved
     sudo "$javaDir" -cp /etc/javalanche/Servers/json.jar:/etc/javalanche/ Servers.DnsBeacon.DnsBeaconServer
 else
-    echo "Usage: javalanche.sh [C2|Beacon|CLI]"
+    echo "Usage: javalanche.sh [C2|Beacon|DnsBeacon|CLI|]"
     exit 1
 fi
