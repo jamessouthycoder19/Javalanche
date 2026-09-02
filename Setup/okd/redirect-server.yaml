@@ -1,0 +1,173 @@
+# Javalanche redirect server, ported from redirectServerSetup.sh to OKD.
+#
+# What the old VM did and where it went:
+#   - certbot / TLS termination   -> the OKD router terminates 443; cert-manager
+#                                    issues per-host certs over http-01 (Ingress)
+#   - Redirect directives edited   -> the ConfigMap below, mounted read-only into
+#     into apache2.conf              a stock unprivileged httpd
+#   - `systemctl restart apache2`  -> `oc rollout restart deploy/javalanche-redirect`
+#
+# No image to build and no registry: this uses Red Hat's public, non-root httpd
+# image and injects the redirect rules as config. To change a redirect, edit the
+# ConfigMap and roll the Deployment.
+#
+# The `javalanche` project is assumed to already exist (no Namespace object here,
+# so applying this doesn't need cluster-admin).
+---
+# Token-less service account: the redirector never calls the Kubernetes API, so
+# it gets no RBAC and no auto-mounted API token. Matches the compsole convention.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: javalanche-redirect
+  namespace: javalanche
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: javalanche-redirects
+  namespace: javalanche
+data:
+  # Dropped straight into httpd's conf.d. These apply at server scope, so every
+  # hostname routed here (apex, www, code) gets the same redirects. Order matters
+  # exactly like it did in apache2.conf: the specific paths must come before the
+  # catch-all `Redirect /`, because mod_alias uses the first matching directive.
+  redirects.conf: |
+    ServerName javalanche.net
+
+    Redirect /linuxServiceFile https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/main/Payloads/httpsBinary/linuxServiceFile.service
+    Redirect /linuxPayload https://github.com/jamessouthycoder19/Javalanche/raw/refs/heads/main/Payloads/httpsBinary/linux
+    Redirect /windowsPayload https://github.com/jamessouthycoder19/Javalanche/raw/refs/heads/main/Payloads/httpsBinary/windows.exe
+    Redirect /install.sh https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/main/Setup/install.sh
+    Redirect / https://github.com/jamessouthycoder19/Javalanche
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: javalanche-redirect
+  namespace: javalanche
+  labels:
+    app: javalanche-redirect
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: javalanche-redirect
+  template:
+    metadata:
+      labels:
+        app: javalanche-redirect
+    spec:
+      serviceAccountName: javalanche-redirect
+      automountServiceAccountToken: false
+      containers:
+        - name: httpd
+          # Public, no auth needed to pull, built to run as an arbitrary non-root
+          # UID with GID 0 (exactly what restricted-v2 hands it). Listens on 8080.
+          image: registry.access.redhat.com/ubi9/httpd-24:latest
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: redirects
+              mountPath: /etc/httpd/conf.d/redirects.conf
+              subPath: redirects.conf
+              readOnly: true
+          readinessProbe:
+            # `/` returns a 302, which counts as success (2xx-3xx). No health
+            # endpoint needed on a pure redirector.
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: redirects
+          configMap:
+            name: javalanche-redirects
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: javalanche-redirect
+  namespace: javalanche
+spec:
+  selector:
+    app: javalanche-redirect
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+# Ingress carrying OpenShift Route annotations (house convention). Cert-manager
+# issues each host's cert via the existing letsencrypt-http-prod ClusterIssuer
+# (http-01); the router terminates TLS at edge and redirects plain http to https.
+#
+# Each host gets its OWN tls entry + secret so a validation failure on one
+# hostname can't block the others' certs. A single host per cert => http-01 is
+# enough; no *.javalanche.net wildcard (that would have needed DNS-01).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: javalanche-redirect
+  namespace: javalanche
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-http-prod
+    route.openshift.io/termination: "edge"
+    route.openshift.io/insecure-edge-termination-policy: Redirect
+spec:
+  rules:
+    - host: javalanche.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: javalanche-redirect
+                port:
+                  number: 80
+    - host: www.javalanche.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: javalanche-redirect
+                port:
+                  number: 80
+    - host: code.javalanche.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: javalanche-redirect
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - javalanche.net
+      secretName: javalanche-tls
+    - hosts:
+        - www.javalanche.net
+      secretName: javalanche-www-tls
+    - hosts:
+        - code.javalanche.net
+      secretName: javalanche-code-tls
