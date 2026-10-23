@@ -21,8 +21,8 @@ linenumber=$(awk '
 
 sed -i "$linenumber i\\
 Redirect /linuxServiceFile https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/main/Payloads/httpsBinary/linuxServiceFile.service\\
-Redirect /linuxPayload https://github.com/jamessouthycoder19/Javalanche/raw/refs/heads/main/Payloads/httpsBinary/linux\\
-Redirect /windowsPayload https://github.com/jamessouthycoder19/Javalanche/raw/refs/heads/main/Payloads/httpsBinary/windows.exe\\
+Redirect /linuxPayload https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/main/Payloads/httpsBinary/linux\\
+Redirect /windowsPayload https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/main/Payloads/httpsBinary/windows.exe\\
 Redirect /install.sh https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/main/Setup/install.sh\\
 Redirect / https://github.com/jamessouthycoder19/Javalanche\\
 " /etc/apache2/apache2.conf

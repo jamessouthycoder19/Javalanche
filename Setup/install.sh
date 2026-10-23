@@ -58,29 +58,29 @@ fi
 echo "[*] Downloading Javalanche files"
 
 # Download all of the java files
-sudo curl -s -o /etc/javalanche/Servers/C2/C2Server.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/C2/C2Server.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/C2/C2ServerBeaconHandler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/C2/C2ServerBeaconHandler.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/C2/C2ServerAPI.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/C2/C2ServerAPI.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/C2/pwnBoardRequest.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/C2/pwnBoardRequest.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/Beacon/BeaconServer.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/Beacon/BeaconServer.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/Beacon/BeaconClientHandler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/Beacon/BeaconClientHandler.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/Beacon/BeaconC2Handler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/Beacon/BeaconC2Handler.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/DnsBeacon/DnsBeaconC2Handler.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/DnsBeacon/DnsBeaconC2Handler.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/DnsBeacon/DnsBeaconServer.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/DnsBeacon/DnsBeaconServer.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/CLI/HTTPSRequest.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/CLI/HTTPSRequest.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/CLI/C2ServerCLI.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/CLI/C2ServerCLI.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/Duplexer.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/Duplexer.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/keepAlive.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/keepAlive.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/notifyLock.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/notifyLock.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/json.jar https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/json.jar?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/encryption/aes/aes.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/aes/aes.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/encryption/aes/encryption.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/aes/encryption.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/encryption/aes/decryption.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/aes/decryption.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/encryption/aes/modes.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/aes/modes.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/encryption/aes/keyExpansion.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/aes/keyExpansion.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/encryption/rot13/rot13.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/rot13/rot13.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/encryption/rsa/rsa.java https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/encryption/rsa/rsa.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/config.txt https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Servers/C2/config.txt?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/C2/C2Server.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/C2/C2Server.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/C2/C2ServerBeaconHandler.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/C2/C2ServerBeaconHandler.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/C2/C2ServerAPI.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/C2/C2ServerAPI.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/C2/pwnBoardRequest.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/C2/pwnBoardRequest.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/Beacon/BeaconServer.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/Beacon/BeaconServer.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/Beacon/BeaconClientHandler.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/Beacon/BeaconClientHandler.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/Beacon/BeaconC2Handler.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/Beacon/BeaconC2Handler.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/DnsBeacon/DnsBeaconC2Handler.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/DnsBeacon/DnsBeaconC2Handler.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/DnsBeacon/DnsBeaconServer.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/DnsBeacon/DnsBeaconServer.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/CLI/HTTPSRequest.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/CLI/HTTPSRequest.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/CLI/C2ServerCLI.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/CLI/C2ServerCLI.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/Duplexer.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/Duplexer.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/keepAlive.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/keepAlive.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/notifyLock.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/notifyLock.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/json.jar https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/json.jar?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/encryption/aes/aes.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/encryption/aes/aes.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/encryption/aes/encryption.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/encryption/aes/encryption.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/encryption/aes/decryption.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/encryption/aes/decryption.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/encryption/aes/modes.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/encryption/aes/modes.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/encryption/aes/keyExpansion.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/encryption/aes/keyExpansion.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/encryption/rot13/rot13.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/encryption/rot13/rot13.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/Servers/encryption/rsa/rsa.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/encryption/rsa/rsa.java?ref_type=heads
+sudo curl -s -o /etc/javalanche/config.txt https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/C2/config.txt?ref_type=heads
 
 echo "[*] Downloading Web UI files & installing Apache"
 
@@ -95,10 +95,10 @@ fi
 if [ -f "/etc/apache2/sites-available/default-ssl.conf" ]; then
     sudo rm /etc/apache2/sites-available/default-ssl.conf
 fi
-sudo curl -s -o /etc/apache2/ports.conf https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Setup/ports.conf?ref_type=heads
-sudo curl -s -o /etc/apache2/sites-available/api-http.conf https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Setup/api-http.conf?ref_type=heads
-sudo curl -s -o /etc/apache2/sites-available/api-https.conf https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Setup/api-https.conf?ref_type=heads
-sudo curl -s -o /etc/apache2/sites-available/web-https.conf https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Setup/web-https.conf?ref_type=heads
+sudo curl -s -o /etc/apache2/ports.conf https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Setup/ports.conf?ref_type=heads
+sudo curl -s -o /etc/apache2/sites-available/api-http.conf https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Setup/api-http.conf?ref_type=heads
+sudo curl -s -o /etc/apache2/sites-available/api-https.conf https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Setup/api-https.conf?ref_type=heads
+sudo curl -s -o /etc/apache2/sites-available/web-https.conf https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Setup/web-https.conf?ref_type=heads
 sudo a2enmod proxy proxy_http ssl headers rewrite > /dev/null
 sudo a2ensite api-http.conf > /dev/null
 sudo a2ensite api-https.conf > /dev/null
@@ -110,7 +110,7 @@ if [ ! -d "/var/www/html/assets" ]; then
 fi
 
 # Download Web UI files
-BASE_URL="https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Web/dist"
+BASE_URL="https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Web/dist"
 MANIFEST_URL="$BASE_URL/.vite/manifest.json"
 
 sudo curl -s -o /etc/javalanche/manifest.json "$MANIFEST_URL?ref_type=heads"
@@ -132,10 +132,10 @@ sudo curl -s -o "/var/www/html/index.html" "$BASE_URL/index.html?ref_type=heads"
 sudo curl -s -o "/var/www/html/RITSECRedTeamLogo.png" "$BASE_URL/RITSECRedTeamLogo.png?ref_type=heads"
 
 # Download file for javac to use
-sudo curl -s -o /etc/javalanche/files.txt https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Setup/linuxFiles.txt?ref_type=heads
+sudo curl -s -o /etc/javalanche/files.txt https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Setup/linuxFiles.txt?ref_type=heads
 
 # Download file cmd line tool to launch whatever server is desired
-sudo curl -s -o /bin/javalanche https://gitlab.ritsec.cloud/jms9508/Javalanche/-/raw/$branch/Setup/javalanche.sh?ref_type=heads
+sudo curl -s -o /bin/javalanche https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Setup/javalanche.sh?ref_type=heads
 sudo chmod +x /bin/javalanche
 
 echo "[*] Compiling Javalanche files"
