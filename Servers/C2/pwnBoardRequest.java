@@ -19,7 +19,7 @@ public class pwnBoardRequest implements Runnable {
 
     public pwnBoardRequest(String IPAddress, String accessType, String username, String password, String pwnboard_api_key) {
         try{
-            this.pwnboardUri = new URI("https://pwnboard.win/pwn");
+            this.pwnboardUri = new URI("https://pwn.salsas.bar/pwn");
             this.pwnboardUrl = this.pwnboardUri.toURL();
         } catch (URISyntaxException e){
             e.printStackTrace();
