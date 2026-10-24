@@ -17,7 +17,10 @@ public class pwnBoardRequest implements Runnable {
     private String pwnboardData;
     private String pwnboardToken;
 
+    private String IPAddress;
+
     public pwnBoardRequest(String IPAddress, String accessType, String username, String password, String pwnboard_api_key) {
+        this.IPAddress = IPAddress;
         try{
             this.pwnboardUri = new URI("https://pwn.salsas.bar/pwn");
             this.pwnboardUrl = this.pwnboardUri.toURL();
@@ -36,6 +39,9 @@ public class pwnBoardRequest implements Runnable {
     @Override
     public void run() {
         try {
+            if (IPAddress != "0.0.0.0") {
+                return;
+            }
             // Connect to pwnboard
             HttpURLConnection pwnboardConnection = (HttpURLConnection)pwnboardUrl.openConnection();
             pwnboardConnection.setDoOutput(true);
