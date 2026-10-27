@@ -293,6 +293,7 @@ public class C2ServerAPI implements Runnable {
                     t.sendResponseHeaders(401, responseBytes.length);
                 }
             } else if (bearerToken != null && validateBearerToken(bearerToken)){
+                int statusCode = 200;
                 if(t.getRequestURI().toString().equals("/status") && t.getRequestMethod().equals("GET")){
                     JSONObject clientStatusJSONObject = new JSONObject(C2server.getClientStatus()); 
                     response = clientStatusJSONObject.toString();
@@ -333,37 +334,50 @@ public class C2ServerAPI implements Runnable {
                     }           
 
                     
-                } else if (t.getRequestURI().toString().equals("/user") && t.getRequestMethod().equals("POST") && "root".equals(bearerTokens.get(bearerToken))){
-                    JSONObject userJSON = new JSONObject(new String(t.getRequestBody().readAllBytes()));
-                    String action = userJSON.get("type").toString();
-                    if(action.equals("add")){
-                        String username = userJSON.get("username").toString();
-                        String password = userJSON.get("password").toString();
-                        C2server.updateUsernamePassword(username, C2Server.hashPassword(password));
-                    } else if (action.equals("disable")){
-                        String username = userJSON.get("username").toString();
-                        C2server.disableUser(username);
-                        try{
-                            removeUserBearerTokens(username);
-                        } catch(Exception e){
-                            e.printStackTrace();
+                } else if (t.getRequestURI().toString().equals("/user") && t.getRequestMethod().equals("POST")){
+                    // /user is root-only
+                    if("root".equals(bearerTokens.get(bearerToken))){
+                        JSONObject userJSON = new JSONObject(new String(t.getRequestBody().readAllBytes()));
+                        String action = userJSON.get("type").toString();
+                        if(action.equals("add")){
+                            String username = userJSON.get("username").toString();
+                            String password = userJSON.get("password").toString();
+                            C2server.updateUsernamePassword(username, C2Server.hashPassword(password));
+                        } else if (action.equals("disable")){
+                            String username = userJSON.get("username").toString();
+                            C2server.disableUser(username);
+                            try{
+                                removeUserBearerTokens(username);
+                            } catch(Exception e){
+                                e.printStackTrace();
+                            }
                         }
+
+                        JSONObject returnObject = new JSONObject();
+                        returnObject.put("output", "success");
+                        response = returnObject.toString();
+                    } else {
+                        statusCode = 403;
+                        JSONObject returnObject = new JSONObject();
+                        returnObject.put("error", "forbidden");
+                        response = returnObject.toString();
                     }
-
-                    JSONObject returnObject = new JSONObject();
-                    returnObject.put("output", "success");
-                    response = returnObject.toString();
-
                 } else if (t.getRequestURI().toString().equals("/messages") && t.getRequestMethod().equals("POST")){
                     JSONObject messageJSON = new JSONObject(new String(t.getRequestBody().readAllBytes()));
                     int numMessagesRead = Integer.parseInt(messageJSON.get("Messages Read").toString());
                     JSONArray messageListJSON = new JSONArray(C2server.getUserMessages(numMessagesRead));
                     response = messageListJSON.toString();
+                } else {
+                    // Valid token but no matching route/method
+                    statusCode = 404;
+                    JSONObject returnObject = new JSONObject();
+                    returnObject.put("error", "not found");
+                    response = returnObject.toString();
                 }
                 t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
                 t.getResponseHeaders().set("Content-Type", "application/json");
                 responseBytes = response.getBytes(StandardCharsets.UTF_8);
-                t.sendResponseHeaders(200, responseBytes.length);
+                t.sendResponseHeaders(statusCode, responseBytes.length);
             } else {
                 JSONObject jo = new JSONObject();
                 // If the token is expired and the client just needs to ask for a new one, they get a 401 unauthorized
