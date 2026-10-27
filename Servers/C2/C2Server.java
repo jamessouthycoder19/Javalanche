@@ -246,9 +246,13 @@ public class C2Server implements Runnable{
      */
     protected void intializeVars(String IPAddress, String OS){
         if(OS.contains("Windows")){
-            windowsClientResponses.put(IPAddress, new ArrayList<>());
+            synchronized(windowsClientResponses){
+                windowsClientResponses.put(IPAddress, new ArrayList<>());
+            }
         } else if(OS.contains("Linux")){
-            linuxClientResponses.put(IPAddress, new ArrayList<>());
+            synchronized(linuxClientResponses){
+                linuxClientResponses.put(IPAddress, new ArrayList<>());
+            }
         }
         clientLastSeen.put(IPAddress, new Time(System.currentTimeMillis()));
     }
