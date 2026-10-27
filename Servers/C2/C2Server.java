@@ -446,13 +446,13 @@ public class C2Server implements Runnable{
         // True if the client is still active, false if the client is no longer active.
         HashMap<String, Boolean> clientStatus = new HashMap<>();
 
-        for (String ip : clientLastSeen.keySet()){
+        for (Map.Entry<String, Time> entry : clientLastSeen.entrySet()){
             long currentTime = System.currentTimeMillis();
-            long lastSeenTime = clientLastSeen.get(ip).getTime();
+            long lastSeenTime = entry.getValue().getTime();
             if((currentTime - lastSeenTime) < 300000){
-                clientStatus.put(ip, true);
+                clientStatus.put(entry.getKey(), true);
             } else {
-                clientStatus.put(ip, false);
+                clientStatus.put(entry.getKey(), false);
             }
         }
         
@@ -470,13 +470,13 @@ public class C2Server implements Runnable{
         // True if the client is still active, false if the client is no longer active.
         HashMap<String, Boolean> clientStatus = new HashMap<>();
 
-        for (String ip : dnsClientLastSeen.keySet()){
+        for (Map.Entry<String, Time> entry : dnsClientLastSeen.entrySet()){
             long currentTime = System.currentTimeMillis();
-            long lastSeenTime = dnsClientLastSeen.get(ip).getTime();
+            long lastSeenTime = entry.getValue().getTime();
             if((currentTime - lastSeenTime) < 300000){
-                clientStatus.put(ip, true);
+                clientStatus.put(entry.getKey(), true);
             } else {
-                clientStatus.put(ip, false);
+                clientStatus.put(entry.getKey(), false);
             }
         }
         
