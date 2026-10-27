@@ -84,6 +84,10 @@ public class pwnBoardRequest implements Runnable {
             }
             // Connect to pwnboard
             HttpURLConnection pwnboardConnection = (HttpURLConnection)pwnboardUrl.openConnection();
+            // Bound the wait so a slow/unreachable pwnboard can't tie up a pool thread
+            // (and, via CallerRunsPolicy, stall a beacon handler)
+            pwnboardConnection.setConnectTimeout(5000);
+            pwnboardConnection.setReadTimeout(5000);
             pwnboardConnection.setDoOutput(true);
             pwnboardConnection.setRequestMethod("POST");
             pwnboardConnection.setRequestProperty("Content-Type", "application/json");
