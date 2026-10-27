@@ -1,6 +1,5 @@
 package Servers.C2;
 
-import java.io.IOException;
 import java.util.Map;
 
 import org.json.JSONObject;
@@ -138,11 +137,10 @@ public class C2ServerBeaconHandler implements Runnable{
                     }
                 }   
             }
-        } catch (IOException e) {
-            beaconDisconnect(e);
-        } catch (NullPointerException e) {
-            beaconDisconnect(e);
-        } catch (NumberFormatException e){
+        } catch (Exception e) {
+            // Any failure (socket error, malformed JSON / missing fields, etc.) ends this
+            // beacon cleanly: without this catch-all a JSONException would kill the thread
+            // and leak the keepAlive thread without cleanup.
             beaconDisconnect(e);
         }
     }
