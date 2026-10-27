@@ -81,6 +81,7 @@ public class C2ServerBeaconHandler implements Runnable{
         String errorMessage = "Lost Beacon Server at " + IP;
         C2server.outputToUser(errorMessage);
         keepAliveClass.stopKeepAlive();
+        C2server.removeBeacon(IP);
         this.sentinel = false;
         if(e != null){
             e.printStackTrace();

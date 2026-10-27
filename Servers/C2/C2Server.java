@@ -530,7 +530,35 @@ public class C2Server implements Runnable{
     protected void setBeaconHTTP(String IPAddress){
         isBeaconHTTP.put(IPAddress, true);
     }
-    
+
+    /**
+     * Removes a disconnected beacon and every client it was routing for from the
+     * tracking maps, so dead beacons/clients no longer linger or get treated as live.
+     * Collected client responses are intentionally preserved so the operator can still
+     * read a client's final output after its beacon drops.
+     *
+     * @param beaconIP - IP Address of the beacon that disconnected
+     */
+    protected void removeBeacon(String beaconIP){
+        longRangeBeacons.remove(beaconIP);
+        isBeaconHTTP.remove(beaconIP);
+
+        // Drop the HTTPS clients this beacon was routing for
+        for(String clientIP : beaconClientHttpsMap.keySet()){
+            if(beaconIP.equals(beaconClientHttpsMap.get(clientIP))){
+                beaconClientHttpsMap.remove(clientIP);
+                clientLastSeen.remove(clientIP);
+            }
+        }
+        // Drop the DNS clients this beacon was routing for
+        for(String clientIP : beaconClientDnsMap.keySet()){
+            if(beaconIP.equals(beaconClientDnsMap.get(clientIP))){
+                beaconClientDnsMap.remove(clientIP);
+                dnsClientLastSeen.remove(clientIP);
+            }
+        }
+    }
+
     @Override
     public void run(){
         File configFile = new File("/etc/javalanche/config.txt");
