@@ -340,13 +340,13 @@ public class C2Server implements Runnable{
         if(scope.equals("Windows")){
             synchronized(windowsClientResponses){
                 for(String ip : windowsClientResponses.keySet()) {
-                    responses.put(ip, windowsClientResponses.get(ip));
+                    responses.put(ip, new ArrayList<>(windowsClientResponses.get(ip)));
                 }
             }
         } else if(scope.equals("Linux")){
             synchronized(linuxClientResponses){
                 for(String ip : linuxClientResponses.keySet()) {
-                    responses.put(ip, linuxClientResponses.get(ip));
+                    responses.put(ip, new ArrayList<>(linuxClientResponses.get(ip)));
                 }
             }
         // Range of IPs 
@@ -356,9 +356,9 @@ public class C2Server implements Runnable{
                 synchronized(windowsClientResponses){
                     synchronized(linuxClientResponses){
                         if(windowsClientResponses.keySet().contains(ip)){
-                            responses.put(ip, windowsClientResponses.get(ip));
+                            responses.put(ip, new ArrayList<>(windowsClientResponses.get(ip)));
                         } else if(linuxClientResponses.keySet().contains(ip)){
-                            responses.put(ip, linuxClientResponses.get(ip));
+                            responses.put(ip, new ArrayList<>(linuxClientResponses.get(ip)));
                         }
                     }
                 }
