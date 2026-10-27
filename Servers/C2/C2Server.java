@@ -341,6 +341,28 @@ public class C2Server implements Runnable{
         return responses;
     }
 
+    /**
+     * Returns a point-in-time copy of a single client's responses, taken under the
+     * appropriate lock. Used by /shell to diff responses before and after a command
+     * without racing the beacon thread that appends to the live list.
+     *
+     * @param ip - IP Address of the client
+     * @return a copy of the client's responses, or an empty list if the client is unknown
+     */
+    protected ArrayList<String> snapshotResponsesForIP(String ip){
+        synchronized(windowsClientResponses){
+            if(windowsClientResponses.containsKey(ip)){
+                return new ArrayList<>(windowsClientResponses.get(ip));
+            }
+        }
+        synchronized(linuxClientResponses){
+            if(linuxClientResponses.containsKey(ip)){
+                return new ArrayList<>(linuxClientResponses.get(ip));
+            }
+        }
+        return new ArrayList<>();
+    }
+
     protected void disableUser(String username){
         usernamesPasswords.remove(username);
     }
