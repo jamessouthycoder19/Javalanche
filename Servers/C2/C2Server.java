@@ -523,6 +523,7 @@ public class C2Server implements Runnable{
             if(beaconIP.equals(beaconClientHttpsMap.get(clientIP))){
                 beaconClientHttpsMap.remove(clientIP);
                 clientLastSeen.remove(clientIP);
+                ipOctetsCache.remove(clientIP);
             }
         }
         // Drop the DNS clients this beacon was routing for
@@ -530,6 +531,7 @@ public class C2Server implements Runnable{
             if(beaconIP.equals(beaconClientDnsMap.get(clientIP))){
                 beaconClientDnsMap.remove(clientIP);
                 dnsClientLastSeen.remove(clientIP);
+                ipOctetsCache.remove(clientIP);
             }
         }
     }

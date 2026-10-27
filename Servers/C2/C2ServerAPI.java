@@ -364,9 +364,17 @@ public class C2ServerAPI implements Runnable {
                     }
                 } else if (t.getRequestURI().toString().equals("/messages") && t.getRequestMethod().equals("POST")){
                     JSONObject messageJSON = new JSONObject(new String(t.getRequestBody().readAllBytes()));
-                    int numMessagesRead = Integer.parseInt(messageJSON.get("Messages Read").toString());
-                    JSONArray messageListJSON = new JSONArray(C2server.getUserMessages(numMessagesRead));
-                    response = messageListJSON.toString();
+                    // optInt returns the default for a missing or non-numeric value, so bad input is a 400 rather than a 500
+                    int numMessagesRead = messageJSON.optInt("Messages Read", -1);
+                    if(numMessagesRead < 0){
+                        statusCode = 400;
+                        JSONObject returnObject = new JSONObject();
+                        returnObject.put("error", "invalid or missing 'Messages Read'");
+                        response = returnObject.toString();
+                    } else {
+                        JSONArray messageListJSON = new JSONArray(C2server.getUserMessages(numMessagesRead));
+                        response = messageListJSON.toString();
+                    }
                 } else {
                     // Valid token but no matching route/method
                     statusCode = 404;
