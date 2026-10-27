@@ -600,7 +600,7 @@ public class C2Server implements Runnable{
                 outputToUser("Attempted Beacon Authentication failed from " + attemptedAuthIP);
             } catch(IOException e){
                 // Only print out when sentinel is true, if sentinel is false, then the C2 Server is shutting down
-                if(sentinel = true){
+                if(sentinel){
                     e.printStackTrace();
                 }
             } catch(Exception e){
