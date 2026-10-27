@@ -12,8 +12,10 @@ import java.sql.Time;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -75,6 +77,11 @@ public class C2Server implements Runnable{
     // Shared, bounded pool for pwnboard notifications so we don't spawn a new
     // Thread on every beacon heartbeat
     private final ExecutorService pwnBoardPool;
+
+    // Cache of client IP string -> its split octets, so getIPMatches doesn't
+    // re-split every connected client on every command/response lookup. An IP
+    // string always splits to the same octets, so entries never need invalidating.
+    private final Map<String, String[]> ipOctetsCache = new ConcurrentHashMap<>();
 
     /**
      * Initializes a Command and Control Server to handle connections from Long Range Beacons
@@ -403,24 +410,32 @@ public class C2Server implements Runnable{
         HashSet<String> matches = new HashSet<>();
         String octets[] = IPAddress.split("\\.");
         for(String ip : beaconClientHttpsMap.keySet()){
-            String clientOctets[] = ip.split("\\.");
-            if ((octets[0].equals(clientOctets[0]) || octets[0].equals("x")) &&
-                (octets[1].equals(clientOctets[1]) || octets[1].equals("x")) &&
-                (octets[2].equals(clientOctets[2]) || octets[2].equals("x")) &&
-                (octets[3].equals(clientOctets[3]) || octets[3].equals("x"))) {
+            if (ipMatches(octets, ip)) {
                 matches.add(ip);
             }
         }
         for(String ip : beaconClientDnsMap.keySet()){
-            String clientOctets[] = ip.split("\\.");
-            if ((octets[0].equals(clientOctets[0]) || octets[0].equals("x")) &&
-                (octets[1].equals(clientOctets[1]) || octets[1].equals("x")) &&
-                (octets[2].equals(clientOctets[2]) || octets[2].equals("x")) &&
-                (octets[3].equals(clientOctets[3]) || octets[3].equals("x"))) {
+            if (ipMatches(octets, ip)) {
                 matches.add(ip);
             }
         }
         return new ArrayList<>(matches);
+    }
+
+    /**
+     * Compares a wildcard-aware query (already split into octets) against a client IP,
+     * using the cached split of the client IP to avoid re-splitting on every call.
+     *
+     * @param queryOctets the query IP split into 4 octets, where "x" matches any value
+     * @param clientIP the client IP address to test
+     * @return true if the client IP matches the query
+     */
+    private boolean ipMatches(String[] queryOctets, String clientIP){
+        String[] clientOctets = ipOctetsCache.computeIfAbsent(clientIP, k -> k.split("\\."));
+        return (queryOctets[0].equals(clientOctets[0]) || queryOctets[0].equals("x")) &&
+               (queryOctets[1].equals(clientOctets[1]) || queryOctets[1].equals("x")) &&
+               (queryOctets[2].equals(clientOctets[2]) || queryOctets[2].equals("x")) &&
+               (queryOctets[3].equals(clientOctets[3]) || queryOctets[3].equals("x"));
     }
 
     /**
