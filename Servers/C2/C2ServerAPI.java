@@ -2,6 +2,7 @@ package Servers.C2;
 
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -126,6 +127,8 @@ public class C2ServerAPI implements Runnable {
         public void handle(HttpExchange t) throws IOException {
             
             String response = "";
+            // Encoded body, filled in per-branch so we encode once (header length + write)
+            byte[] responseBytes = new byte[0];
 
             /**
              * There are 6 different RESTful API calls available currently
@@ -248,14 +251,16 @@ public class C2ServerAPI implements Runnable {
                         jsonBearerObject.put("ttl", TOKEN_TTL_SECONDS);
                         jsonBearerObject.put("bearer", bearerToken);
                         response = jsonBearerObject.toString();
+                        responseBytes = response.getBytes(StandardCharsets.UTF_8);
                         t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
-                        t.sendResponseHeaders(200, response.getBytes().length);
+                        t.sendResponseHeaders(200, responseBytes.length);
                     } else {
                         JSONObject jsonBearerObject = new JSONObject();
                         jsonBearerObject.put("error", "Invalid Credentials");
                         response = jsonBearerObject.toString();
+                        responseBytes = response.getBytes(StandardCharsets.UTF_8);
                         t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
-                        t.sendResponseHeaders(401, response.getBytes().length);
+                        t.sendResponseHeaders(401, responseBytes.length);
                     }
                 }
             } else if (validateBearerToken(t.getRequestHeaders().get("Authorization").get(0).split(" ")[1])){
@@ -336,7 +341,8 @@ public class C2ServerAPI implements Runnable {
                 }
                 t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
                 t.getResponseHeaders().set("Content-Type", "application/json");
-                t.sendResponseHeaders(200, response.getBytes().length);
+                responseBytes = response.getBytes(StandardCharsets.UTF_8);
+                t.sendResponseHeaders(200, responseBytes.length);
             } else {
                 JSONObject jo = new JSONObject();
                 // If the token is expired and the client just needs to ask for a new one, they get a 401 unauthorized
@@ -344,20 +350,22 @@ public class C2ServerAPI implements Runnable {
                 if(bearerTokens.keySet().contains(t.getRequestHeaders().get("Authorization").get(0).split(" ")[1])){
                     jo.put("error", "expired token");
                     response = jo.toString();
+                    responseBytes = response.getBytes(StandardCharsets.UTF_8);
                     t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
-                    t.sendResponseHeaders(401, response.getBytes().length);
+                    t.sendResponseHeaders(401, responseBytes.length);
                 } else {
                     jo.put("error", "invalid token");
                     response = jo.toString();
+                    responseBytes = response.getBytes(StandardCharsets.UTF_8);
                     t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
-                    t.sendResponseHeaders(403, response.getBytes().length);
+                    t.sendResponseHeaders(403, responseBytes.length);
                 }
                 
             }
             
             
             OutputStream os = t.getResponseBody();
-            os.write(response.getBytes());
+            os.write(responseBytes);
             os.close();
         }
     }
