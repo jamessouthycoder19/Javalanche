@@ -251,11 +251,21 @@ public class C2ServerAPI implements Runnable {
                 t.getResponseHeaders().add("Access-Control-Allow-Headers", "Authorization, Content-Type");
                 t.sendResponseHeaders(204, -1);
             } else if(t.getRequestURI().toString().equals("/auth") && t.getRequestMethod().equals("GET")){
-                if(authHeader != null && authHeader.split(" ")[0].equals("Basic")){
-                    String userpass = new String(Base64.getDecoder().decode(authHeader.split(" ")[1]));
-                    String username = userpass.split(":")[0];
-                    String password = userpass.split(":")[1];
-                    if(C2server.authenticate(username, C2Server.hashPassword(password))){
+                if(authHeader != null && authHeader.startsWith("Basic ")){
+                    String username = null;
+                    String password = null;
+                    try {
+                        String userpass = new String(Base64.getDecoder().decode(authHeader.substring(6)));
+                        // Split on the first colon only, so a password containing ':' is kept intact
+                        int sep = userpass.indexOf(':');
+                        if(sep >= 0){
+                            username = userpass.substring(0, sep);
+                            password = userpass.substring(sep + 1);
+                        }
+                    } catch (IllegalArgumentException e){
+                        // Malformed Base64: leave credentials null so this is treated as invalid
+                    }
+                    if(username != null && C2server.authenticate(username, C2Server.hashPassword(password))){
                         String newBearerToken = generateBearerToken(username);
                         JSONObject jsonBearerObject = new JSONObject();
                         jsonBearerObject.put("ttl", TOKEN_TTL_SECONDS);

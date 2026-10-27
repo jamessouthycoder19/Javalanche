@@ -565,7 +565,12 @@ public class C2Server implements Runnable{
         try (Scanner fileReader = new Scanner(configFile)){
             while (fileReader.hasNextLine()){
                 String data = fileReader.nextLine();
-                String[] dataSplit = data.split(":");
+                // Split on the first colon only, so a value containing ':' is kept intact;
+                // skip lines without a key:value separator
+                String[] dataSplit = data.split(":", 2);
+                if (dataSplit.length < 2){
+                    continue;
+                }
                 if (dataSplit[0].equals("password")){
                     this.root_password = dataSplit[1];
                 } else if (dataSplit[0].equals("pwnboard_api_key")){
