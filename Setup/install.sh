@@ -71,7 +71,6 @@ sudo curl -s -o /etc/javalanche/Servers/CLI/HTTPSRequest.java https://raw.github
 sudo curl -s -o /etc/javalanche/Servers/CLI/C2ServerCLI.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/CLI/C2ServerCLI.java?ref_type=heads
 sudo curl -s -o /etc/javalanche/Servers/Duplexer.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/Duplexer.java?ref_type=heads
 sudo curl -s -o /etc/javalanche/Servers/keepAlive.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/keepAlive.java?ref_type=heads
-sudo curl -s -o /etc/javalanche/Servers/notifyLock.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/notifyLock.java?ref_type=heads
 sudo curl -s -o /etc/javalanche/Servers/json.jar https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/json.jar?ref_type=heads
 sudo curl -s -o /etc/javalanche/Servers/encryption/aes/aes.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/encryption/aes/aes.java?ref_type=heads
 sudo curl -s -o /etc/javalanche/Servers/encryption/aes/encryption.java https://raw.githubusercontent.com/jamessouthycoder19/Javalanche/refs/heads/$branch/Servers/encryption/aes/encryption.java?ref_type=heads
